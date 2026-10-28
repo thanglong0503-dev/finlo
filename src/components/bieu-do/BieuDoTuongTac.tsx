@@ -145,10 +145,13 @@ export function BieuDoTuongTac({
   nguon,
   ma,
   khiCoNen,
+  phienCK = null,
 }: {
   nguon: Nguon;
   ma: string;
   khiCoNen?: (nen: NenCB[]) => void; // báo dữ liệu nến đã tải cho khung bên cạnh dùng lại
+  // Cổ phiếu: giá trong phiên (ảnh chụp mỗi phút) để cập nhật cây nến hôm nay
+  phienCK?: { ngay: string; gia: number; thamChieu: number | null; khoiLuong: number } | null;
 }) {
   const khiCoNenRef = useRef(khiCoNen);
   useEffect(() => {
@@ -475,6 +478,45 @@ export function BieuDoTuongTac({
     coMoi.current = true;
   }, []);
   const trangThai = useLuongBinance(nguon === "ts" && nenGoc ? [`${capGiaoDich(ma).toLowerCase()}@kline_${khung}`] : [], nhanTin);
+
+  // ---- Cổ phiếu: cây nến hôm nay theo ảnh chụp phiên (mỗi phút) ----
+  useEffect(() => {
+    if (nguon !== "ck" || !phienCK || !nenGoc || phienCK.gia <= 0) return;
+    const ds = nenHienTai.current;
+    const [y, m, d] = phienCK.ngay.split("-").map(Number);
+    // Nến ngày của mofi đánh dấu lúc 0h giờ Việt Nam (UTC+7)
+    const lucNgay = Date.UTC(y, m - 1, d) / 1000 - 7 * 3600;
+    const cuoi = ds[ds.length - 1];
+    let moi: NenCB;
+    if (cuoi && cuoi.time === lucNgay) {
+      moi = {
+        ...cuoi,
+        close: phienCK.gia,
+        high: Math.max(cuoi.high, phienCK.gia),
+        low: Math.min(cuoi.low, phienCK.gia),
+        volume: Math.max(cuoi.volume, phienCK.khoiLuong),
+      };
+      ds[ds.length - 1] = moi;
+    } else if (!cuoi || lucNgay > cuoi.time) {
+      const mo = phienCK.thamChieu ?? phienCK.gia;
+      moi = {
+        time: lucNgay,
+        open: mo,
+        high: Math.max(mo, phienCK.gia),
+        low: Math.min(mo, phienCK.gia),
+        close: phienCK.gia,
+        volume: phienCK.khoiLuong,
+      };
+      ds.push(moi);
+    } else return;
+    nenSeries.current?.update({ time: moi.time as UTCTimestamp, open: moi.open, high: moi.high, low: moi.low, close: moi.close });
+    klSeries.current?.update({
+      time: moi.time as UTCTimestamp,
+      value: moi.volume,
+      color: (moi.close >= moi.open ? mauCss("--tang") : mauCss("--giam")) + "55",
+    });
+    coMoi.current = true;
+  }, [nguon, phienCK, nenGoc]);
 
   // Tính lại chỉ báo mỗi 2 giây nếu có nến mới (tránh tính lại với từng tin)
   useEffect(() => {

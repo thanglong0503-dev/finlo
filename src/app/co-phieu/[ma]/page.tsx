@@ -9,13 +9,15 @@ import { TimMa } from "@/components/TimMa";
 import {
   giaNghin,
   khoiLuong,
-  mauTangGiam,
+  mauGia,
   phanTram,
   soNguyen,
   thayDoi,
+  trieuDong,
   tyDong,
   vonHoa,
 } from "@/lib/dinh-dang";
+import { NhanPhien } from "@/components/NhanPhien";
 import { TaiChinh } from "@/components/TaiChinh";
 import { layBangGia, layBaoCao, layHoSo, layNen, layNganh } from "@/lib/mofi";
 
@@ -88,14 +90,26 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   const truoc = nen[n - 2];
   const klTb20 = nen.slice(-20).reduce((s, x) => s + x.volume, 0) / Math.min(20, n);
 
-  const giaoDich = [
-    { nhan: "Tham chiếu", giaTri: truoc ? giaNghin(truoc.close) : "—" },
+  const nnRong = cp.nnMua != null && cp.nnBan != null ? cp.nnMua - cp.nnBan : null;
+  const giaoDich: { nhan: string; giaTri: string; mau?: string }[] = [
+    ...(cp.tran != null ? [{ nhan: "Trần", giaTri: giaNghin(cp.tran), mau: "text-tran" }] : []),
+    { nhan: "Tham chiếu", giaTri: giaNghin(cp.thamChieu ?? truoc?.close ?? cp.gia), mau: "text-dung" },
+    ...(cp.giaSan != null ? [{ nhan: "Sàn", giaTri: giaNghin(cp.giaSan), mau: "text-san-gia" }] : []),
     { nhan: "Mở cửa", giaTri: giaNghin(homNay.open) },
     { nhan: "Cao nhất", giaTri: giaNghin(homNay.high) },
     { nhan: "Thấp nhất", giaTri: giaNghin(homNay.low) },
     { nhan: "Khối lượng", giaTri: khoiLuong(cp.khoiLuong) },
     { nhan: "KL TB 20 phiên", giaTri: khoiLuong(klTb20) },
     { nhan: "Giá trị GD", giaTri: tyDong(cp.giaTri) },
+    ...(nnRong != null
+      ? [
+          {
+            nhan: "Nước ngoài ròng",
+            giaTri: nnRong === 0 ? "0" : `${nnRong > 0 ? "+" : "−"}${trieuDong(Math.abs(nnRong))}`,
+            mau: nnRong > 0 ? "text-tang" : nnRong < 0 ? "text-giam" : "",
+          },
+        ]
+      : []),
     { nhan: "Vốn hoá", giaTri: vonHoa(cp.vonHoa) },
     { nhan: "Đỉnh 52 tuần", giaTri: giaNghin(dinh) },
     { nhan: "Đáy 52 tuần", giaTri: giaNghin(day) },
@@ -150,9 +164,12 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         <div className="flex items-end gap-5">
           <NutTheoDoi ma={cp.ma} />
           <div className="text-right">
-            <div className={`text-3xl font-bold tabular-nums ${mauTangGiam(cp.phanTram)}`}>{giaNghin(cp.gia)}</div>
-            <div className={`tabular-nums ${mauTangGiam(cp.phanTram)}`}>
+            <div className={`text-3xl font-bold tabular-nums ${mauGia(cp)}`}>{giaNghin(cp.gia)}</div>
+            <div className={`tabular-nums ${mauGia(cp)}`}>
               {thayDoi(cp.thayDoi / 1000)} ({phanTram(cp.phanTram)})
+            </div>
+            <div className="mt-1 text-[12px]">
+              <NhanPhien phien={bangGia.phien} />
             </div>
           </div>
         </div>
@@ -172,7 +189,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
             {giaoDich.map((ct) => (
               <div key={ct.nhan} className="flex justify-between border-b border-vien px-4 py-2 last:border-b-0">
                 <dt className="text-chu-phu">{ct.nhan}</dt>
-                <dd className="font-medium tabular-nums">{ct.giaTri}</dd>
+                <dd className={`font-medium tabular-nums ${ct.mau ?? ""}`}>{ct.giaTri}</dd>
               </div>
             ))}
           </dl>

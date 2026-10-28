@@ -55,7 +55,7 @@ type CongTyTho = {
 
 type ChiSoTho = {
   meta: { asOf: string };
-  indices: Record<string, NenTho & { name: string }>;
+  indices: Record<string, NenTho & { name: string; chuaChot?: string }>;
 };
 
 // ---- Kiểu dữ liệu Finlo dùng ----
@@ -71,9 +71,21 @@ export type CoPhieu = {
   khoiLuong: number;
   giaTri: number;
   vonHoa: number | null;
+  // Từ ảnh chụp bảng giá trong phiên (null khi chưa có ảnh chụp cho mã)
+  thamChieu: number | null;
+  tran: number | null;
+  giaSan: number | null;
+  giaTB: number | null;
+  nnMua: number | null; // giá trị nước ngoài mua, triệu đồng
+  nnBan: number | null;
+  muaCD: number | null; // khối lượng mua chủ động
+  banCD: number | null;
 };
 
-export type BangGia = { capNhat: string; coPhieu: CoPhieu[] };
+// Đợt giao dịch theo ảnh chụp: ATO, LO (liên tục), Break (nghỉ trưa), ATC, PT (thoả thuận), C (đóng cửa)
+export type Phien = { ngay: string; gio: string; dot: string; luc: number };
+
+export type BangGia = { capNhat: string; phien: Phien | null; coPhieu: CoPhieu[] };
 
 export type ChiSo = {
   ma: string;
@@ -82,6 +94,7 @@ export type ChiSo = {
   thayDoi: number;
   phanTram: number;
   lichSu: number[]; // điểm đóng cửa ~3 tháng gần nhất, để vẽ đường nhỏ
+  tangGiam: { tang: number; giam: number; dung: number } | null; // số mã trong rổ, theo ảnh chụp phiên
 };
 
 export type HoSo = {
@@ -126,7 +139,153 @@ export type Nen = { time: number; open: number; high: number; low: number; close
 
 // ---- Hàm lấy dữ liệu ----
 
+// Cache ngắn cho dữ liệu trong phiên: ảnh chụp đổi mỗi phút
+const MOT_PHUT = { stale: 30, revalidate: 30, expire: 600 };
+
+// Bảng giá: giá cuối ngày làm nền, phủ lên bằng ảnh chụp mới nhất trong phiên (mỗi phút)
 export async function layBangGia(): Promise<BangGia> {
+  "use cache";
+  cacheLife(MOT_PHUT);
+  const [{ ngayGiaoDich, ...goc }, anh] = await Promise.all([layBangGiaGoc(), layAnhChupPhien().catch(() => null)]);
+  // Ảnh chụp cũ hơn dữ liệu cuối ngày (mofi thiếu file hôm nay) thì bỏ qua
+  if (!anh || anh.phien.ngay < ngayGiaoDich) return { ...goc, phien: null };
+
+  const coPhieu = goc.coPhieu.map((cp) => {
+    const x = anh.theoMa.get(cp.ma);
+    if (!x) return cp;
+    // Đầu phiên ATO chưa khớp thì giá = 0: giữ giá tham chiếu
+    const gia = x.gia > 0 ? x.gia : x.tc;
+    return {
+      ...cp,
+      gia,
+      thayDoi: gia - x.tc,
+      phanTram: x.tc ? (gia / x.tc - 1) * 100 : 0,
+      khoiLuong: x.kl,
+      giaTri: x.gt,
+      vonHoa: cp.vonHoa != null && cp.gia ? (cp.vonHoa / cp.gia) * gia : null,
+      thamChieu: x.tc,
+      tran: x.tran,
+      giaSan: x.san,
+      giaTB: x.tb || null,
+      nnMua: x.nnM,
+      nnBan: x.nnB,
+      muaCD: x.buV,
+      banCD: x.sdV,
+    };
+  });
+  coPhieu.sort((a, b) => b.giaTri - a.giaTri);
+  return { capNhat: new Date(anh.phien.luc).toISOString(), phien: anh.phien, coPhieu };
+}
+
+type AnhChupTho = {
+  ngay: string;
+  hhmm: string;
+  dot: string;
+  ts: number;
+  ma: string[];
+  gia: number[];
+  tc: number[];
+  tran: number[];
+  gsan: number[];
+  kl: number[];
+  gt: number[];
+  nnM: number[];
+  nnB: number[];
+  buV: number[];
+  sdV: number[];
+  tb: number[];
+};
+
+// Giờ Việt Nam hiện tại: ngày (YYYY-MM-DD), thứ trong tuần (0 = CN), số phút từ 0h
+function gioVietNam(luc = new Date()) {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      weekday: "short",
+      hour12: false,
+    })
+      .formatToParts(luc)
+      .map((x) => [x.type, x.value]),
+  );
+  const thu = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday);
+  return { ngay: `${p.year}-${p.month}-${p.day}`, thu, phut: (Number(p.hour) % 24) * 60 + Number(p.minute) };
+}
+
+const PHIEN_SANG = [540, 690]; // 09:00 – 11:30
+const PHIEN_CHIEU = [780, 930]; // 13:00 – 15:30 (gồm ATC, thoả thuận, sau giờ)
+
+// Ảnh chụp mới nhất: mofi lưu mỗi phút một file realtime/<thư mục>/<ngày>/<HHMM>.json trong giờ giao dịch.
+// Dò từ phút gần nhất lùi về; ngoài giờ thì lấy 15:30 của ngày giao dịch gần nhất.
+async function timAnhChup<T>(thuMuc: "bang" | "chi-so"): Promise<T | null> {
+  const thu = async (ngay: string, phut: number) => {
+    const hhmm = `${String(Math.floor(phut / 60)).padStart(2, "0")}${String(phut % 60).padStart(2, "0")}`;
+    const res = await fetch(`${BASE}/realtime/${thuMuc}/${ngay}/${hhmm}.json`, { signal: AbortSignal.timeout(8000) });
+    return res.ok ? ((await res.json()) as T) : null;
+  };
+
+  const bay = gioVietNam();
+  let ngay = bay.ngay;
+  let t = bay.phut - 1; // file của phút hiện tại có thể chưa ghi xong
+  let tho: T | null = null;
+
+  for (let lui = 0; lui < 8 && !tho; lui++) {
+    const nghiCuoiTuan = new Date(`${ngay}T00:00:00Z`).getUTCDay() % 6 === 0;
+    if (!nghiCuoiTuan && t >= PHIEN_SANG[0]) {
+      const moc = t > PHIEN_CHIEU[1] ? PHIEN_CHIEU[1] : t > PHIEN_SANG[1] && t < PHIEN_CHIEU[0] ? PHIEN_SANG[1] : t;
+      // Thử vài phút gần nhất (file có thể ghi trễ)
+      for (let i = 0; i < 4 && !tho; i++) tho = await thu(ngay, moc - i);
+    }
+    if (!tho) {
+      // Lùi về 15:30 của ngày trước
+      const truoc = new Date(`${ngay}T00:00:00Z`);
+      truoc.setUTCDate(truoc.getUTCDate() - 1);
+      ngay = truoc.toISOString().slice(0, 10);
+      t = PHIEN_CHIEU[1];
+    }
+  }
+  return tho;
+}
+
+export async function layAnhChupPhien() {
+  "use cache";
+  cacheLife(MOT_PHUT);
+  const tho = await timAnhChup<AnhChupTho>("bang");
+  if (!tho) return null;
+
+  const theoMa = new Map(
+    tho.ma.map((ma, i) => [
+      ma,
+      {
+        gia: tho.gia[i],
+        tc: tho.tc[i],
+        tran: tho.tran[i],
+        san: tho.gsan[i],
+        kl: tho.kl[i],
+        gt: tho.gt[i],
+        nnM: tho.nnM[i],
+        nnB: tho.nnB[i],
+        buV: tho.buV[i],
+        sdV: tho.sdV[i],
+        tb: tho.tb?.[i] ?? 0,
+      },
+    ]),
+  );
+  const phien: Phien = {
+    ngay: tho.ngay,
+    gio: `${tho.hhmm.slice(0, 2)}:${tho.hhmm.slice(2)}`,
+    dot: tho.dot,
+    luc: tho.ts,
+  };
+  return { phien, theoMa };
+}
+
+// Giá cuối ngày (tổng hợp) cùng hồ sơ công ty
+async function layBangGiaGoc(): Promise<Omit<BangGia, "phien"> & { ngayGiaoDich: string }> {
   "use cache";
   cacheLife("minutes");
   const [gia, congTy] = await Promise.all([
@@ -148,29 +307,61 @@ export async function layBangGia(): Promise<BangGia> {
       khoiLuong: g.volume,
       giaTri: g.value,
       vonHoa: ct?.outstandingShares ? ct.outstandingShares * g.close : null,
+      thamChieu: null,
+      tran: null,
+      giaSan: null,
+      giaTB: null,
+      nnMua: null,
+      nnBan: null,
+      muaCD: null,
+      banCD: null,
     };
   });
   coPhieu.sort((a, b) => b.giaTri - a.giaTri);
+  // Ngày giao dịch mới nhất có trong dữ liệu cuối ngày
+  const ngayGiaoDich = Object.values(gia.latest).reduce((m, g) => (g.tradeDate > m ? g.tradeDate : m), "");
 
-  return { capNhat: gia.meta.asOf, coPhieu };
+  return { capNhat: gia.meta.asOf, coPhieu, ngayGiaoDich };
 }
 
+type AnhChupChiSoTho = {
+  ngay: string;
+  ds: { ma: string; gia: number; tc: number; tang: number; giam: number; dung: number }[];
+};
+
+// Tên chỉ số trong ảnh chụp khác khoá trong chi-so.json
+const MA_CHI_SO_ANH: Record<string, string> = { HNXIndex: "HNX", UpcomIndex: "UPCOM", UPCOMINDEX: "UPCOM" };
+
 // Điểm chỉ số được Mofi lưu nhân 1000 (1761870 = 1.761,87 điểm).
+// Trong phiên, điểm hiện tại lấy từ ảnh chụp mỗi phút (kèm số mã tăng/giảm/đứng của rổ).
 export async function layChiSo(): Promise<ChiSo[]> {
   "use cache";
-  cacheLife("minutes");
-  const data = await layJson<ChiSoTho>("tong-hop/chi-so.json");
+  cacheLife(MOT_PHUT);
+  const [data, anh] = await Promise.all([
+    layJson<ChiSoTho>("tong-hop/chi-so.json"),
+    timAnhChup<AnhChupChiSoTho>("chi-so").catch(() => null),
+  ]);
+  const theoMa = new Map((anh?.ds ?? []).map((x) => [MA_CHI_SO_ANH[x.ma] ?? x.ma.toUpperCase(), x]));
   return Object.entries(data.indices).map(([ma, cs]) => {
     const n = cs.c.length;
-    const diem = cs.c[n - 1] / 1000;
-    const truoc = cs.c[n - 2] / 1000;
+    let diem = cs.c[n - 1] / 1000;
+    let truoc = cs.c[n - 2] / 1000;
+    const x = theoMa.get(ma);
+    const coAnh = anh && x && x.gia > 0 && anh.ngay >= (cs.chuaChot ?? "");
+    if (coAnh) {
+      diem = x.gia;
+      truoc = x.tc;
+    }
+    const lichSu = cs.c.slice(-60).map((c) => c / 1000);
+    if (coAnh) lichSu[lichSu.length - 1] = diem;
     return {
       ma,
       ten: cs.name,
       diem,
       thayDoi: diem - truoc,
       phanTram: ((diem - truoc) / truoc) * 100,
-      lichSu: cs.c.slice(-60).map((c) => c / 1000),
+      lichSu,
+      tangGiam: coAnh ? { tang: x.tang, giam: x.giam, dung: x.dung } : null,
     };
   });
 }

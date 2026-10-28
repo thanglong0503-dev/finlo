@@ -19,6 +19,9 @@
   --tang: #12a150;
   --giam: #d6204f;
   --dung: #b7791f;
+  /* Màu bảng điện Việt Nam: chạm trần tím, chạm sàn xanh lam */
+  --tran: #9333ea;
+  --san-gia: #0891b2;
 }
 
 /* Giao diện tối: theo máy khi chưa chọn, hoặc khi người dùng bấm chọn "tối" (data-theme trên <html>) */
@@ -36,6 +39,8 @@
     --tang: #2fd07a;
     --giam: #f0506e;
     --dung: #e3b341;
+    --tran: #c084fc;
+    --san-gia: #22d3ee;
     color-scheme: dark;
   }
 }
@@ -53,6 +58,8 @@
   --tang: #2fd07a;
   --giam: #f0506e;
   --dung: #e3b341;
+  --tran: #c084fc;
+  --san-gia: #22d3ee;
   color-scheme: dark;
 }
 
@@ -73,6 +80,8 @@
   --color-tang: var(--tang);
   --color-giam: var(--giam);
   --color-dung: var(--dung);
+  --color-tran: var(--tran);
+  --color-san-gia: var(--san-gia);
   --font-sans: var(--font-be-vietnam);
 }
 

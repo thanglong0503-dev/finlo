@@ -46,3 +46,18 @@ export const vonHoa = (vnd: number | null) =>
 export const soNguyen = (x: number) => so0.format(x);
 // Lớp màu theo chiều tăng/giảm
 export const mauTangGiam = (x: number) => (x > 0 ? "text-tang" : x < 0 ? "text-giam" : "text-dung");
+
+// Màu giá theo chuẩn bảng điện Việt Nam: trần tím, sàn xanh lam, tham chiếu vàng, còn lại xanh/đỏ.
+// Chưa có giá trần/sàn (ngoài ảnh chụp phiên) thì chỉ tô theo tăng/giảm.
+export function mauGia(cp: { gia: number; phanTram: number; tran: number | null; giaSan: number | null; thamChieu: number | null }) {
+  if (cp.tran != null && cp.gia >= cp.tran) return "text-tran";
+  if (cp.giaSan != null && cp.giaSan > 0 && cp.gia <= cp.giaSan) return "text-san-gia";
+  if (cp.thamChieu != null && cp.gia === cp.thamChieu) return "text-dung";
+  return mauTangGiam(cp.phanTram);
+}
+
+// Giá trị theo triệu đồng -> "1,23 tỷ" / "456 tr"
+export const trieuDong = (trieu: number) =>
+  Math.abs(trieu) >= 1000
+    ? `${so2.format(trieu / 1000)} tỷ`
+    : `${so0.format(trieu)} tr`;

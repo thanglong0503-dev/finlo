@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BieuDoTuongTac, type Nguon } from "@/components/bieu-do/BieuDoTuongTac";
 import { DanhSachMa } from "@/components/bieu-do/DanhSachMa";
 import { BangSoLenh, useThiTruongTienSo } from "@/components/bieu-do/SoLenhTienSo";
@@ -62,6 +62,18 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
   const thiTruong = useThiTruongTienSo(ma, nguon === "ts" && coCap === true);
   const cp = bangGia?.coPhieu.find((c) => c.ma === ma) ?? null;
   const ts = tienSo?.find((x) => x.ma === ma);
+  // Giá trong phiên cho cây nến hôm nay (chỉ khi có ảnh chụp phiên); giữ nguyên đối tượng khi số liệu không đổi
+  const ngayPhien = bangGia?.phien?.ngay;
+  const giaCp = cp?.gia;
+  const thamChieuCp = cp?.thamChieu;
+  const klCp = cp?.khoiLuong;
+  const phienCK = useMemo(
+    () =>
+      ngayPhien && giaCp != null && thamChieuCp != null && klCp != null
+        ? { ngay: ngayPhien, gia: giaCp, thamChieu: thamChieuCp, khoiLuong: klCp }
+        : null,
+    [ngayPhien, giaCp, thamChieuCp, klCp],
+  );
   const t = thiTruong.ticker;
   const giaTs = t ? Number(t.c) : null;
   const le = giaTs ? soLe(giaTs) : 2;
@@ -98,7 +110,7 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
             {nguon === "ts" ? "Trang chi tiết" : "Phân tích, tài chính"} →
           </Link>
         </div>
-        <BieuDoTuongTac key={`${nguon}:${ma}`} nguon={nguon} ma={ma} khiCoNen={khiCoNen} />
+        <BieuDoTuongTac key={`${nguon}:${ma}`} nguon={nguon} ma={ma} khiCoNen={khiCoNen} phienCK={phienCK} />
       </section>
 
       <aside className="border-t border-vien lg:border-t-0 xl:border-r xl:border-vien">
@@ -114,7 +126,7 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
             </>
           )
         ) : (
-          <ThongTinCoPhieu cp={cp} nen={nen?.ma === ma ? nen.ds : null} />
+          <ThongTinCoPhieu cp={cp} nen={nen?.ma === ma ? nen.ds : null} phien={bangGia?.phien ?? null} />
         )}
       </aside>
 

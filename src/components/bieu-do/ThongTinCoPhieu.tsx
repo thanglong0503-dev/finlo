@@ -4,13 +4,18 @@ import Link from "next/link";
 import { GiaChop } from "@/components/GiaChop";
 import { NutTheoDoi } from "@/components/NutTheoDoi";
 import { khoiLuongTheoGia, type NenCB } from "@/lib/chi-bao";
-import { giaNghin, khoiLuong, mauTangGiam, phanTram, thayDoi, tyDong, vonHoa } from "@/lib/dinh-dang";
-import type { CoPhieu } from "@/lib/mofi";
+import { NhanPhien } from "@/components/NhanPhien";
+import { giaNghin, khoiLuong, mauGia, phanTram, thayDoi, trieuDong, tyDong, vonHoa } from "@/lib/dinh-dang";
+import type { CoPhieu, Phien } from "@/lib/mofi";
 
 // Khung bên cạnh biểu đồ cổ phiếu: giá (làm mới mỗi phút, chớp khi đổi), thông số phiên,
 // và khối lượng theo giá 60 phiên gần nhất
-export function ThongTinCoPhieu({ cp, nen }: { cp: CoPhieu | null; nen: NenCB[] | null }) {
+export function ThongTinCoPhieu({ cp, nen, phien }: { cp: CoPhieu | null; nen: NenCB[] | null; phien: Phien | null }) {
   if (!cp) return <div className="h-64 animate-pulse bg-nen-phu" />;
+  const mau = mauGia(cp);
+  const nnRong = cp.nnMua != null && cp.nnBan != null ? cp.nnMua - cp.nnBan : null;
+  const tongCD = (cp.muaCD ?? 0) + (cp.banCD ?? 0);
+  const tyLeMua = tongCD > 0 ? ((cp.muaCD ?? 0) / tongCD) * 100 : null;
 
   const n = nen?.length ?? 0;
   const homNay = nen?.[n - 1];
@@ -20,13 +25,26 @@ export function ThongTinCoPhieu({ cp, nen }: { cp: CoPhieu | null; nen: NenCB[] 
   const lonNhat = Math.max(1, ...o.map((x) => x.kl));
 
   const dong = [
-    { nhan: "Tham chiếu", gt: truoc ? giaNghin(truoc.close) : "—" },
+    { nhan: "Trần", gt: cp.tran != null ? giaNghin(cp.tran) : "—", mau: "text-tran" },
+    { nhan: "Tham chiếu", gt: giaNghin(cp.thamChieu ?? truoc?.close ?? cp.gia), mau: "text-dung" },
+    { nhan: "Sàn", gt: cp.giaSan != null ? giaNghin(cp.giaSan) : "—", mau: "text-san-gia" },
     { nhan: "Mở cửa", gt: homNay ? giaNghin(homNay.open) : "—" },
     { nhan: "Cao nhất", gt: homNay ? giaNghin(homNay.high) : "—", mau: "text-tang" },
     { nhan: "Thấp nhất", gt: homNay ? giaNghin(homNay.low) : "—", mau: "text-giam" },
     { nhan: "Khối lượng", gt: khoiLuong(cp.khoiLuong) },
     { nhan: "KL TB 20 phiên", gt: klTb != null ? khoiLuong(klTb) : "—" },
     { nhan: "Giá trị GD", gt: tyDong(cp.giaTri) },
+    ...(cp.giaTB ? [{ nhan: "Giá trung bình", gt: giaNghin(cp.giaTB) }] : []),
+    ...(nnRong != null
+      ? [
+          { nhan: "NN mua / bán", gt: `${trieuDong(cp.nnMua!)} / ${trieuDong(cp.nnBan!)}` },
+          {
+            nhan: "NN ròng",
+            gt: nnRong === 0 ? "0" : `${nnRong > 0 ? "+" : "−"}${trieuDong(Math.abs(nnRong))}`,
+            mau: nnRong > 0 ? "text-tang" : nnRong < 0 ? "text-giam" : "",
+          },
+        ]
+      : []),
     { nhan: "Vốn hoá", gt: vonHoa(cp.vonHoa) },
   ];
 
@@ -37,15 +55,30 @@ export function ThongTinCoPhieu({ cp, nen }: { cp: CoPhieu | null; nen: NenCB[] 
           <p className="font-semibold">
             {cp.ma} <span className="text-[11px] font-normal text-chu-phu">{cp.san}</span>
           </p>
-          <GiaChop gia={cp.gia} className={`text-2xl font-bold tabular-nums ${mauTangGiam(cp.phanTram)}`}>
+          <GiaChop gia={cp.gia} className={`text-2xl font-bold tabular-nums ${mau}`}>
             {giaNghin(cp.gia)}
           </GiaChop>
-          <p className={`tabular-nums ${mauTangGiam(cp.phanTram)}`}>
+          <p className={`tabular-nums ${mau}`}>
             {thayDoi(cp.thayDoi / 1000)} ({phanTram(cp.phanTram)})
           </p>
         </div>
         <NutTheoDoi ma={cp.ma} />
       </div>
+      <div className="border-b border-vien px-3 py-1.5 text-[12px]">
+        <NhanPhien phien={phien} />
+      </div>
+      {tyLeMua != null && (
+        <div className="border-b border-vien px-3 py-2">
+          <div className="flex justify-between text-[11px] tabular-nums">
+            <span className="text-tang">Mua CĐ {khoiLuong(cp.muaCD ?? 0)}</span>
+            <span className="text-giam">Bán CĐ {khoiLuong(cp.banCD ?? 0)}</span>
+          </div>
+          <div className="mt-1 flex h-1.5">
+            <div className="bg-tang" style={{ width: `${tyLeMua}%` }} />
+            <div className="flex-1 bg-giam" />
+          </div>
+        </div>
+      )}
 
       <dl>
         {dong.map((d) => (

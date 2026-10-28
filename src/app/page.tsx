@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { DaiGia, type NhomGia } from "@/components/DaiGia";
 import { DanhMucTheoDoi } from "@/components/DanhMucTheoDoi";
 import { DuongNho } from "@/components/DuongNho";
+import { NhanPhien } from "@/components/NhanPhien";
 import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { diem, giaNghin, mauTangGiam, phanTram, thayDoi, tyDong, usd, vonHoa } from "@/lib/dinh-dang";
 import { layBangGia, layBangVang, layChiSo, layTienSo, type CoPhieu } from "@/lib/mofi";
@@ -215,6 +216,9 @@ async function ThiTruong() {
       <section className="mx-auto max-w-6xl px-4 py-12">
         <p className="nhan-muc">Tổng quan</p>
         <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Thị trường hôm nay</h2>
+        <p className="mt-1">
+          <NhanPhien phien={bangGia.phien} />
+        </p>
 
         <div className="mt-6 grid grid-cols-2 border-t border-l border-vien md:grid-cols-5">
           {chiSo.map((cs, i) => (
