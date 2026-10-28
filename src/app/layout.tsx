@@ -16,7 +16,9 @@ export const metadata: Metadata = {
 
 const MENU = [
   { href: "/", nhan: "Thị trường" },
-  { href: "/bang-gia", nhan: "Bảng giá" },
+  { href: "/bang-gia", nhan: "Chứng khoán" },
+  { href: "/tai-san-so", nhan: "Tài sản số" },
+  { href: "/kim-loai-quy", nhan: "Kim loại quý" },
   { href: "/co-phieu/VNM", nhan: "Phân tích" },
 ];
 
@@ -43,6 +45,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               Mở bảng giá
             </Link>
           </nav>
+          {/* Điện thoại: menu cuộn ngang dưới thanh logo */}
+          <div className="flex gap-5 overflow-x-auto border-t border-vien px-4 sm:hidden">
+            {MENU.map((m) => (
+              <Link key={m.href} href={m.href} className="py-2.5 font-medium whitespace-nowrap text-chu-phu">
+                {m.nhan}
+              </Link>
+            ))}
+          </div>
         </header>
 
         <main className="flex-1">{children}</main>

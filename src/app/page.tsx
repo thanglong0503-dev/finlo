@@ -4,13 +4,33 @@ import { Suspense } from "react";
 import { DaiGia, type NhomGia } from "@/components/DaiGia";
 import { DuongNho } from "@/components/DuongNho";
 import { diem, giaNghin, mauTangGiam, phanTram, thayDoi, tyDong, usd, vonHoa } from "@/lib/dinh-dang";
-import { layBangGia, layChiSo, layTienSo, type CoPhieu } from "@/lib/mofi";
+import { layBangGia, layBangVang, layChiSo, layTienSo, type CoPhieu } from "@/lib/mofi";
 
 const LOP_TAI_SAN = [
-  { ten: "Chứng khoán", moTa: "Cổ phiếu niêm yết trên HOSE, HNX và UPCOM, cập nhật trong phiên.", trangThai: "1.525 mã" },
-  { ten: "Tài sản số", moTa: "Bitcoin, Ethereum và các tài sản mã hoá phổ biến.", trangThai: "2 tài sản" },
-  { ten: "Hàng hoá", moTa: "Dầu, cà phê, kim loại công nghiệp và nông sản quốc tế.", trangThai: "Sắp có" },
-  { ten: "Kim loại quý", moTa: "Vàng miếng, vàng nhẫn và bạc của các thương hiệu trong nước.", trangThai: "Sắp có" },
+  {
+    ten: "Chứng khoán",
+    moTa: "Cổ phiếu niêm yết trên HOSE, HNX và UPCOM, cập nhật trong phiên.",
+    trangThai: "1.525 mã",
+    href: "/bang-gia",
+  },
+  {
+    ten: "Tài sản số",
+    moTa: "Bitcoin, Ethereum và top 30 tài sản mã hoá theo vốn hoá.",
+    trangThai: "30 tài sản",
+    href: "/tai-san-so",
+  },
+  {
+    ten: "Kim loại quý",
+    moTa: "Vàng miếng, vàng nhẫn của PNJ, Bảo Tín Mạnh Hải, Phú Quý và vàng thế giới.",
+    trangThai: "Vàng SJC, nhẫn trơn",
+    href: "/kim-loai-quy",
+  },
+  {
+    ten: "Hàng hoá",
+    moTa: "Dầu, cà phê, kim loại công nghiệp và nông sản quốc tế.",
+    trangThai: "Sắp có",
+    href: null,
+  },
 ];
 
 export default function TrangChu() {
@@ -50,16 +70,28 @@ export default function TrangChu() {
             Finlo gom dữ liệu của nhiều thị trường về một chỗ để bạn so sánh và ra quyết định nhanh hơn.
           </p>
           <div className="mt-8 grid border-t border-l border-vien sm:grid-cols-2 lg:grid-cols-4">
-            {LOP_TAI_SAN.map((lop, i) => (
-              <div key={lop.ten} className="border-r border-b border-vien bg-nen p-5">
-                <p className="nhan-muc">Lớp {i + 1}</p>
-                <h3 className="mt-2 text-[15px] font-semibold">{lop.ten}</h3>
-                <p className="mt-1 text-chu-phu">{lop.moTa}</p>
-                <p className={`mt-4 font-medium ${lop.trangThai === "Sắp có" ? "text-dung" : "text-nhan"}`}>
-                  {lop.trangThai}
-                </p>
-              </div>
-            ))}
+            {LOP_TAI_SAN.map((lop, i) => {
+              const noiDung = (
+                <>
+                  <p className="nhan-muc">Lớp {i + 1}</p>
+                  <h3 className="mt-2 text-[15px] font-semibold">{lop.ten}</h3>
+                  <p className="mt-1 text-chu-phu">{lop.moTa}</p>
+                  <p className={`mt-4 font-medium ${lop.href ? "text-nhan" : "text-dung"}`}>
+                    {lop.trangThai}
+                    {lop.href && " →"}
+                  </p>
+                </>
+              );
+              return lop.href ? (
+                <Link key={lop.ten} href={lop.href} className="border-r border-b border-vien bg-nen p-5 hover:bg-nen-phu">
+                  {noiDung}
+                </Link>
+              ) : (
+                <div key={lop.ten} className="border-r border-b border-vien bg-nen p-5">
+                  {noiDung}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -81,7 +113,14 @@ export default function TrangChu() {
 // Phần số liệu: tải lúc có người truy cập (đã cache ~1 phút), không tải lúc build
 async function ThiTruong() {
   await connection();
-  const [bangGia, chiSo, tienSo] = await Promise.all([layBangGia(), layChiSo(), layTienSo()]);
+  const [bangGia, chiSo, tienSoKq, vangKq] = await Promise.all([
+    layBangGia(),
+    layChiSo(),
+    // Tiền số và vàng là phần phụ: lỗi thì chỉ ẩn nhóm đó trên dải giá
+    layTienSo().catch(() => null),
+    layBangVang().catch(() => null),
+  ]);
+  const tienSo = tienSoKq ?? [];
   const ds = bangGia.coPhieu;
 
   // Chỉ xét mã có thanh khoản đáng kể để danh sách tăng/giảm không toàn mã ít giao dịch
@@ -111,11 +150,27 @@ async function ThiTruong() {
     },
     {
       ten: "Tài sản số",
-      moTa: `${tienSo.length} tài sản`,
-      href: "/",
+      moTa: "Top 30",
+      href: "/tai-san-so",
       muc: tienSo.map((ts) => ({ ten: ts.ma, gia: usd(ts.gia), phanTram: ts.phanTram })),
     },
-  ];
+    {
+      ten: "Kim loại quý",
+      moTa: `${vangKq?.thuongHieu.length ?? 0} thương hiệu`,
+      href: "/kim-loai-quy",
+      // Giá bán vàng miếng 1 lượng, đổi sang triệu đồng; % so với phiên trước từ lịch sử
+      muc: (vangKq?.lichSu ?? []).map((d) => {
+        const n = d.diem.length;
+        const cuoi = d.diem[n - 1]?.value ?? 0;
+        const truoc = d.diem[n - 2]?.value ?? cuoi;
+        return {
+          ten: d.ma === "the-gioi" ? "Vàng TG" : `SJC ${d.ten}`,
+          gia: (cuoi / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 }),
+          phanTram: truoc ? ((cuoi - truoc) / truoc) * 100 : 0,
+        };
+      }),
+    },
+  ].filter((n) => n.muc.length > 0);
 
   return (
     <>

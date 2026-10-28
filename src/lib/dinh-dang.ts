@@ -13,6 +13,19 @@ export const diem = (x: number) => so2.format(x);
 
 export const usd = (x: number) => so0.format(x);
 
+// Giá tiền số: đồng giá thấp cần nhiều chữ số thập phân hơn (0,0786 thay vì 0)
+export const giaUsd = (x: number) =>
+  x >= 1000 ? so0.format(x) : x >= 1 ? so2.format(x) : so(6).format(x);
+
+export const vnd = (x: number) => so0.format(x);
+
+// Vốn hoá tiền số theo USD: 1,62 nghìn tỷ / 98,36 tỷ / 450 triệu
+export function usdGon(x: number) {
+  if (x >= 1e12) return `${so2.format(x / 1e12)} nghìn tỷ`;
+  if (x >= 1e9) return `${so2.format(x / 1e9)} tỷ`;
+  return `${so0.format(x / 1e6)} triệu`;
+}
+
 export const phanTram = (x: number) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${so2.format(Math.abs(x))}%`;
 
 export const thayDoi = (x: number) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${so2.format(Math.abs(x))}`;

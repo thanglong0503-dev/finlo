@@ -7,9 +7,16 @@ import { cacheLife } from "next/cache";
 const BASE = "https://data.mofi.vn";
 
 async function layJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(20000) });
-  if (!res.ok) throw new Error(`Mofi ${path}: HTTP ${res.status}`);
-  return res.json() as Promise<T>;
+  // Thử lại 1 lần khi lỗi mạng (kết nối tới Mofi đôi khi bị rớt)
+  for (let lan = 1; ; lan++) {
+    try {
+      const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) throw new Error(`Mofi ${path}: HTTP ${res.status}`);
+      return (await res.json()) as T;
+    } catch (e) {
+      if (lan >= 2) throw e;
+    }
+  }
 }
 
 // ---- Kiểu dữ liệu thô từ Mofi ----
@@ -86,7 +93,34 @@ export type HoSo = {
   ngayGiaoDichDau: string | null;
 };
 
-export type TienSo = { ma: string; ten: string; gia: number; phanTram: number };
+export type Diem = { time: number; value: number };
+
+export type TienSo = { ma: string; ten: string; gia: number; phanTram: number; lichSu: Diem[] };
+
+export type TienSoTop = { hang: number; ma: string; ten: string; gia: number; vonHoa: number; thiPhan: number };
+
+export type BangTienSo = { capNhat: string; tongVonHoa: number; ds: TienSoTop[] };
+
+export type GiaVang = { mua: number | null; ban: number };
+
+export type ThuongHieuVang = {
+  ma: string;
+  ten: string;
+  tenDayDu: string;
+  nguon: string;
+  capNhat: string | null;
+  gia: Record<string, GiaVang>;
+  ghiChu: string | null;
+};
+
+export type BangVang = {
+  capNhat: string;
+  sanPham: { ma: string; ten: string; tuoi: string }[];
+  thuongHieu: ThuongHieuVang[];
+  theGioi: { usdOz: number; tyGia: number; vndLuong: number; capNhat: string };
+  // Giá bán vàng miếng 1 lượng theo ngày, mỗi đường là một thương hiệu
+  lichSu: { ma: string; ten: string; diem: { time: string; value: number }[] }[];
+};
 
 export type Nen = { time: number; open: number; high: number; low: number; close: number; volume: number };
 
@@ -169,7 +203,13 @@ export async function layTienSo(): Promise<TienSo[]> {
     TIEN_SO.map(async ({ ma, ten }) => {
       const d = await layJson<NenTho>(`crypto/d/${ma}-usd.json`);
       const n = d.c.length;
-      return { ma, ten, gia: d.c[n - 1], phanTram: ((d.c[n - 1] - d.c[n - 2]) / d.c[n - 2]) * 100 };
+      return {
+        ma,
+        ten,
+        gia: d.c[n - 1],
+        phanTram: ((d.c[n - 1] - d.c[n - 2]) / d.c[n - 2]) * 100,
+        lichSu: d.t.map((time, i) => ({ time, value: d.c[i] })),
+      };
     }),
   );
 }
@@ -186,4 +226,95 @@ export async function layNen(ma: string): Promise<Nen[]> {
     close: d.c[i],
     volume: d.v[i],
   }));
+}
+
+// ---- Tài sản số: xếp hạng theo vốn hoá (nguồn CoinGecko qua Mofi) ----
+
+type VonHoaTho = {
+  keoLuc: string;
+  ma: Record<string, { id: string; gia: number; vonHoa: number; hang: number | null }[]>;
+};
+
+// "binancecoin" -> "Binancecoin", "usd-coin" -> "Usd Coin"
+const tenTuId = (id: string) => id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+export async function layBangTienSo(soLuong = 30): Promise<BangTienSo> {
+  "use cache";
+  cacheLife("minutes");
+  const data = await layJson<VonHoaTho>("crypto/von-hoa/moi-nhat.json");
+  // Mỗi ký hiệu có thể trùng nhiều đồng; lấy đồng đầu tiên có thứ hạng
+  const coHang = Object.entries(data.ma)
+    .map(([ma, ds]) => ({ ma, ...ds[0] }))
+    .filter((x): x is typeof x & { hang: number } => x.hang != null)
+    .sort((a, b) => a.hang - b.hang);
+  const tongVonHoa = coHang.reduce((s, x) => s + x.vonHoa, 0);
+  return {
+    capNhat: data.keoLuc,
+    tongVonHoa,
+    ds: coHang.slice(0, soLuong).map((x) => ({
+      hang: x.hang,
+      ma: x.ma,
+      ten: tenTuId(x.id),
+      gia: x.gia,
+      vonHoa: x.vonHoa,
+      thiPhan: (x.vonHoa / tongVonHoa) * 100,
+    })),
+  };
+}
+
+// ---- Kim loại quý ----
+
+type VangMoiNhatTho = {
+  keoLuc: string;
+  sanPham: { ma: string; ten: string; tuoi: string }[];
+  thuongHieu: {
+    ma: string;
+    ten: string;
+    tenDayDu: string;
+    nguon: { ten: string; url: string; capNhat: string | null };
+    gia: Record<string, { mua: number | null; ban: number }>;
+    ghiChu: string | null;
+  }[];
+  theGioi: { usdOz: number; tyGia: number; vndLuong: number; capNhat: string };
+};
+
+type VangLichSuTho = { ngay: string[]; gia: Record<string, Record<string, (number | null)[]>> };
+
+export async function layBangVang(): Promise<BangVang> {
+  "use cache";
+  cacheLife("minutes");
+  const [moi, lichSu] = await Promise.all([
+    layJson<VangMoiNhatTho>("vang/moi-nhat.json"),
+    layJson<VangLichSuTho>("vang/lich-su.json"),
+  ]);
+
+  // Bỏ thương hiệu không đọc được giá lượt này (gia rỗng)
+  const thuongHieu = moi.thuongHieu
+    .filter((th) => Object.keys(th.gia).length > 0)
+    .map((th) => ({
+      ma: th.ma,
+      ten: th.ten,
+      tenDayDu: th.tenDayDu,
+      nguon: th.nguon.url,
+      capNhat: th.nguon.capNhat,
+      gia: th.gia,
+      ghiChu: th.ghiChu,
+    }));
+
+  const tenTheoMa = new Map(moi.thuongHieu.map((th) => [th.ma, th.ten]));
+  const duong = Object.entries(lichSu.gia)
+    .filter(([, sp]) => sp["mieng-luong"])
+    .map(([ma, sp]) => ({
+      ma,
+      ten: ma === "the-gioi" ? "Thế giới (quy đổi)" : (tenTheoMa.get(ma) ?? ma),
+      diem: sp["mieng-luong"].flatMap((v, i) => (v == null ? [] : [{ time: lichSu.ngay[i], value: v }])),
+    }));
+
+  return {
+    capNhat: moi.keoLuc,
+    sanPham: moi.sanPham,
+    thuongHieu,
+    theGioi: moi.theGioi,
+    lichSu: duong,
+  };
 }
