@@ -37,3 +37,17 @@ export function BangMo({ dong = 10 }: { dong?: number }) {
     </div>
   );
 }
+
+// Trang chỉ số: thanh chọn chỉ số, tiêu đề, biểu đồ và khung hiệu suất
+export function KhungChoChiSo() {
+  return (
+    <>
+      <KhoiMo className="mt-4 h-14" />
+      <KhoiMo className="mt-6 h-16 w-64" />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_280px]">
+        <KhoiMo className="h-[470px]" />
+        <KhoiMo className="h-[470px]" />
+      </div>
+    </>
+  );
+}

@@ -372,3 +372,130 @@ export async function layBaoCao(ma: string): Promise<BaoCao | null> {
     })),
   };
 }
+
+// ---- Lãi suất tiết kiệm các ngân hàng ----
+
+export type BangLaiSuat = {
+  capNhat: string;
+  coSo: string;
+  kyHan: { ma: string; ngan: string }[];
+  nganHang: {
+    ma: string;
+    ten: string;
+    khoi: string;
+    maCk: string | null;
+    ls: Record<string, number>;
+    nguon: string;
+    ngayDoi: string | null;
+  }[];
+};
+
+type LaiSuatTho = {
+  keoLuc: string;
+  coSo: string;
+  kyHan: { ma: string; ngan: string }[];
+  nganHang: {
+    ma: string;
+    ten: string;
+    khoi: string;
+    maCk: string | null;
+    ls: Record<string, number>;
+    nguon: { url: string };
+    ngayDoi: string | null;
+  }[];
+};
+
+export async function layLaiSuat(): Promise<BangLaiSuat> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<LaiSuatTho>("lai-suat/moi-nhat.json");
+  return {
+    capNhat: tho.keoLuc,
+    coSo: tho.coSo,
+    kyHan: tho.kyHan.map((k) => ({ ma: k.ma, ngan: k.ngan })),
+    nganHang: tho.nganHang.map((b) => ({
+      ma: b.ma,
+      ten: b.ten,
+      khoi: b.khoi,
+      maCk: b.maCk,
+      ls: b.ls,
+      nguon: b.nguon.url,
+      ngayDoi: b.ngayDoi,
+    })),
+  };
+}
+
+// ---- Chuỗi vĩ mô (World Bank, IMF, Cục Thống kê, NHNN… qua Mofi) ----
+
+export type ChuoiViMo = {
+  ma: string;
+  ten: string;
+  donVi: string;
+  tanSuat: "nam" | "quy" | "thang" | "ngay";
+  nguon: string;
+  ky: string[];
+  gt: (number | null)[];
+};
+
+type ChuoiViMoTho = Omit<ChuoiViMo, "nguon"> & { nguon: { ten: string } };
+
+export async function layViMo(ma: string): Promise<ChuoiViMo | null> {
+  "use cache";
+  cacheLife("hours");
+  try {
+    const tho = await layJson<ChuoiViMoTho>(`vi-mo/${encodeURIComponent(ma)}.json`);
+    return { ...tho, nguon: tho.nguon?.ten ?? "" };
+  } catch {
+    return null;
+  }
+}
+
+// ---- Chỉ số: nến ngày của một chỉ số và P/E toàn thị trường ----
+
+export async function layNenChiSo(ma: string): Promise<{ ten: string; nen: Nen[] } | null> {
+  "use cache";
+  cacheLife("minutes");
+  const data = await layJson<ChiSoTho>("tong-hop/chi-so.json");
+  const cs = data.indices[ma];
+  if (!cs) return null;
+  // Điểm lưu nhân 1000, giữ nguyên để dùng chung biểu đồ nến với cổ phiếu (biểu đồ chia 1000 khi hiển thị)
+  return {
+    ten: cs.name,
+    nen: cs.t.map((time, i) => ({ time, open: cs.o[i], high: cs.h[i], low: cs.l[i], close: cs.c[i], volume: cs.v[i] })),
+  };
+}
+
+export type PeThiTruong = { ngay: string[]; pe: number[]; vnindex: number[]; trungVi: number | null };
+
+export async function layPeThiTruong(): Promise<PeThiTruong> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<{ meta: { trungViCaChuoi?: number }; ngay: string[]; pe: number[]; vnindex: number[] }>(
+    "tong-hop/pe-thi-truong.json",
+  );
+  return { ngay: tho.ngay, pe: tho.pe, vnindex: tho.vnindex, trungVi: tho.meta.trungViCaChuoi ?? null };
+}
+
+// ---- Ngành theo phân loại của Mofi (rổ ngành định giá cùng một thước) ----
+
+export type DuLieuNganh = {
+  ten: Record<string, string>; // khoá ngành -> tên
+  maNganh: Record<string, string>; // mã cổ phiếu -> khoá ngành
+  pe: Record<string, number>; // khoá ngành -> P/E trung vị
+};
+
+export async function layNganh(): Promise<DuLieuNganh> {
+  "use cache";
+  cacheLife("hours");
+  const [n, pe] = await Promise.all([
+    layJson<{ meta: { tenRo: Record<string, string> }; ma: Record<string, { nganh: string | null }> }>(
+      "tong-hop/nganh-mofi.json",
+    ),
+    layJson<{ ma: Record<string, { ro: string; tv: number }> }>("tong-hop/pe-nganh.json"),
+  ]);
+  const maNganh: Record<string, string> = {};
+  for (const [ma, v] of Object.entries(n.ma)) if (v.nganh && n.meta.tenRo[v.nganh]) maNganh[ma] = v.nganh;
+  const peNganh: Record<string, number> = {};
+  for (const v of Object.values(pe.ma)) if (v.ro && peNganh[v.ro] == null) peNganh[v.ro] = v.tv;
+  return { ten: n.meta.tenRo, maNganh, pe: peNganh };
+}

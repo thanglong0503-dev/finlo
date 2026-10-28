@@ -17,13 +17,23 @@ import {
   vonHoa,
 } from "@/lib/dinh-dang";
 import { TaiChinh } from "@/components/TaiChinh";
-import { layBangGia, layBaoCao, layHoSo, layNen } from "@/lib/mofi";
+import { layBangGia, layBaoCao, layHoSo, layNen, layNganh } from "@/lib/mofi";
 
 // Báo cáo tài chính tải riêng để biểu đồ giá hiện ra trước; mã không có báo cáo thì ẩn phần này
-async function PhanTaiChinh({ ma, gia, soCoPhieu }: { ma: string; gia: number; soCoPhieu: number | null }) {
+async function PhanTaiChinh({
+  ma,
+  gia,
+  soCoPhieu,
+  peNganh,
+}: {
+  ma: string;
+  gia: number;
+  soCoPhieu: number | null;
+  peNganh: number | null;
+}) {
   const bc = await layBaoCao(ma);
   if (!bc || bc.quy.length === 0) return null;
-  return <TaiChinh bc={bc} gia={gia} soCoPhieu={soCoPhieu} />;
+  return <TaiChinh bc={bc} gia={gia} soCoPhieu={soCoPhieu} peNganh={peNganh} />;
 }
 
 export async function generateMetadata({ params }: PageProps<"/co-phieu/[ma]">): Promise<Metadata> {
@@ -64,7 +74,11 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   const cp = bangGia.coPhieu.find((c) => c.ma === ma);
   if (!cp) notFound();
 
-  const [nen, hoSo] = await Promise.all([layNen(ma), layHoSo(ma)]);
+  const [nen, hoSo, nganh] = await Promise.all([layNen(ma), layHoSo(ma), layNganh().catch(() => null)]);
+  // Ngành theo phân loại của Mofi (đầy đủ hơn nhãn ngành của Sở), kèm P/E trung vị ngành để so sánh
+  const khoaNganh = nganh?.maNganh[ma];
+  const tenNganh = khoaNganh ? nganh?.ten[khoaNganh] : cp.nganh;
+  const peNganh = khoaNganh ? (nganh?.pe[khoaNganh] ?? null) : null;
   const n = nen.length;
   // Đỉnh/đáy 52 tuần (khoảng 250 phiên)
   const namQua = nen.slice(Math.max(0, n - 250));
@@ -90,7 +104,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   const doanhNghiep = hoSo
     ? [
         { nhan: "Sàn", giaTri: cp.san },
-        { nhan: "Ngành", giaTri: cp.nganh ?? "—" },
+        { nhan: "Ngành", giaTri: tenNganh ?? "—" },
         { nhan: "Vốn điều lệ", giaTri: hoSo.vonDieuLe ? tyDong(hoSo.vonDieuLe) : "—" },
         { nhan: "CP lưu hành", giaTri: hoSo.soCoPhieu ? soNguyen(hoSo.soCoPhieu) : "—" },
         {
@@ -113,7 +127,14 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-b border-vien pb-5">
         <div>
           <p className="nhan-muc">
-            {cp.san} · {cp.nganh ?? "Cổ phiếu"}
+            {cp.san} ·{" "}
+            {khoaNganh ? (
+              <Link href={`/nganh/${khoaNganh}`} className="hover:underline">
+                {tenNganh}
+              </Link>
+            ) : (
+              (tenNganh ?? "Cổ phiếu")
+            )}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-[-0.03em]">{cp.ma}</h1>
           <p className="mt-1 text-[15px] text-chu-phu">{cp.ten}</p>
@@ -151,7 +172,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
       </div>
 
       <Suspense fallback={<BangMo dong={8} />}>
-        <PhanTaiChinh ma={cp.ma} gia={cp.gia} soCoPhieu={hoSo?.soCoPhieu ?? null} />
+        <PhanTaiChinh ma={cp.ma} gia={cp.gia} soCoPhieu={hoSo?.soCoPhieu ?? null} peNganh={peNganh} />
       </Suspense>
 
       {hoSo && (

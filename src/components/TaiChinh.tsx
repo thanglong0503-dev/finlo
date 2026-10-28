@@ -7,12 +7,27 @@ const so = (x: number, chuSo = 2) => x.toLocaleString("vi-VN", { maximumFraction
 const tyDong = (trieu: number) => Math.round(trieu / 1000).toLocaleString("vi-VN");
 
 // Phần "Tài chính" trong trang phân tích mã: thẻ chỉ số, biểu đồ doanh thu/lợi nhuận, bảng báo cáo
-export function TaiChinh({ bc, gia, soCoPhieu }: { bc: BaoCao; gia: number; soCoPhieu: number | null }) {
+export function TaiChinh({
+  bc,
+  gia,
+  soCoPhieu,
+  peNganh = null,
+}: {
+  bc: BaoCao;
+  gia: number;
+  soCoPhieu: number | null;
+  peNganh?: number | null;
+}) {
   const cs = tinhChiSo(bc, gia, soCoPhieu);
   const nganHang = bc.loai === "ngan_hang";
 
-  const the: { nhan: string; giaTri: string; giaiThich: string; mau?: number | null }[] = [
-    { nhan: "P/E", giaTri: cs.pe != null ? so(cs.pe) : "—", giaiThich: "Giá / lợi nhuận mỗi cổ phiếu 4 quý gần nhất" },
+  const the: { nhan: string; giaTri: string; giaiThich: string; mau?: number | null; phu?: string }[] = [
+    {
+      nhan: "P/E",
+      giaTri: cs.pe != null ? so(cs.pe) : "—",
+      giaiThich: "Giá / lợi nhuận mỗi cổ phiếu 4 quý gần nhất",
+      phu: peNganh != null ? `Ngành: ${so(peNganh)}` : undefined,
+    },
     { nhan: "P/B", giaTri: cs.pb != null ? so(cs.pb) : "—", giaiThich: "Giá / giá trị sổ sách mỗi cổ phiếu" },
     {
       nhan: "EPS (4 quý)",
@@ -90,6 +105,7 @@ export function TaiChinh({ bc, gia, soCoPhieu }: { bc: BaoCao; gia: number; soCo
             >
               {t.giaTri}
             </dd>
+            {t.phu && <dd className="text-[11px] text-chu-phu tabular-nums">{t.phu}</dd>}
           </div>
         ))}
       </dl>

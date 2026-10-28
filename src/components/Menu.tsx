@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MENU } from "@/lib/menu";
 
+// "/chi-so" sáng cả khi đang ở "/chi-so/VN30"; trang chủ chỉ sáng đúng "/"
 const dangMo = (pathname: string, href: string) =>
-  href === "/" ? pathname === "/" : href.startsWith("/co-phieu") ? pathname.startsWith("/co-phieu") : pathname === href;
+  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 
 // Menu trên thanh đen: mục đang mở có chữ trắng và vạch xanh bên dưới
 export function Menu({ diDong = false }: { diDong?: boolean }) {

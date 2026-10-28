@@ -219,8 +219,9 @@ async function ThiTruong() {
         <div className="mt-6 grid grid-cols-2 border-t border-l border-vien md:grid-cols-5">
           {chiSo.map((cs, i) => (
             // VN-INDEX nổi bật với vạch xanh phía trên và nền xanh nhạt
-            <div
+            <Link
               key={cs.ma}
+              href={cs.ma === "VNINDEX" ? "/chi-so" : `/chi-so/${cs.ma}`}
               className={`border-r border-b border-vien p-4 shadow-[inset_0_2px_0_0_var(--nhan)] ${
                 i === 0 ? "bg-nhan-nhat" : "shadow-none hover:shadow-[inset_0_2px_0_0_var(--nhan)]"
               }`}
@@ -234,7 +235,7 @@ async function ThiTruong() {
                 <DuongNho diem={cs.lichSu} tang={cs.lichSu[cs.lichSu.length - 1] >= cs.lichSu[0]} />
               </div>
               <p className="mt-1 text-[11px] text-chu-phu">3 tháng</p>
-            </div>
+            </Link>
           ))}
         </div>
 
