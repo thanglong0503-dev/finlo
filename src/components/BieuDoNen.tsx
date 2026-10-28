@@ -93,7 +93,7 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
           <button
             key={k.nhan}
             onClick={() => setKhoang(k.ngay)}
-            className={`h-8 px-3 font-medium ${khoang === k.ngay ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
+            className={`h-8 px-3 font-medium ${khoang === k.ngay ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"}`}
           >
             {k.nhan}
           </button>

@@ -100,7 +100,10 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         </div>
 
         <div className="border border-vien">
-          <h2 className="border-b border-vien px-4 py-2.5 font-semibold">Giao dịch</h2>
+          <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
+            <span className="h-3.5 w-1 bg-nhan" />
+            Giao dịch
+          </h2>
           <dl>
             {giaoDich.map((ct) => (
               <div key={ct.nhan} className="flex justify-between border-b border-vien px-4 py-2 last:border-b-0">

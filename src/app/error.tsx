@@ -15,7 +15,7 @@ export default function Loi({ error, retry }: { error: unknown; retry: () => voi
       <p className="mt-2 text-chu-phu">Nguồn dữ liệu đang phản hồi chậm. Vui lòng thử lại sau ít giây.</p>
       <button
         onClick={() => retry()}
-        className="mt-6 h-10 bg-chu px-6 text-sm font-semibold text-nen hover:opacity-90"
+        className="mt-6 h-10 bg-nhan px-6 text-sm font-semibold text-white hover:brightness-110"
       >
         Thử lại
       </button>

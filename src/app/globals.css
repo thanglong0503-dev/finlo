@@ -2,25 +2,37 @@
 
 :root {
   --nen: #ffffff;
-  --nen-phu: #f6f6f6;
-  --chu: #1f1f1f;
-  --chu-phu: #707070;
-  --vien: #e3e3e3;
-  --nhan: #0f7b3e;
-  --tang: #1a8a2e;
+  --nen-phu: #f5f7f6;
+  --chu: #121614;
+  --chu-phu: #6b7570;
+  --vien: #e2e7e4;
+  /* Xanh lá thương hiệu Finlo */
+  --nhan: #0e9f55;
+  --nhan-sang: #19c26b;
+  --nhan-nhat: #e9f7ef;
+  /* Thanh đen: header, dải giá, footer — giống nhau ở cả hai chế độ */
+  --toi: #0b0f0d;
+  --toi-phu: #141a17;
+  --chu-toi: #e9efeb;
+  --chu-toi-phu: #8a968f;
+  --vien-toi: #1f2723;
+  --tang: #12a150;
   --giam: #d6204f;
   --dung: #b7791f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --nen: #0e0f11;
-    --nen-phu: #16181b;
-    --chu: #ececec;
-    --chu-phu: #8a8f98;
-    --vien: #26292e;
-    --nhan: #3fb950;
-    --tang: #3fb950;
+    --nen: #0d1110;
+    --nen-phu: #131917;
+    --chu: #e9efeb;
+    --chu-phu: #8a968f;
+    --vien: #222b27;
+    --nhan: #19c26b;
+    --nhan-nhat: #0f2a1d;
+    --toi: #070a09;
+    --toi-phu: #0f1412;
+    --tang: #2fd07a;
     --giam: #f0506e;
     --dung: #e3b341;
   }
@@ -33,6 +45,13 @@
   --color-chu-phu: var(--chu-phu);
   --color-vien: var(--vien);
   --color-nhan: var(--nhan);
+  --color-nhan-sang: var(--nhan-sang);
+  --color-nhan-nhat: var(--nhan-nhat);
+  --color-toi: var(--toi);
+  --color-toi-phu: var(--toi-phu);
+  --color-chu-toi: var(--chu-toi);
+  --color-chu-toi-phu: var(--chu-toi-phu);
+  --color-vien-toi: var(--vien-toi);
   --color-tang: var(--tang);
   --color-giam: var(--giam);
   --color-dung: var(--dung);
@@ -45,12 +64,46 @@ body {
   font-size: 13px;
 }
 
-/* Nhãn mục nhỏ phía trên tiêu đề */
+/* Nhãn mục nhỏ phía trên tiêu đề, kèm vạch xanh thương hiệu */
 .nhan-muc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--chu-phu);
+  color: var(--nhan);
+}
+
+.nhan-muc::before {
+  content: "";
+  width: 14px;
+  height: 2px;
+  background: var(--nhan);
+}
+
+/* Lưới mờ phía sau phần mở đầu trang chủ */
+.luoi-nen {
+  background-image:
+    linear-gradient(var(--vien) 1px, transparent 1px), linear-gradient(90deg, var(--vien) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
+}
+
+/* Chấm xanh nhấp nháy báo dữ liệu đang cập nhật */
+@keyframes nhap-nhay {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.cham-song {
+  animation: nhap-nhay 1.6s ease-in-out infinite;
 }
 
 /* Dải giá chạy ngang: nội dung được nhân đôi nên dịch -50% là liền mạch */
@@ -72,7 +125,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dai-gia {
+  .dai-gia,
+  .cham-song {
     animation: none;
   }
 }

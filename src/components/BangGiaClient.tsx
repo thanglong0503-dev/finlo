@@ -78,7 +78,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
             setSoDong(MOI_TRANG);
           }}
           placeholder="Tìm mã hoặc tên công ty…"
-          className="h-9 w-full border border-vien bg-nen px-3 outline-none focus:border-chu sm:w-72"
+          className="h-9 w-full border border-vien bg-nen px-3 outline-none focus:border-nhan sm:w-72"
         />
         <div className="flex border border-vien">
           {SAN.map((s) => (
@@ -88,7 +88,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
                 setSan(s);
                 setSoDong(MOI_TRANG);
               }}
-              className={`h-9 px-4 font-medium ${san === s ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
+              className={`h-9 px-4 font-medium ${san === s ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"}`}
             >
               {s}
             </button>
@@ -96,7 +96,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
         </div>
       </div>
 
-      <div className="mt-5 overflow-x-auto border border-vien">
+      <div className="mt-5 overflow-x-auto border border-vien border-t-2 border-t-nhan">
         <table className="w-full">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>
@@ -115,7 +115,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
           </thead>
           <tbody className="divide-y divide-vien">
             {ds.slice(0, soDong).map((cp) => (
-              <tr key={cp.ma} className="hover:bg-nen-phu">
+              <tr key={cp.ma} className="hover:bg-nhan-nhat">
                 <td className="max-w-[12rem] px-3 py-2 sm:max-w-xs">
                   <Link href={`/co-phieu/${cp.ma}`} className="block">
                     <span className="font-semibold">{cp.ma}</span>
@@ -146,7 +146,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
         <div className="mt-5 text-center">
           <button
             onClick={() => setSoDong((n) => n + MOI_TRANG)}
-            className="h-9 border border-vien px-5 font-medium hover:bg-nen-phu"
+            className="h-9 border border-nhan px-5 font-medium text-nhan hover:bg-nhan hover:text-white"
           >
             Xem thêm {Math.min(MOI_TRANG, ds.length - soDong)} mã
           </button>

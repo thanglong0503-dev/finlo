@@ -98,7 +98,7 @@ async function NoiDung() {
             </thead>
             <tbody>
               {bang.ds.map((x) => (
-                <tr key={x.ma} className="border-t border-vien hover:bg-nen-phu">
+                <tr key={x.ma} className="border-t border-vien hover:bg-nhan-nhat">
                   <td className="px-3 py-2 text-chu-phu tabular-nums">{x.hang}</td>
                   <td className="px-3 py-2">
                     <span className="font-semibold">{x.ma}</span>

@@ -36,25 +36,35 @@ const LOP_TAI_SAN = [
 export default function TrangChu() {
   return (
     <>
-      <section className="mx-auto max-w-6xl px-4 pt-16 pb-12 text-center sm:pt-20">
-        <h1 className="text-[34px] leading-tight font-bold tracking-[-0.035em] sm:text-5xl">
-          Nền tảng theo dõi
-          <br />
-          đa lớp tài sản
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-[15px] text-chu-phu">
-          Chứng khoán, hàng hoá, tài sản số và kim loại quý trên cùng một màn hình.
-        </p>
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <Link href="/bang-gia" className="flex h-10 items-center bg-chu px-6 text-sm font-semibold text-nen hover:opacity-90">
-            Xem bảng giá
-          </Link>
-          <Link
-            href="/co-phieu/VNM"
-            className="flex h-10 items-center border border-vien px-6 text-sm font-semibold hover:bg-nen-phu"
-          >
-            Phân tích cổ phiếu
-          </Link>
+      <section className="relative overflow-hidden">
+        <div className="luoi-nen absolute inset-0" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-4 pt-16 pb-14 text-center sm:pt-20">
+          <p className="inline-flex items-center gap-2 border border-nhan/30 bg-nhan-nhat px-3 py-1 text-[12px] font-medium text-nhan">
+            <span className="cham-song h-1.5 w-1.5 bg-nhan" />
+            Dữ liệu thị trường cập nhật mỗi phút
+          </p>
+          <h1 className="mt-5 text-[34px] leading-tight font-bold tracking-[-0.035em] sm:text-5xl">
+            Nền tảng theo dõi
+            <br />
+            <span className="text-nhan">đa lớp tài sản</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-md text-[15px] text-chu-phu">
+            Chứng khoán, hàng hoá, tài sản số và kim loại quý trên cùng một màn hình.
+          </p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/bang-gia"
+              className="flex h-10 items-center bg-nhan px-6 text-sm font-semibold text-white hover:brightness-110"
+            >
+              Xem bảng giá
+            </Link>
+            <Link
+              href="/co-phieu/VNM"
+              className="flex h-10 items-center border border-chu bg-nen px-6 text-sm font-semibold hover:bg-chu hover:text-nen"
+            >
+              Phân tích cổ phiếu
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -73,8 +83,8 @@ export default function TrangChu() {
             {LOP_TAI_SAN.map((lop, i) => {
               const noiDung = (
                 <>
-                  <p className="nhan-muc">Lớp {i + 1}</p>
-                  <h3 className="mt-2 text-[15px] font-semibold">{lop.ten}</h3>
+                  <p className="text-3xl font-bold tracking-tight text-nhan tabular-nums">0{i + 1}</p>
+                  <h3 className="mt-3 text-[15px] font-semibold">{lop.ten}</h3>
                   <p className="mt-1 text-chu-phu">{lop.moTa}</p>
                   <p className={`mt-4 font-medium ${lop.href ? "text-nhan" : "text-dung"}`}>
                     {lop.trangThai}
@@ -83,7 +93,11 @@ export default function TrangChu() {
                 </>
               );
               return lop.href ? (
-                <Link key={lop.ten} href={lop.href} className="border-r border-b border-vien bg-nen p-5 hover:bg-nen-phu">
+                <Link
+                  key={lop.ten}
+                  href={lop.href}
+                  className="border-r border-b border-vien bg-nen p-5 shadow-[inset_0_0_0_0_var(--nhan)] transition-shadow hover:shadow-[inset_0_-3px_0_0_var(--nhan)]"
+                >
                   {noiDung}
                 </Link>
               ) : (
@@ -96,15 +110,21 @@ export default function TrangChu() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 text-center">
-        <h2 className="text-2xl font-bold tracking-[-0.03em]">Theo dõi thị trường ngay hôm nay.</h2>
-        <p className="mt-2 text-chu-phu">Miễn phí, không cần đăng ký.</p>
-        <Link
-          href="/bang-gia"
-          className="mt-6 inline-flex h-10 items-center bg-chu px-6 text-sm font-semibold text-nen hover:opacity-90"
-        >
-          Mở bảng giá
-        </Link>
+      <section className="border-t-2 border-nhan bg-toi text-chu-toi">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-4 py-14">
+          <div>
+            <h2 className="text-2xl font-bold tracking-[-0.03em]">
+              Theo dõi thị trường <span className="text-nhan-sang">ngay hôm nay.</span>
+            </h2>
+            <p className="mt-2 text-chu-toi-phu">Miễn phí, không cần đăng ký.</p>
+          </div>
+          <Link
+            href="/bang-gia"
+            className="inline-flex h-10 items-center bg-nhan-sang px-6 text-sm font-semibold text-toi hover:brightness-110"
+          >
+            Mở bảng giá
+          </Link>
+        </div>
       </section>
     </>
   );
@@ -181,8 +201,14 @@ async function ThiTruong() {
         <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Thị trường hôm nay</h2>
 
         <div className="mt-6 grid grid-cols-2 border-t border-l border-vien md:grid-cols-5">
-          {chiSo.map((cs) => (
-            <div key={cs.ma} className="border-r border-b border-vien p-4">
+          {chiSo.map((cs, i) => (
+            // VN-INDEX nổi bật với vạch xanh phía trên và nền xanh nhạt
+            <div
+              key={cs.ma}
+              className={`border-r border-b border-vien p-4 shadow-[inset_0_2px_0_0_var(--nhan)] ${
+                i === 0 ? "bg-nhan-nhat" : "shadow-none hover:shadow-[inset_0_2px_0_0_var(--nhan)]"
+              }`}
+            >
               <p className="font-semibold">{cs.ten}</p>
               <p className="mt-1 text-lg font-semibold tabular-nums">{diem(cs.diem)}</p>
               <p className={`tabular-nums ${mauTangGiam(cs.phanTram)}`}>
@@ -240,7 +266,10 @@ async function ThiTruong() {
 function BangTop({ tieuDe, ds, cotPhu }: { tieuDe: string; ds: CoPhieu[]; cotPhu: "vonHoa" | "giaTri" }) {
   return (
     <div className="border border-vien">
-      <h3 className="border-b border-vien px-3 py-2.5 font-semibold">{tieuDe}</h3>
+      <h3 className="flex items-center gap-2 border-b border-vien px-3 py-2.5 font-semibold">
+        <span className="h-3.5 w-1 bg-nhan" />
+        {tieuDe}
+      </h3>
       <table className="w-full">
         <thead>
           <tr className="text-[10px] font-bold tracking-wider text-chu-phu uppercase">
@@ -252,7 +281,7 @@ function BangTop({ tieuDe, ds, cotPhu }: { tieuDe: string; ds: CoPhieu[]; cotPhu
         </thead>
         <tbody>
           {ds.map((cp) => (
-            <tr key={cp.ma} className="border-t border-vien hover:bg-nen-phu">
+            <tr key={cp.ma} className="border-t border-vien hover:bg-nhan-nhat">
               <td className="px-3 py-2">
                 <Link href={`/co-phieu/${cp.ma}`} className="font-semibold hover:underline">
                   {cp.ma}
