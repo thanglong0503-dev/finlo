@@ -32,7 +32,18 @@ type GiaMoiNhatTho = {
 };
 
 type CongTyTho = {
-  companies: { sym: string; exch: string; name: string; sectorVi: string | null }[];
+  companies: {
+    sym: string;
+    exch: string;
+    name: string;
+    sectorVi: string | null;
+    address: string | null;
+    web: string | null;
+    director: string | null;
+    charterCapital: number | null;
+    outstandingShares: number | null;
+    firstTradeDate: string | null;
+  }[];
 };
 
 type ChiSoTho = {
@@ -52,11 +63,28 @@ export type CoPhieu = {
   phanTram: number;
   khoiLuong: number;
   giaTri: number;
+  vonHoa: number | null;
 };
 
 export type BangGia = { capNhat: string; coPhieu: CoPhieu[] };
 
-export type ChiSo = { ma: string; ten: string; diem: number; thayDoi: number; phanTram: number };
+export type ChiSo = {
+  ma: string;
+  ten: string;
+  diem: number;
+  thayDoi: number;
+  phanTram: number;
+  lichSu: number[]; // điểm đóng cửa ~3 tháng gần nhất, để vẽ đường nhỏ
+};
+
+export type HoSo = {
+  diaChi: string | null;
+  website: string | null;
+  lanhDao: string | null;
+  vonDieuLe: number | null;
+  soCoPhieu: number | null;
+  ngayGiaoDichDau: string | null;
+};
 
 export type TienSo = { ma: string; ten: string; gia: number; phanTram: number };
 
@@ -85,6 +113,7 @@ export async function layBangGia(): Promise<BangGia> {
       phanTram: g.changePct,
       khoiLuong: g.volume,
       giaTri: g.value,
+      vonHoa: ct?.outstandingShares ? ct.outstandingShares * g.close : null,
     };
   });
   coPhieu.sort((a, b) => b.giaTri - a.giaTri);
@@ -101,8 +130,31 @@ export async function layChiSo(): Promise<ChiSo[]> {
     const n = cs.c.length;
     const diem = cs.c[n - 1] / 1000;
     const truoc = cs.c[n - 2] / 1000;
-    return { ma, ten: cs.name, diem, thayDoi: diem - truoc, phanTram: ((diem - truoc) / truoc) * 100 };
+    return {
+      ma,
+      ten: cs.name,
+      diem,
+      thayDoi: diem - truoc,
+      phanTram: ((diem - truoc) / truoc) * 100,
+      lichSu: cs.c.slice(-60).map((c) => c / 1000),
+    };
   });
+}
+
+export async function layHoSo(ma: string): Promise<HoSo | null> {
+  "use cache";
+  cacheLife("days");
+  const { companies } = await layJson<CongTyTho>("tong-hop/cong-ty.json");
+  const ct = companies.find((c) => c.sym === ma);
+  if (!ct) return null;
+  return {
+    diaChi: ct.address,
+    website: ct.web,
+    lanhDao: ct.director,
+    vonDieuLe: ct.charterCapital,
+    soCoPhieu: ct.outstandingShares,
+    ngayGiaoDichDau: ct.firstTradeDate,
+  };
 }
 
 const TIEN_SO = [

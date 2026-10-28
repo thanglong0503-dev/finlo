@@ -88,12 +88,12 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
 
   return (
     <div>
-      <div className="mb-3 flex gap-1">
+      <div className="mb-3 flex w-fit border border-vien">
         {KHOANG.map((k) => (
           <button
             key={k.nhan}
             onClick={() => setKhoang(k.ngay)}
-            className={`rounded-full px-3 py-1 text-sm ${khoang === k.ngay ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
+            className={`h-8 px-3 font-medium ${khoang === k.ngay ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
           >
             {k.nhan}
           </button>

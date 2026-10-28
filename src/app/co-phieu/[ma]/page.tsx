@@ -3,8 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BieuDoNen } from "@/components/BieuDoNen";
-import { giaNghin, khoiLuong, mauTangGiam, phanTram, thayDoi, tyDong } from "@/lib/dinh-dang";
-import { layBangGia, layNen } from "@/lib/mofi";
+import {
+  giaNghin,
+  khoiLuong,
+  mauTangGiam,
+  phanTram,
+  soNguyen,
+  thayDoi,
+  tyDong,
+  vonHoa,
+} from "@/lib/dinh-dang";
+import { layBangGia, layHoSo, layNen } from "@/lib/mofi";
 
 export async function generateMetadata({ params }: PageProps<"/co-phieu/[ma]">): Promise<Metadata> {
   const { ma } = await params;
@@ -26,38 +35,56 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   const cp = bangGia.coPhieu.find((c) => c.ma === ma);
   if (!cp) notFound();
 
-  const nen = await layNen(ma);
+  const [nen, hoSo] = await Promise.all([layNen(ma), layHoSo(ma)]);
   const n = nen.length;
   // Đỉnh/đáy 52 tuần (khoảng 250 phiên)
   const namQua = nen.slice(Math.max(0, n - 250));
   const dinh = Math.max(...namQua.map((x) => x.high));
   const day = Math.min(...namQua.map((x) => x.low));
   const homNay = nen[n - 1];
+  const truoc = nen[n - 2];
+  const klTb20 = nen.slice(-20).reduce((s, x) => s + x.volume, 0) / Math.min(20, n);
 
-  const chiTiet = [
+  const giaoDich = [
+    { nhan: "Tham chiếu", giaTri: truoc ? giaNghin(truoc.close) : "—" },
     { nhan: "Mở cửa", giaTri: giaNghin(homNay.open) },
     { nhan: "Cao nhất", giaTri: giaNghin(homNay.high) },
     { nhan: "Thấp nhất", giaTri: giaNghin(homNay.low) },
     { nhan: "Khối lượng", giaTri: khoiLuong(cp.khoiLuong) },
+    { nhan: "KL TB 20 phiên", giaTri: khoiLuong(klTb20) },
     { nhan: "Giá trị GD", giaTri: tyDong(cp.giaTri) },
+    { nhan: "Vốn hoá", giaTri: vonHoa(cp.vonHoa) },
     { nhan: "Đỉnh 52 tuần", giaTri: giaNghin(dinh) },
     { nhan: "Đáy 52 tuần", giaTri: giaNghin(day) },
-    { nhan: "Ngành", giaTri: cp.nganh ?? "—" },
   ];
+
+  const doanhNghiep = hoSo
+    ? [
+        { nhan: "Sàn", giaTri: cp.san },
+        { nhan: "Ngành", giaTri: cp.nganh ?? "—" },
+        { nhan: "Vốn điều lệ", giaTri: hoSo.vonDieuLe ? tyDong(hoSo.vonDieuLe) : "—" },
+        { nhan: "CP lưu hành", giaTri: hoSo.soCoPhieu ? soNguyen(hoSo.soCoPhieu) : "—" },
+        {
+          nhan: "Ngày GD đầu tiên",
+          giaTri: hoSo.ngayGiaoDichDau ? new Date(hoSo.ngayGiaoDichDau).toLocaleDateString("vi-VN") : "—",
+        },
+        { nhan: "Lãnh đạo", giaTri: hoSo.lanhDao ?? "—" },
+      ].filter((ct) => ct.giaTri !== "—")
+    : [];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <Link href="/bang-gia" className="text-sm text-chu-phu hover:text-chu">
+      <Link href="/bang-gia" className="text-chu-phu hover:text-chu">
         ← Bảng giá
       </Link>
 
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-b border-vien pb-5">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-extrabold">{cp.ma}</h1>
-            <span className="rounded-full border border-vien px-2 py-0.5 text-xs text-chu-phu">{cp.san}</span>
-          </div>
-          <p className="mt-1 text-chu-phu">{cp.ten}</p>
+          <p className="nhan-muc">
+            {cp.san} · {cp.nganh ?? "Cổ phiếu"}
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-[-0.03em]">{cp.ma}</h1>
+          <p className="mt-1 text-[15px] text-chu-phu">{cp.ten}</p>
         </div>
         <div className="text-right">
           <div className={`text-3xl font-bold tabular-nums ${mauTangGiam(cp.phanTram)}`}>{giaNghin(cp.gia)}</div>
@@ -67,20 +94,58 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-vien p-4">
-        <BieuDoNen nen={nen} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
+        <div className="border border-vien p-4">
+          <BieuDoNen nen={nen} />
+        </div>
+
+        <div className="border border-vien">
+          <h2 className="border-b border-vien px-4 py-2.5 font-semibold">Giao dịch</h2>
+          <dl>
+            {giaoDich.map((ct) => (
+              <div key={ct.nhan} className="flex justify-between border-b border-vien px-4 py-2 last:border-b-0">
+                <dt className="text-chu-phu">{ct.nhan}</dt>
+                <dd className="font-medium tabular-nums">{ct.giaTri}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
 
-      <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-vien bg-vien sm:grid-cols-4">
-        {chiTiet.map((ct) => (
-          <div key={ct.nhan} className="bg-nen p-4">
-            <dt className="text-xs text-chu-phu">{ct.nhan}</dt>
-            <dd className="mt-1 truncate font-semibold tabular-nums">{ct.giaTri}</dd>
-          </div>
-        ))}
-      </dl>
+      {hoSo && (
+        <section className="mt-8">
+          <p className="nhan-muc">Hồ sơ doanh nghiệp</p>
+          <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">{cp.ten}</h2>
+          <dl className="mt-4 grid border-t border-l border-vien sm:grid-cols-2 lg:grid-cols-3">
+            {doanhNghiep.map((ct) => (
+              <div key={ct.nhan} className="border-r border-b border-vien p-4">
+                <dt className="text-chu-phu">{ct.nhan}</dt>
+                <dd className="mt-1 font-semibold tabular-nums">{ct.giaTri}</dd>
+              </div>
+            ))}
+          </dl>
+          {(hoSo.diaChi || hoSo.website) && (
+            <p className="mt-3 text-chu-phu">
+              {hoSo.diaChi}
+              {hoSo.website && (
+                <>
+                  {" · "}
+                  <a
+                    href={hoSo.website.startsWith("http") ? hoSo.website : `https://${hoSo.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-nhan hover:underline"
+                  >
+                    {hoSo.website}
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+        </section>
+      )}
 
-      <p className="mt-4 text-xs text-chu-phu">Giá theo nghìn đồng, đã điều chỉnh chia tách và cổ tức.</p>
+      <p className="mt-6 text-[11px] text-chu-phu">Giá theo nghìn đồng, đã điều chỉnh chia tách và cổ tức.</p>
     </div>
   );
 }

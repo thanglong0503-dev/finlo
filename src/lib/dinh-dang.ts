@@ -26,5 +26,10 @@ export function khoiLuong(x: number) {
 export const tyDong = (vnd: number) =>
   vnd >= 1e9 ? `${so0.format(vnd / 1e9)} tỷ` : `${so0.format(vnd / 1e6)} tr`;
 
+// Vốn hoá: từ 1.000 tỷ trở lên viết gọn "1,86 nghìn tỷ"
+export const vonHoa = (vnd: number | null) =>
+  vnd == null ? "—" : vnd >= 1e12 ? `${so2.format(vnd / 1e12)} nghìn tỷ` : tyDong(vnd);
+
+export const soNguyen = (x: number) => so0.format(x);
 // Lớp màu theo chiều tăng/giảm
 export const mauTangGiam = (x: number) => (x > 0 ? "text-tang" : x < 0 ? "text-giam" : "text-dung");

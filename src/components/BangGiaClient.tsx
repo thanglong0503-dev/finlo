@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { giaNghin, khoiLuong, mauTangGiam, phanTram, thayDoi, tyDong } from "@/lib/dinh-dang";
+import { giaNghin, khoiLuong, mauTangGiam, phanTram, thayDoi, tyDong, vonHoa } from "@/lib/dinh-dang";
 import type { BangGia, CoPhieu } from "@/lib/mofi";
 
 const SAN = ["Tất cả", "HOSE", "HNX", "UPCOM"] as const;
 const MOI_TRANG = 50;
 
-type Cot = "ma" | "gia" | "phanTram" | "khoiLuong" | "giaTri";
+type Cot = "ma" | "gia" | "phanTram" | "khoiLuong" | "giaTri" | "vonHoa";
 
 const COT: { khoa: Cot; nhan: string; canPhai: boolean; anTrenDiDong?: boolean }[] = [
   { khoa: "ma", nhan: "Mã", canPhai: false },
@@ -16,6 +16,7 @@ const COT: { khoa: Cot; nhan: string; canPhai: boolean; anTrenDiDong?: boolean }
   { khoa: "phanTram", nhan: "+/- %", canPhai: true },
   { khoa: "khoiLuong", nhan: "Khối lượng", canPhai: true, anTrenDiDong: true },
   { khoa: "giaTri", nhan: "Giá trị", canPhai: true },
+  { khoa: "vonHoa", nhan: "Vốn hoá", canPhai: true, anTrenDiDong: true },
 ];
 
 export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
@@ -49,7 +50,8 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
     return loc.sort((a, b) => {
       const x = a[sapXep.cot as keyof CoPhieu];
       const y = b[sapXep.cot as keyof CoPhieu];
-      return (typeof x === "string" ? x.localeCompare(y as string) : (x as number) - (y as number)) * huong;
+      if (typeof x === "string") return x.localeCompare(y as string) * huong;
+      return (((x as number | null) ?? 0) - ((y as number | null) ?? 0)) * huong;
     });
   }, [duLieu, tuKhoa, san, sapXep]);
 
@@ -76,9 +78,9 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
             setSoDong(MOI_TRANG);
           }}
           placeholder="Tìm mã hoặc tên công ty…"
-          className="w-full rounded-full border border-vien bg-nen px-4 py-2 text-sm outline-none focus:border-nhan sm:w-72"
+          className="h-9 w-full border border-vien bg-nen px-3 outline-none focus:border-chu sm:w-72"
         />
-        <div className="flex gap-1 rounded-full border border-vien p-1">
+        <div className="flex border border-vien">
           {SAN.map((s) => (
             <button
               key={s}
@@ -86,7 +88,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
                 setSan(s);
                 setSoDong(MOI_TRANG);
               }}
-              className={`rounded-full px-3 py-1 text-sm ${san === s ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
+              className={`h-9 px-4 font-medium ${san === s ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
             >
               {s}
             </button>
@@ -94,14 +96,14 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
         </div>
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-vien">
-        <table className="w-full text-sm">
-          <thead className="bg-nen-phu text-chu-phu">
+      <div className="mt-5 overflow-x-auto border border-vien">
+        <table className="w-full">
+          <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>
               {COT.map((c) => (
                 <th
                   key={c.khoa}
-                  className={`px-4 py-3 font-medium ${c.canPhai ? "text-right" : "text-left"} ${c.anTrenDiDong ? "hidden sm:table-cell" : ""}`}
+                  className={`px-3 py-2 ${c.canPhai ? "text-right" : "text-left"} ${c.anTrenDiDong ? "hidden sm:table-cell" : ""}`}
                 >
                   <button onClick={() => doiSapXep(c.khoa)} className="hover:text-chu">
                     {c.nhan}
@@ -114,22 +116,25 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
           <tbody className="divide-y divide-vien">
             {ds.slice(0, soDong).map((cp) => (
               <tr key={cp.ma} className="hover:bg-nen-phu">
-                <td className="max-w-[12rem] px-4 py-2.5 sm:max-w-xs">
+                <td className="max-w-[12rem] px-3 py-2 sm:max-w-xs">
                   <Link href={`/co-phieu/${cp.ma}`} className="block">
                     <span className="font-semibold">{cp.ma}</span>
-                    <span className="ml-2 text-xs text-chu-phu">{cp.san}</span>
-                    <div className="truncate text-xs text-chu-phu">{cp.ten}</div>
+                    <span className="ml-2 text-[11px] text-chu-phu">{cp.san}</span>
+                    <div className="truncate text-[11px] text-chu-phu">{cp.ten}</div>
                   </Link>
                 </td>
-                <td className={`px-4 py-2.5 text-right font-medium tabular-nums ${mauTangGiam(cp.phanTram)}`}>
+                <td className={`px-3 py-2 text-right font-semibold tabular-nums ${mauTangGiam(cp.phanTram)}`}>
                   {giaNghin(cp.gia)}
                 </td>
-                <td className={`px-4 py-2.5 text-right tabular-nums ${mauTangGiam(cp.phanTram)}`}>
+                <td className={`px-3 py-2 text-right tabular-nums ${mauTangGiam(cp.phanTram)}`}>
                   <div>{phanTram(cp.phanTram)}</div>
-                  <div className="text-xs opacity-80">{thayDoi(cp.thayDoi / 1000)}</div>
+                  <div className="text-[11px] opacity-80">{thayDoi(cp.thayDoi / 1000)}</div>
                 </td>
-                <td className="hidden px-4 py-2.5 text-right tabular-nums sm:table-cell">{khoiLuong(cp.khoiLuong)}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums">{tyDong(cp.giaTri)}</td>
+                <td className="hidden px-3 py-2 text-right tabular-nums sm:table-cell">{khoiLuong(cp.khoiLuong)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{tyDong(cp.giaTri)}</td>
+                <td className="hidden px-3 py-2 text-right text-chu-phu tabular-nums sm:table-cell">
+                  {vonHoa(cp.vonHoa)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -141,7 +146,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
         <div className="mt-5 text-center">
           <button
             onClick={() => setSoDong((n) => n + MOI_TRANG)}
-            className="rounded-full border border-vien px-5 py-2 text-sm hover:bg-nen-phu"
+            className="h-9 border border-vien px-5 font-medium hover:bg-nen-phu"
           >
             Xem thêm {Math.min(MOI_TRANG, ds.length - soDong)} mã
           </button>

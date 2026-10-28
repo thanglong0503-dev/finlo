@@ -2,27 +2,27 @@
 
 :root {
   --nen: #ffffff;
-  --nen-phu: #f6f7f9;
-  --chu: #0f172a;
-  --chu-phu: #64748b;
-  --vien: #e5e7eb;
-  --nhan: #16a34a;
-  --tang: #16a34a;
-  --giam: #dc2626;
-  --dung: #ca8a04;
+  --nen-phu: #f6f6f6;
+  --chu: #1f1f1f;
+  --chu-phu: #707070;
+  --vien: #e3e3e3;
+  --nhan: #0f7b3e;
+  --tang: #1a8a2e;
+  --giam: #d6204f;
+  --dung: #b7791f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --nen: #0b1120;
-    --nen-phu: #111a2e;
-    --chu: #f1f5f9;
-    --chu-phu: #94a3b8;
-    --vien: #1e293b;
-    --nhan: #22c55e;
-    --tang: #22c55e;
-    --giam: #f87171;
-    --dung: #facc15;
+    --nen: #0e0f11;
+    --nen-phu: #16181b;
+    --chu: #ececec;
+    --chu-phu: #8a8f98;
+    --vien: #26292e;
+    --nhan: #3fb950;
+    --tang: #3fb950;
+    --giam: #f0506e;
+    --dung: #e3b341;
   }
 }
 
@@ -42,6 +42,15 @@
 body {
   background: var(--nen);
   color: var(--chu);
+  font-size: 13px;
+}
+
+/* Nhãn mục nhỏ phía trên tiêu đề */
+.nhan-muc {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--chu-phu);
 }
 
 /* Dải giá chạy ngang: nội dung được nhân đôi nên dịch -50% là liền mạch */
@@ -55,7 +64,7 @@ body {
 }
 
 .dai-gia {
-  animation: chay-ngang 60s linear infinite;
+  animation: chay-ngang 80s linear infinite;
 }
 
 .dai-gia:hover {
