@@ -30,11 +30,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <header className="sticky top-0 z-20 bg-toi text-chu-toi">
-          <nav className="mx-auto flex h-[60px] max-w-6xl items-center gap-8 px-4">
+          <nav className="mx-auto flex h-[60px] max-w-7xl items-center gap-8 px-4">
             <Link href="/" aria-label="Finlo — trang chủ">
               <Logo nenDen={false} />
             </Link>
-            <div className="hidden h-full items-center gap-6 lg:flex">
+            <div className="hidden h-full items-center gap-5 xl:flex">
               <Suspense fallback={<MenuTinh />}>
                 <Menu />
               </Suspense>
@@ -44,8 +44,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <NutGiaoDien />
             </div>
           </nav>
-          {/* Màn hình nhỏ hơn 1024px: menu cuộn ngang dưới thanh logo */}
-          <div className="flex gap-5 overflow-x-auto border-t border-vien-toi px-4 lg:hidden">
+          {/* Màn hình nhỏ hơn 1280px: menu cuộn ngang dưới thanh logo */}
+          <div className="flex gap-5 overflow-x-auto border-t border-vien-toi px-4 xl:hidden">
             <Suspense fallback={<MenuTinh diDong />}>
               <Menu diDong />
             </Suspense>

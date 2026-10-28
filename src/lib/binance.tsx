@@ -14,6 +14,25 @@ export type TrangThai = "dang-ket-noi" | "truc-tiep" | "tam-dung" | "mat-ket-noi
 
 export const capGiaoDich = (ma: string) => `${ma}USDT`;
 
+// Cặp còn giao dịch không (cặp đã huỷ niêm yết như XMRUSDT vẫn còn lịch sử nến cũ). Nhớ kết quả trong phiên.
+const daKiem = new Map<string, Promise<boolean>>();
+export function kiemTraCap(ma: string): Promise<boolean> {
+  const cap = capGiaoDich(ma);
+  if (!daKiem.has(cap)) {
+    daKiem.set(
+      cap,
+      fetch(`${REST}/exchangeInfo?symbol=${cap}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((info: { symbols?: { status: string }[] } | null) => info?.symbols?.[0]?.status === "TRADING")
+        .catch(() => {
+          daKiem.delete(cap); // lỗi mạng: lần sau hỏi lại
+          return false;
+        }),
+    );
+  }
+  return daKiem.get(cap)!;
+}
+
 // Mở một kết nối gộp nhiều luồng. Tự nối lại khi rớt mạng (chờ tăng dần 2s → 15s),
 // tự ngắt khi người xem chuyển sang tab khác để tiết kiệm dữ liệu và pin, quay lại thì nối lại.
 export function useLuongBinance(luong: string[], nhanTin: (luong: string, duLieu: unknown) => void): TrangThai {

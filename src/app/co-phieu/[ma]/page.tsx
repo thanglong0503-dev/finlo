@@ -121,7 +121,15 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         <Link href="/bang-gia" className="text-chu-phu hover:text-chu">
           ← Bảng giá
         </Link>
-        <TimMa className="w-full sm:w-96" />
+        <div className="flex w-full items-center gap-3 sm:w-auto">
+          <Link
+            href={`/bieu-do?loai=ck&ma=${cp.ma}`}
+            className="flex h-9 shrink-0 items-center bg-nhan px-3 font-semibold text-white hover:brightness-110"
+          >
+            Biểu đồ kỹ thuật
+          </Link>
+          <TimMa className="min-w-0 flex-1 sm:w-80" />
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-b border-vien pb-5">
