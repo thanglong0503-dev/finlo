@@ -2,7 +2,9 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { DaiGia, type NhomGia } from "@/components/DaiGia";
+import { DanhMucTheoDoi } from "@/components/DanhMucTheoDoi";
 import { DuongNho } from "@/components/DuongNho";
+import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { diem, giaNghin, mauTangGiam, phanTram, thayDoi, tyDong, usd, vonHoa } from "@/lib/dinh-dang";
 import { layBangGia, layBangVang, layChiSo, layTienSo, type CoPhieu } from "@/lib/mofi";
 
@@ -68,9 +70,23 @@ export default function TrangChu() {
         </div>
       </section>
 
-      <Suspense fallback={<div className="h-[42rem] border-y border-vien" />}>
+      <Suspense
+        fallback={
+          <>
+            <div className="h-[42px] border-y-2 border-nhan bg-toi" />
+            <div className="mx-auto max-w-6xl px-4 py-12">
+              <p className="nhan-muc">Tổng quan</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Thị trường hôm nay</h2>
+              <LuoiMo so={5} cot="md:grid-cols-5" />
+              <BangMo dong={8} />
+            </div>
+          </>
+        }
+      >
         <ThiTruong />
       </Suspense>
+
+      <DanhMucTheoDoi />
 
       <section className="border-t border-vien bg-nen-phu">
         <div className="mx-auto max-w-6xl px-4 py-16">

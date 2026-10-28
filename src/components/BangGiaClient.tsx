@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { giaNghin, khoiLuong, mauTangGiam, phanTram, thayDoi, tyDong, vonHoa } from "@/lib/dinh-dang";
 import type { BangGia, CoPhieu } from "@/lib/mofi";
+import { useTheoDoi } from "@/lib/theo-doi";
+import { NutTheoDoi } from "@/components/NutTheoDoi";
 
-const SAN = ["Tất cả", "HOSE", "HNX", "UPCOM"] as const;
+const SAN = ["Tất cả", "HOSE", "HNX", "UPCOM", "Theo dõi"] as const;
 const MOI_TRANG = 50;
 
 type Cot = "ma" | "gia" | "phanTram" | "khoiLuong" | "giaTri" | "vonHoa";
@@ -25,6 +27,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
   const [san, setSan] = useState<(typeof SAN)[number]>("Tất cả");
   const [sapXep, setSapXep] = useState<{ cot: Cot; giam: boolean }>({ cot: "giaTri", giam: true });
   const [soDong, setSoDong] = useState(MOI_TRANG);
+  const theoDoi = useTheoDoi();
 
   // Làm mới giá mỗi 60 giây
   useEffect(() => {
@@ -43,7 +46,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
     const tk = tuKhoa.trim().toUpperCase();
     const loc = duLieu.coPhieu.filter(
       (cp) =>
-        (san === "Tất cả" || cp.san === san) &&
+        (san === "Tất cả" || (san === "Theo dõi" ? theoDoi.includes(cp.ma) : cp.san === san)) &&
         (!tk || cp.ma.includes(tk) || cp.ten.toUpperCase().includes(tk)),
     );
     const huong = sapXep.giam ? -1 : 1;
@@ -53,7 +56,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
       if (typeof x === "string") return x.localeCompare(y as string) * huong;
       return (((x as number | null) ?? 0) - ((y as number | null) ?? 0)) * huong;
     });
-  }, [duLieu, tuKhoa, san, sapXep]);
+  }, [duLieu, tuKhoa, san, sapXep, theoDoi]);
 
   const doiSapXep = (cot: Cot) =>
     setSapXep((s) => (s.cot === cot ? { cot, giam: !s.giam } : { cot, giam: cot !== "ma" }));
@@ -80,7 +83,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
           placeholder="Tìm mã hoặc tên công ty…"
           className="h-9 w-full border border-vien bg-nen px-3 outline-none focus:border-nhan sm:w-72"
         />
-        <div className="flex border border-vien">
+        <div className="flex max-w-full overflow-x-auto border border-vien">
           {SAN.map((s) => (
             <button
               key={s}
@@ -88,9 +91,10 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
                 setSan(s);
                 setSoDong(MOI_TRANG);
               }}
-              className={`h-9 px-4 font-medium ${san === s ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"}`}
+              className={`h-9 px-4 font-medium whitespace-nowrap ${san === s ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"}`}
             >
               {s}
+              {s === "Theo dõi" && theoDoi.length > 0 && ` (${theoDoi.length})`}
             </button>
           ))}
         </div>
@@ -100,6 +104,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
         <table className="w-full">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>
+              <th className="w-8 py-2 pl-2" aria-label="Theo dõi" />
               {COT.map((c) => (
                 <th
                   key={c.khoa}
@@ -116,6 +121,9 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
           <tbody className="divide-y divide-vien">
             {ds.slice(0, soDong).map((cp) => (
               <tr key={cp.ma} className="hover:bg-nhan-nhat">
+                <td className="py-2 pl-2">
+                  <NutTheoDoi ma={cp.ma} gon />
+                </td>
                 <td className="max-w-[12rem] px-3 py-2 sm:max-w-xs">
                   <Link href={`/co-phieu/${cp.ma}`} className="block">
                     <span className="font-semibold">{cp.ma}</span>
@@ -139,7 +147,13 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
             ))}
           </tbody>
         </table>
-        {ds.length === 0 && <p className="p-8 text-center text-chu-phu">Không tìm thấy mã phù hợp.</p>}
+        {ds.length === 0 && (
+          <p className="p-8 text-center text-chu-phu">
+            {san === "Theo dõi" && theoDoi.length === 0
+              ? "Chưa theo dõi mã nào. Bấm ngôi sao ở đầu mỗi dòng để thêm vào danh mục."
+              : "Không tìm thấy mã phù hợp."}
+          </p>
+        )}
       </div>
 
       {soDong < ds.length && (

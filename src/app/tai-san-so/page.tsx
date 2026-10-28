@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { BieuDoTienSo } from "@/components/BieuDoTienSo";
+import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { giaUsd, mauTangGiam, phanTram, usdGon, vnd } from "@/lib/dinh-dang";
 import { layBangTienSo, layBangVang, layTienSo } from "@/lib/mofi";
 
@@ -13,7 +14,15 @@ export default function TrangTaiSanSo() {
       <p className="nhan-muc">Tài sản số</p>
       <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Giá tài sản số</h1>
       <p className="mt-1 text-chu-phu">Giá tham khảo theo USD, quy đổi VND theo tỷ giá bán của Vietcombank.</p>
-      <Suspense fallback={<p className="mt-6 text-chu-phu">Đang tải dữ liệu…</p>}>
+      <Suspense
+        fallback={
+          <>
+            <LuoiMo so={2} cao="h-44" cot="md:grid-cols-2" />
+            <LuoiMo so={4} />
+            <BangMo dong={10} />
+          </>
+        }
+      >
         <NoiDung />
       </Suspense>
     </div>

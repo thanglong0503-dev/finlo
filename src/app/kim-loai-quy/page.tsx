@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { BieuDoVang } from "@/components/BieuDoVang";
+import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { usd, vnd } from "@/lib/dinh-dang";
 import { layBangVang, type ThuongHieuVang } from "@/lib/mofi";
 
@@ -24,7 +25,15 @@ export default function TrangKimLoaiQuy() {
       <p className="nhan-muc">Kim loại quý</p>
       <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Giá vàng hôm nay</h1>
       <p className="mt-1 text-chu-phu">Giá mua vào và bán ra theo bảng giá công khai của từng thương hiệu, đơn vị đồng.</p>
-      <Suspense fallback={<p className="mt-6 text-chu-phu">Đang tải dữ liệu…</p>}>
+      <Suspense
+        fallback={
+          <>
+            <LuoiMo so={4} />
+            <BangMo dong={3} />
+            <BangMo dong={2} />
+          </>
+        }
+      >
         <NoiDung />
       </Suspense>
     </div>

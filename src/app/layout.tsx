@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Suspense } from "react";
 import { Menu, MenuTinh } from "@/components/Menu";
+import { NutGiaoDien } from "@/components/NutGiaoDien";
+import { TimMa } from "@/components/TimMa";
+import { KICH_BAN_DAU_TRANG } from "@/lib/giao-dien-dau-trang";
 import { MENU } from "@/lib/menu";
 import "./globals.css";
 
@@ -20,27 +23,29 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="vi" className={`${beVietnam.variable} h-full antialiased`}>
+    // suppressHydrationWarning: script đầu trang đặt data-theme trước khi React chạy
+    <html lang="vi" className={`${beVietnam.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: KICH_BAN_DAU_TRANG }} />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
         <header className="sticky top-0 z-20 bg-toi text-chu-toi">
           <nav className="mx-auto flex h-[60px] max-w-6xl items-center gap-8 px-4">
             <Link href="/" aria-label="Finlo — trang chủ">
               <Logo nenDen={false} />
             </Link>
-            <div className="hidden h-full items-center gap-6 sm:flex">
+            <div className="hidden h-full items-center gap-6 lg:flex">
               <Suspense fallback={<MenuTinh />}>
                 <Menu />
               </Suspense>
             </div>
-            <Link
-              href="/bang-gia"
-              className="ml-auto flex h-9 items-center bg-nhan-sang px-4 font-semibold text-toi hover:brightness-110"
-            >
-              Mở bảng giá
-            </Link>
+            <div className="ml-auto flex items-center gap-2">
+              <TimMa nenToi className="w-36 sm:w-52" />
+              <NutGiaoDien />
+            </div>
           </nav>
-          {/* Điện thoại: menu cuộn ngang dưới thanh logo */}
-          <div className="flex gap-5 overflow-x-auto border-t border-vien-toi px-4 sm:hidden">
+          {/* Màn hình nhỏ hơn 1024px: menu cuộn ngang dưới thanh logo */}
+          <div className="flex gap-5 overflow-x-auto border-t border-vien-toi px-4 lg:hidden">
             <Suspense fallback={<MenuTinh diDong />}>
               <Menu diDong />
             </Suspense>

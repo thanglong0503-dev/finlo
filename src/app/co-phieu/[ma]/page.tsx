@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BieuDoNen } from "@/components/BieuDoNen";
+import { KhoiMo } from "@/components/KhungCho";
+import { NutTheoDoi } from "@/components/NutTheoDoi";
+import { TimMa } from "@/components/TimMa";
 import {
   giaNghin,
   khoiLuong,
@@ -23,7 +26,25 @@ export async function generateMetadata({ params }: PageProps<"/co-phieu/[ma]">):
 // params chỉ có khi có request, nên phần nội dung được stream sau khung trang
 export default function TrangCoPhieu({ params }: PageProps<"/co-phieu/[ma]">) {
   return (
-    <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-8 text-chu-phu">Đang tải…</div>}>
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl px-4 py-8">
+          <KhoiMo className="h-3 w-20" />
+          <div className="mt-6 flex justify-between border-b border-vien pb-5">
+            <div>
+              <KhoiMo className="h-3 w-28" />
+              <KhoiMo className="mt-3 h-8 w-24" />
+              <KhoiMo className="mt-2 h-3 w-56" />
+            </div>
+            <KhoiMo className="h-10 w-28" />
+          </div>
+          <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
+            <KhoiMo className="h-[470px]" />
+            <KhoiMo className="h-[470px]" />
+          </div>
+        </div>
+      }
+    >
       <NoiDung params={params} />
     </Suspense>
   );
@@ -74,9 +95,12 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <Link href="/bang-gia" className="text-chu-phu hover:text-chu">
-        ← Bảng giá
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/bang-gia" className="text-chu-phu hover:text-chu">
+          ← Bảng giá
+        </Link>
+        <TimMa className="w-full sm:w-96" />
+      </div>
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-b border-vien pb-5">
         <div>
@@ -86,10 +110,13 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
           <h1 className="mt-1 text-3xl font-bold tracking-[-0.03em]">{cp.ma}</h1>
           <p className="mt-1 text-[15px] text-chu-phu">{cp.ten}</p>
         </div>
-        <div className="text-right">
-          <div className={`text-3xl font-bold tabular-nums ${mauTangGiam(cp.phanTram)}`}>{giaNghin(cp.gia)}</div>
-          <div className={`tabular-nums ${mauTangGiam(cp.phanTram)}`}>
-            {thayDoi(cp.thayDoi / 1000)} ({phanTram(cp.phanTram)})
+        <div className="flex items-end gap-5">
+          <NutTheoDoi ma={cp.ma} />
+          <div className="text-right">
+            <div className={`text-3xl font-bold tabular-nums ${mauTangGiam(cp.phanTram)}`}>{giaNghin(cp.gia)}</div>
+            <div className={`tabular-nums ${mauTangGiam(cp.phanTram)}`}>
+              {thayDoi(cp.thayDoi / 1000)} ({phanTram(cp.phanTram)})
+            </div>
           </div>
         </div>
       </div>

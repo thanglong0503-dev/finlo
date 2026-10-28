@@ -21,8 +21,9 @@
   --dung: #b7791f;
 }
 
+/* Giao diện tối: theo máy khi chưa chọn, hoặc khi người dùng bấm chọn "tối" (data-theme trên <html>) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --nen: #0d1110;
     --nen-phu: #131917;
     --chu: #e9efeb;
@@ -35,7 +36,24 @@
     --tang: #2fd07a;
     --giam: #f0506e;
     --dung: #e3b341;
+    color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --nen: #0d1110;
+  --nen-phu: #131917;
+  --chu: #e9efeb;
+  --chu-phu: #8a968f;
+  --vien: #222b27;
+  --nhan: #19c26b;
+  --nhan-nhat: #0f2a1d;
+  --toi: #070a09;
+  --toi-phu: #0f1412;
+  --tang: #2fd07a;
+  --giam: #f0506e;
+  --dung: #e3b341;
+  color-scheme: dark;
 }
 
 @theme inline {

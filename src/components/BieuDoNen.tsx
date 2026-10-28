@@ -9,6 +9,7 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
+import { useGiaoDien } from "@/lib/giao-dien";
 import type { Nen } from "@/lib/mofi";
 
 const KHOANG = [
@@ -26,6 +27,8 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
   const khung = useRef<HTMLDivElement>(null);
   const bieuDo = useRef<IChartApi | null>(null);
   const [khoang, setKhoang] = useState(365);
+  // Đổi sáng/tối thì vẽ lại biểu đồ với màu mới
+  const giaoDien = useGiaoDien();
 
   useEffect(() => {
     if (!khung.current) return;
@@ -70,7 +73,7 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
       chart.remove();
       bieuDo.current = null;
     };
-  }, [nen]);
+  }, [nen, giaoDien]);
 
   useEffect(() => {
     const chart = bieuDo.current;
@@ -84,7 +87,7 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
       from: (cuoi - khoang * 86400) as UTCTimestamp,
       to: cuoi as UTCTimestamp,
     });
-  }, [khoang, nen]);
+  }, [khoang, nen, giaoDien]);
 
   return (
     <div>

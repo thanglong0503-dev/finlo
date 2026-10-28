@@ -2,6 +2,7 @@
 
 import { ColorType, createChart, LineSeries, type Time } from "lightweight-charts";
 import { useEffect, useRef } from "react";
+import { useGiaoDien } from "@/lib/giao-dien";
 
 export type Duong = { ten: string; diem: { time: number | string; value: number }[] };
 
@@ -21,6 +22,8 @@ export function BieuDoDuong({
   cao?: number;
 }) {
   const khung = useRef<HTMLDivElement>(null);
+  // Đổi sáng/tối thì vẽ lại biểu đồ với màu mới
+  const giaoDien = useGiaoDien();
 
   useEffect(() => {
     if (!khung.current) return;
@@ -46,7 +49,7 @@ export function BieuDoDuong({
     });
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [duong, dinhDang]);
+  }, [duong, dinhDang, giaoDien]);
 
   return (
     <div>
