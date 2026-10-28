@@ -7,7 +7,7 @@ import { cacheLife } from "next/cache";
 const BASE = "https://data.mofi.vn";
 
 async function layJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}/${path}`);
+  const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(20000) });
   if (!res.ok) throw new Error(`Mofi ${path}: HTTP ${res.status}`);
   return res.json() as Promise<T>;
 }

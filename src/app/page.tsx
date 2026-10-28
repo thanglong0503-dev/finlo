@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { DaiGia, type MucGia } from "@/components/DaiGia";
 import { diem, giaNghin, mauTangGiam, phanTram, usd } from "@/lib/dinh-dang";
 import { layBangGia, layChiSo, layTienSo, type CoPhieu } from "@/lib/mofi";
@@ -34,21 +36,7 @@ function BangTop({ tieuDe, ds }: { tieuDe: string; ds: CoPhieu[] }) {
   );
 }
 
-export default async function TrangChu() {
-  const [bangGia, chiSo, tienSo] = await Promise.all([layBangGia(), layChiSo(), layTienSo()]);
-
-  // Chỉ xét mã có thanh khoản đáng kể để danh sách tăng/giảm không toàn mã "rác"
-  const thanhKhoan = bangGia.coPhieu.filter((cp) => cp.giaTri >= 10e9);
-  const tangManh = [...thanhKhoan].sort((a, b) => b.phanTram - a.phanTram).slice(0, 5);
-  const giamManh = [...thanhKhoan].sort((a, b) => a.phanTram - b.phanTram).slice(0, 5);
-  const soiNoi = bangGia.coPhieu.slice(0, 5);
-
-  const dai: MucGia[] = [
-    ...chiSo.map((cs) => ({ ten: cs.ten, gia: diem(cs.diem), phanTram: cs.phanTram })),
-    ...bangGia.coPhieu.slice(0, 10).map((cp) => ({ ten: cp.ma, gia: giaNghin(cp.gia), phanTram: cp.phanTram })),
-    ...tienSo.map((ts) => ({ ten: ts.ma, gia: `$${usd(ts.gia)}`, phanTram: ts.phanTram })),
-  ];
-
+export default function TrangChu() {
   return (
     <>
       <section className="mx-auto max-w-6xl px-4 pt-16 pb-12 text-center sm:pt-24">
@@ -71,21 +59,9 @@ export default async function TrangChu() {
         </div>
       </section>
 
-      <DaiGia muc={dai} />
-
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <h2 className="text-2xl font-bold">Thị trường hôm nay</h2>
-          <Link href="/bang-gia" className="text-sm text-nhan hover:underline">
-            Tất cả {bangGia.coPhieu.length.toLocaleString("vi-VN")} mã →
-          </Link>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <BangTop tieuDe="🔥 Sôi nổi nhất" ds={soiNoi} />
-          <BangTop tieuDe="▲ Tăng mạnh" ds={tangManh} />
-          <BangTop tieuDe="▼ Giảm mạnh" ds={giamManh} />
-        </div>
-      </section>
+      <Suspense fallback={<div className="h-[34rem] border-y border-vien bg-nen-phu" />}>
+        <ThiTruong />
+      </Suspense>
 
       <section className="bg-nen-phu">
         <div className="mx-auto max-w-6xl px-4 py-14">
@@ -113,6 +89,44 @@ export default async function TrangChu() {
         >
           Mở bảng giá
         </Link>
+      </section>
+    </>
+  );
+}
+
+// Dải giá và các bảng tăng/giảm: tải lúc có người truy cập (đã cache ~1 phút), không tải lúc build
+async function ThiTruong() {
+  await connection();
+  const [bangGia, chiSo, tienSo] = await Promise.all([layBangGia(), layChiSo(), layTienSo()]);
+
+  // Chỉ xét mã có thanh khoản đáng kể để danh sách tăng/giảm không toàn mã "rác"
+  const thanhKhoan = bangGia.coPhieu.filter((cp) => cp.giaTri >= 10e9);
+  const tangManh = [...thanhKhoan].sort((a, b) => b.phanTram - a.phanTram).slice(0, 5);
+  const giamManh = [...thanhKhoan].sort((a, b) => a.phanTram - b.phanTram).slice(0, 5);
+  const soiNoi = bangGia.coPhieu.slice(0, 5);
+
+  const dai: MucGia[] = [
+    ...chiSo.map((cs) => ({ ten: cs.ten, gia: diem(cs.diem), phanTram: cs.phanTram })),
+    ...bangGia.coPhieu.slice(0, 10).map((cp) => ({ ten: cp.ma, gia: giaNghin(cp.gia), phanTram: cp.phanTram })),
+    ...tienSo.map((ts) => ({ ten: ts.ma, gia: `$${usd(ts.gia)}`, phanTram: ts.phanTram })),
+  ];
+
+  return (
+    <>
+      <DaiGia muc={dai} />
+
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <h2 className="text-2xl font-bold">Thị trường hôm nay</h2>
+          <Link href="/bang-gia" className="text-sm text-nhan hover:underline">
+            Tất cả {bangGia.coPhieu.length.toLocaleString("vi-VN")} mã →
+          </Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <BangTop tieuDe="🔥 Sôi nổi nhất" ds={soiNoi} />
+          <BangTop tieuDe="▲ Tăng mạnh" ds={tangManh} />
+          <BangTop tieuDe="▼ Giảm mạnh" ds={giamManh} />
+        </div>
       </section>
     </>
   );
