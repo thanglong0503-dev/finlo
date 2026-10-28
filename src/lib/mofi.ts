@@ -318,3 +318,57 @@ export async function layBangVang(): Promise<BangVang> {
     lichSu: duong,
   };
 }
+
+// ---- Báo cáo tài chính (nguồn VNDirect qua Mofi), đơn vị triệu đồng ----
+
+export type NhomBaoCao = "kqkd" | "can_doi" | "lctt";
+
+export type MucBaoCao = {
+  ten: string;
+  nhom: NhomBaoCao;
+  cap: number; // 0: tổng, 1: mục chính, 2+: mục con
+  q: (number | null)[]; // theo thứ tự kỳ trong BaoCao.quy (cũ -> mới)
+  n: (number | null)[]; // theo thứ tự kỳ trong BaoCao.nam
+};
+
+export type BaoCao = {
+  loai: string; // "thuong" | "ngan_hang" | "chung_khoan" | ...
+  quy: string[]; // nhãn kỳ, ví dụ "Q2/2026"
+  nam: string[]; // ví dụ "2025"
+  muc: MucBaoCao[];
+};
+
+type BaoCaoTho = {
+  loai: string;
+  quy: { nam: number; q: number }[];
+  nam: { nam: number }[];
+  muc: { ten: string; nhom: NhomBaoCao; cap: number; q?: (number | null)[]; n?: (number | null)[] }[];
+};
+
+// Báo cáo chỉ đổi mỗi quý nên cache theo giờ; mã không có báo cáo (ETF, chứng quyền…) trả null
+export async function layBaoCao(ma: string): Promise<BaoCao | null> {
+  "use cache";
+  cacheLife("hours");
+  let tho: BaoCaoTho;
+  try {
+    tho = await layJson<BaoCaoTho>(`financial/bao-cao/${encodeURIComponent(ma)}.json`);
+  } catch {
+    return null;
+  }
+  const soQuy = tho.quy.length;
+  const soNam = tho.nam.length;
+  const chuan = (a: (number | null)[] | undefined, dai: number) =>
+    Array.from({ length: dai }, (_, i) => (typeof a?.[i] === "number" ? a[i] : null));
+  return {
+    loai: tho.loai,
+    quy: tho.quy.map((k) => `Q${k.q}/${k.nam}`),
+    nam: tho.nam.map((k) => String(k.nam)),
+    muc: tho.muc.map((m) => ({
+      ten: m.ten.replace(/\s+/g, " ").trim(),
+      nhom: m.nhom,
+      cap: m.cap,
+      q: chuan(m.q, soQuy),
+      n: chuan(m.n, soNam),
+    })),
+  };
+}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BieuDoNen } from "@/components/BieuDoNen";
-import { KhoiMo } from "@/components/KhungCho";
+import { BangMo, KhoiMo } from "@/components/KhungCho";
 import { NutTheoDoi } from "@/components/NutTheoDoi";
 import { TimMa } from "@/components/TimMa";
 import {
@@ -16,7 +16,15 @@ import {
   tyDong,
   vonHoa,
 } from "@/lib/dinh-dang";
-import { layBangGia, layHoSo, layNen } from "@/lib/mofi";
+import { TaiChinh } from "@/components/TaiChinh";
+import { layBangGia, layBaoCao, layHoSo, layNen } from "@/lib/mofi";
+
+// Báo cáo tài chính tải riêng để biểu đồ giá hiện ra trước; mã không có báo cáo thì ẩn phần này
+async function PhanTaiChinh({ ma, gia, soCoPhieu }: { ma: string; gia: number; soCoPhieu: number | null }) {
+  const bc = await layBaoCao(ma);
+  if (!bc || bc.quy.length === 0) return null;
+  return <TaiChinh bc={bc} gia={gia} soCoPhieu={soCoPhieu} />;
+}
 
 export async function generateMetadata({ params }: PageProps<"/co-phieu/[ma]">): Promise<Metadata> {
   const { ma } = await params;
@@ -141,6 +149,10 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
           </dl>
         </div>
       </div>
+
+      <Suspense fallback={<BangMo dong={8} />}>
+        <PhanTaiChinh ma={cp.ma} gia={cp.gia} soCoPhieu={hoSo?.soCoPhieu ?? null} />
+      </Suspense>
 
       {hoSo && (
         <section className="mt-8">
