@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+:root {
+  --nen: #ffffff;
+  --nen-phu: #f6f7f9;
+  --chu: #0f172a;
+  --chu-phu: #64748b;
+  --vien: #e5e7eb;
+  --nhan: #16a34a;
+  --tang: #16a34a;
+  --giam: #dc2626;
+  --dung: #ca8a04;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --nen: #0b1120;
+    --nen-phu: #111a2e;
+    --chu: #f1f5f9;
+    --chu-phu: #94a3b8;
+    --vien: #1e293b;
+    --nhan: #22c55e;
+    --tang: #22c55e;
+    --giam: #f87171;
+    --dung: #facc15;
+  }
+}
+
+@theme inline {
+  --color-nen: var(--nen);
+  --color-nen-phu: var(--nen-phu);
+  --color-chu: var(--chu);
+  --color-chu-phu: var(--chu-phu);
+  --color-vien: var(--vien);
+  --color-nhan: var(--nhan);
+  --color-tang: var(--tang);
+  --color-giam: var(--giam);
+  --color-dung: var(--dung);
+  --font-sans: var(--font-be-vietnam);
+}
+
+body {
+  background: var(--nen);
+  color: var(--chu);
+}
+
+/* Dải giá chạy ngang: nội dung được nhân đôi nên dịch -50% là liền mạch */
+@keyframes chay-ngang {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.dai-gia {
+  animation: chay-ngang 60s linear infinite;
+}
+
+.dai-gia:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dai-gia {
+    animation: none;
+  }
+}
