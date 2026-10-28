@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { BangTienSoTrucTiep } from "@/components/BangTienSoTrucTiep";
 import { BieuDoTienSo } from "@/components/BieuDoTienSo";
 import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { giaUsd, mauTangGiam, phanTram, usdGon, vnd } from "@/lib/dinh-dang";
@@ -61,7 +63,12 @@ async function NoiDung() {
               <div className="mt-4">
                 <BieuDoTienSo duong={[{ ten: ts.ma, diem }]} />
               </div>
-              <p className="mt-1 text-[11px] text-chu-phu">90 ngày gần nhất</p>
+              <div className="mt-1 flex justify-between text-[11px]">
+                <span className="text-chu-phu">90 ngày gần nhất</span>
+                <Link href={`/tai-san-so/${ts.ma}`} className="font-semibold text-nhan hover:underline">
+                  Sổ lệnh & biểu đồ realtime →
+                </Link>
+              </div>
             </div>
           );
         })}
@@ -93,41 +100,9 @@ async function NoiDung() {
       <section className="mt-8">
         <p className="nhan-muc">Xếp hạng</p>
         <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Top {bang.ds.length} theo vốn hoá</h2>
-        <div className="mt-4 overflow-x-auto border border-vien">
-          <table className="w-full">
-            <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
-              <tr>
-                <th className="px-3 py-2 text-left">#</th>
-                <th className="px-3 py-2 text-left">Tài sản</th>
-                <th className="px-3 py-2 text-right">Giá (USD)</th>
-                <th className="hidden px-3 py-2 text-right sm:table-cell">Giá (VND)</th>
-                <th className="px-3 py-2 text-right">Vốn hoá</th>
-                <th className="hidden px-3 py-2 text-right sm:table-cell">Thị phần</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bang.ds.map((x) => (
-                <tr key={x.ma} className="border-t border-vien hover:bg-nhan-nhat">
-                  <td className="px-3 py-2 text-chu-phu tabular-nums">{x.hang}</td>
-                  <td className="px-3 py-2">
-                    <span className="font-semibold">{x.ma}</span>
-                    <span className="ml-2 text-[11px] text-chu-phu">{x.ten}</span>
-                  </td>
-                  <td className="px-3 py-2 text-right font-medium tabular-nums">{giaUsd(x.gia)}</td>
-                  <td className="hidden px-3 py-2 text-right text-chu-phu tabular-nums sm:table-cell">
-                    {vnd(x.gia * tyGia)}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">${usdGon(x.vonHoa)}</td>
-                  <td className="hidden px-3 py-2 text-right text-chu-phu tabular-nums sm:table-cell">
-                    {x.thiPhan.toFixed(2).replace(".", ",")}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <BangTienSoTrucTiep ds={bang.ds} tyGia={tyGia} />
         <p className="mt-3 text-[11px] text-chu-phu">
-          Nguồn: CoinGecko qua Mofi. Tài sản số có biến động lớn, giá chỉ mang tính tham khảo.
+          Xếp hạng và vốn hoá: CoinGecko qua Mofi. Giá và % 24h: Binance realtime (cặp USDT). Bấm vào mã để xem sổ lệnh, biểu đồ realtime. Tài sản số có biến động lớn, giá chỉ mang tính tham khảo.
         </p>
       </section>
     </>

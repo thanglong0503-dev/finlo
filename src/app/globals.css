@@ -124,6 +124,33 @@ body {
   animation: nhap-nhay 1.6s ease-in-out infinite;
 }
 
+/* Ô giá chớp khi giá đổi: xanh khi tăng, đỏ khi giảm */
+@keyframes chop-tang {
+  from {
+    background-color: color-mix(in srgb, var(--tang) 35%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes chop-giam {
+  from {
+    background-color: color-mix(in srgb, var(--giam) 35%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.chop-tang {
+  animation: chop-tang 0.7s ease-out;
+}
+
+.chop-giam {
+  animation: chop-giam 0.7s ease-out;
+}
+
 /* Dải giá chạy ngang: nội dung được nhân đôi nên dịch -50% là liền mạch */
 @keyframes chay-ngang {
   from {
