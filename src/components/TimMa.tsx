@@ -143,7 +143,7 @@ export function TimMa({
             ketQua.map((k, i) => (
               <li key={k.href}>
                 {(i === 0 || ketQua[i - 1].loai !== k.loai) && (
-                  <p className="border-t border-vien px-3 pt-2 pb-1 text-[10px] font-bold tracking-wider text-chu-phu uppercase first:border-t-0">
+                  <p className="border-t border-vien px-3 pt-2 pb-1 text-[12px] font-medium text-chu-phu first:border-t-0">
                     {k.loai === "trang" ? "Trang" : "Mã cổ phiếu"}
                   </p>
                 )}

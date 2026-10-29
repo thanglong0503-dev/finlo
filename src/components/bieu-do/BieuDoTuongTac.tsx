@@ -201,10 +201,17 @@ export function BieuDoTuongTac({
     // Định dạng giá: cổ phiếu hiển thị nghìn đồng, tiền số theo độ lớn giá
     const giaCuoi = nenGoc[nenGoc.length - 1].close;
     const le = soLe(giaCuoi);
-    const dinhDangGia =
+    // Giá theo kiểu Việt Nam (1.234,56) cho cả nhãn và vạch chia trục; cổ phiếu hiển thị theo nghìn đồng
+    const vietGia = (p: number) =>
       nguon === "ck"
-        ? { type: "custom" as const, formatter: (p: number) => (p / 1000).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), minMove: 10 }
-        : { type: "price" as const, precision: le, minMove: 1 / 10 ** le };
+        ? (p / 1000).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : p.toLocaleString("vi-VN", { minimumFractionDigits: le, maximumFractionDigits: le });
+    const dinhDangGia = {
+      type: "custom" as const,
+      formatter: vietGia,
+      tickmarksFormatter: (ds: number[]) => ds.map(vietGia),
+      minMove: nguon === "ck" ? 10 : 1 / 10 ** le,
+    };
 
     const nen = chart.addSeries(CandlestickSeries, {
       upColor: tang,

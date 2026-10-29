@@ -90,7 +90,7 @@ export function ThongTinCoPhieu({ cp, nen, phien }: { cp: CoPhieu | null; nen: N
       </dl>
 
       <div className="px-3 py-3">
-        <p className="text-[10px] font-bold tracking-wider text-chu-phu uppercase">Khối lượng theo giá · 60 phiên</p>
+        <p className="text-[12px] font-medium text-chu-phu">Khối lượng theo giá · 60 phiên</p>
         <div className="mt-2 space-y-[3px] tabular-nums">
           {o.map((x) => {
             const coGiaHienTai = cp.gia >= x.tu && cp.gia <= x.den;

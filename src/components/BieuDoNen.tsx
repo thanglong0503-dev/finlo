@@ -45,13 +45,13 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
       grid: { vertLines: { color: mau("--vien") }, horzLines: { color: mau("--vien") } },
       rightPriceScale: { borderColor: mau("--vien") },
       timeScale: { borderColor: mau("--vien") },
-      localization: {
-        locale: "vi-VN",
-        priceFormatter: (p: number) => (p / 1000).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-      },
+      localization: { locale: "vi-VN" },
     });
 
+    // Giá theo nghìn đồng, kiểu Việt Nam (1.234,56) cho cả nhãn và vạch chia trục
+    const vietGia = (p: number) => (p / 1000).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const nenSeries = chart.addSeries(CandlestickSeries, {
+      priceFormat: { type: "custom", formatter: vietGia, tickmarksFormatter: (ds: number[]) => ds.map(vietGia), minMove: 10 },
       upColor: tang,
       downColor: giam,
       borderVisible: false,

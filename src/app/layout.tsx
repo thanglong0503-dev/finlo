@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, DM_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Suspense } from "react";
@@ -10,18 +10,10 @@ import { KICH_BAN_DAU_TRANG } from "@/lib/giao-dien-dau-trang";
 import { NHOM_MENU } from "@/lib/menu";
 import "./globals.css";
 
-const beVietnam = Be_Vietnam_Pro({
-  variable: "--font-be-vietnam",
+// Một phông cho cả chữ và số: Inter đủ dấu tiếng Việt, chữ số đều cột (tabular) cho bảng giá
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
-});
-
-// Phông đơn cách cho con số: các cột giá thẳng hàng như bảng điện.
-// DM Mono có số 0 trơn (không chấm/gạch) nên cỡ nhỏ không bị đọc nhầm thành 8.
-const dmMono = DM_Mono({
-  variable: "--font-so",
-  subsets: ["latin"],
-  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -37,7 +29,7 @@ export const viewport: Viewport = { themeColor: "#000000" };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: script đầu trang đặt data-theme trước khi React chạy
-    <html lang="vi" className={`${beVietnam.variable} ${dmMono.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="vi" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: KICH_BAN_DAU_TRANG }} />
       </head>

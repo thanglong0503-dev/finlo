@@ -255,7 +255,7 @@ export function BoLocClient({
 
       <div className="mt-2 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full">
-          <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
+          <thead className="border-b border-vien text-[12px] font-medium text-chu-phu">
             <tr>
               <th className="w-8 py-2 pl-2" aria-label="Theo dõi" />
               <th className="px-3 py-2 text-left">Mã</th>

@@ -122,7 +122,7 @@ export function DanhSachMa({
           Theo dõi
         </button>
       </div>
-      <div className="grid grid-cols-[24px_1fr_auto_64px] gap-x-1 px-2 py-1.5 text-[10px] font-bold tracking-wider text-chu-phu uppercase">
+      <div className="grid grid-cols-[24px_1fr_auto_64px] gap-x-1 px-2 py-1.5 text-[12px] font-medium text-chu-phu">
         <span />
         <span>Mã</span>
         <span className="text-right">Giá</span>

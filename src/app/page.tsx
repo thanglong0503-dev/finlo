@@ -65,7 +65,7 @@ function GioiThieu() {
       />
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pt-14 pb-16 lg:grid-cols-[1.1fr_1fr] lg:pt-20 lg:pb-24">
         <div>
-          <h1 className="text-[42px] leading-[1.04] font-bold tracking-[-0.045em] sm:text-[60px] lg:text-[68px]">
+          <h1 className="text-[40px] leading-[1.2] font-bold tracking-[-0.035em] sm:text-[56px] lg:text-[64px]">
             Mọi lớp tài sản.
             <br />
             Một màn hình.

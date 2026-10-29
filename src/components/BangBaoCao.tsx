@@ -66,7 +66,7 @@ export function BangBaoCao({ duLieu }: { duLieu: DuLieuBang }) {
 
       <div className="mt-3 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full min-w-[720px]">
-          <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
+          <thead className="border-b border-vien text-[12px] font-medium text-chu-phu">
             <tr>
               <th className="sticky left-0 bg-nen px-3 py-2 text-left">Khoản mục · tỷ đồng</th>
               {ky.map((k) => (

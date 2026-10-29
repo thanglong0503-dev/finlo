@@ -83,7 +83,7 @@ export function TinClient({ tin }: { tin: TinDoanhNghiep[] }) {
       <div className="mt-6 space-y-6">
         {theoNgay.map(([ngay, ds]) => (
           <section key={ngay}>
-            <h2 className="flex items-center gap-2 text-[12px] font-bold tracking-wider text-chu-phu uppercase">
+            <h2 className="flex items-center gap-2 text-[13px] font-semibold text-chu-phu">
               <span className="h-3 w-1 bg-nhan" />
               {ngayVN(ngay)}
             </h2>

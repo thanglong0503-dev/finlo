@@ -171,7 +171,7 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
 
       {mo && (
         <div className="absolute top-full left-2 z-30 mt-2 w-[min(420px,calc(100vw-2rem))] border border-vien bg-nen shadow-lg rounded-2xl overflow-hidden">
-          <p className="border-b border-vien px-3 py-2 text-[10px] font-bold tracking-wider text-chu-phu uppercase">
+          <p className="border-b border-vien px-3 py-2 text-[12px] font-medium text-chu-phu">
             {NHOM.find((n) => n.ma === mo)?.ten}
           </p>
           {dung

@@ -103,7 +103,7 @@ export function BangSoLenh({
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-3 px-3 py-1.5 text-[10px] font-bold tracking-wider text-chu-phu uppercase">
+      <div className="grid grid-cols-3 px-3 py-1.5 text-[12px] font-medium text-chu-phu">
         <span>Giá (USDT)</span>
         <span className="text-right">KL ({ma})</span>
         <span className="text-right">{tab === "so-lenh" ? "Tổng" : "Giờ"}</span>
