@@ -1,71 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  --nen: #ffffff;
-  --nen-phu: #f5f7f6;
-  --chu: #121614;
-  --chu-phu: #6b7570;
-  --vien: #e2e7e4;
+  /* Mặc định nền đen tuyền, chữ trắng, độ tương phản cao */
+  --nen: #000000;
+  --nen-phu: #111312;
+  --nen-noi: #1a1d1b;
+  --chu: #ffffff;
+  --chu-phu: #8f9692;
+  --vien: #242826;
   /* Xanh lá thương hiệu Finlo */
-  --nhan: #0e9f55;
-  --nhan-sang: #19c26b;
-  --nhan-nhat: #e9f7ef;
-  /* Thanh đen: header, dải giá, footer — giống nhau ở cả hai chế độ */
-  --toi: #0b0f0d;
-  --toi-phu: #141a17;
-  --chu-toi: #e9efeb;
-  --chu-toi-phu: #8a968f;
-  --vien-toi: #1f2723;
-  --tang: #12a150;
-  --giam: #d6204f;
-  --dung: #b7791f;
-  /* Màu bảng điện Việt Nam: chạm trần tím, chạm sàn xanh lam */
-  --tran: #9333ea;
-  --san-gia: #0891b2;
-}
-
-/* Giao diện tối: theo máy khi chưa chọn, hoặc khi người dùng bấm chọn "tối" (data-theme trên <html>) */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --nen: #0d1110;
-    --nen-phu: #131917;
-    --chu: #e9efeb;
-    --chu-phu: #8a968f;
-    --vien: #222b27;
-    --nhan: #19c26b;
-    --nhan-nhat: #0f2a1d;
-    --toi: #070a09;
-    --toi-phu: #0f1412;
-    --tang: #2fd07a;
-    --giam: #f0506e;
-    --dung: #e3b341;
-    --tran: #c084fc;
-    --san-gia: #22d3ee;
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme="dark"] {
-  --nen: #0d1110;
-  --nen-phu: #131917;
-  --chu: #e9efeb;
-  --chu-phu: #8a968f;
-  --vien: #222b27;
   --nhan: #19c26b;
-  --nhan-nhat: #0f2a1d;
-  --toi: #070a09;
-  --toi-phu: #0f1412;
-  --tang: #2fd07a;
+  --nhan-sang: #19c26b;
+  --nhan-nhat: #0c2318;
+  /* Thanh đen: header, thanh trạng thái, footer */
+  --toi: #000000;
+  --toi-phu: #141716;
+  --chu-toi: #ffffff;
+  --chu-toi-phu: #8f9692;
+  --vien-toi: #242826;
+  --tang: #25c26e;
   --giam: #f0506e;
   --dung: #e3b341;
+  /* Màu bảng điện Việt Nam: chạm trần tím, chạm sàn xanh lam */
   --tran: #c084fc;
   --san-gia: #22d3ee;
   color-scheme: dark;
 }
 
+/* Giao diện sáng khi người dùng bấm chọn (data-theme trên <html>) */
+:root[data-theme="light"] {
+  --nen: #ffffff;
+  --nen-phu: #f4f5f4;
+  --nen-noi: #eaecea;
+  --chu: #0a0b0a;
+  --chu-phu: #6b726e;
+  --vien: #e3e6e4;
+  --nhan: #0e9f55;
+  --nhan-nhat: #e6f6ed;
+  --tang: #12a150;
+  --giam: #d6204f;
+  --dung: #b7791f;
+  --tran: #9333ea;
+  --san-gia: #0891b2;
+  color-scheme: light;
+}
+
 @theme inline {
   --color-nen: var(--nen);
   --color-nen-phu: var(--nen-phu);
+  --color-nen-noi: var(--nen-noi);
   --color-chu: var(--chu);
   --color-chu-phu: var(--chu-phu);
   --color-vien: var(--vien);

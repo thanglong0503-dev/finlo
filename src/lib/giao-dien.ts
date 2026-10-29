@@ -12,26 +12,19 @@ export type GiaoDien = "sang" | "toi";
 const KHOA = KHOA_GIAO_DIEN;
 const SU_KIEN = "finlo-giao-dien";
 
+// Mặc định là nền tối; chỉ sáng khi người dùng đã chọn
 function hienTai(): GiaoDien {
-  const theme = document.documentElement.dataset.theme;
-  if (theme === "dark") return "toi";
-  if (theme === "light") return "sang";
-  return matchMedia("(prefers-color-scheme: dark)").matches ? "toi" : "sang";
+  return document.documentElement.dataset.theme === "light" ? "sang" : "toi";
 }
 
 function dangKy(goiLai: () => void) {
-  const mq = matchMedia("(prefers-color-scheme: dark)");
   window.addEventListener(SU_KIEN, goiLai);
-  mq.addEventListener("change", goiLai);
-  return () => {
-    window.removeEventListener(SU_KIEN, goiLai);
-    mq.removeEventListener("change", goiLai);
-  };
+  return () => window.removeEventListener(SU_KIEN, goiLai);
 }
 
 // Giao diện đang dùng; biểu đồ dùng giá trị này để vẽ lại màu khi đổi
 export function useGiaoDien(): GiaoDien {
-  return useSyncExternalStore(dangKy, hienTai, () => "sang");
+  return useSyncExternalStore(dangKy, hienTai, () => "toi");
 }
 
 export function datGiaoDien(g: GiaoDien) {

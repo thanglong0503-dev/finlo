@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, DM_Mono } from "next/font/google";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
@@ -27,7 +27,12 @@ const dmMono = DM_Mono({
 export const metadata: Metadata = {
   title: { default: "Finlo — Nền tảng theo dõi đa lớp tài sản", template: "%s · Finlo" },
   description: "Theo dõi chứng khoán, hàng hoá, kim loại quý và tài sản số trong một nơi.",
+  // Mở từ màn hình chính iPhone như một ứng dụng riêng
+  appleWebApp: { capable: true, title: "Finlo", statusBarStyle: "black-translucent" },
+  icons: { apple: "/app/apple-touch-icon.png" },
 };
+
+export const viewport: Viewport = { themeColor: "#000000" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -37,7 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: KICH_BAN_DAU_TRANG }} />
       </head>
       <body className="flex min-h-full flex-col font-sans">
-        <header className="sticky top-0 z-20 bg-toi text-chu-toi">
+        <header className="sticky top-0 z-20 border-b border-vien-toi bg-toi/90 text-chu-toi backdrop-blur-md">
           <nav className="mx-auto flex h-[60px] max-w-7xl items-stretch gap-6 px-4">
             <Link href="/" aria-label="Finlo — trang chủ" className="flex items-center">
               <Logo nenDen={false} />
@@ -48,6 +53,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Suspense>
             <div className="ml-auto flex items-center gap-2">
               <TimMa nenToi className="w-40 sm:w-72" />
+              <Link
+                href="/#cai-app"
+                className="hidden h-9 items-center rounded-full bg-chu-toi px-4 font-semibold text-toi hover:bg-nhan-sang lg:flex"
+              >
+                Cài app
+              </Link>
               <NutGiaoDien />
               <Suspense fallback={null}>
                 <MenuDiDong />
@@ -58,7 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
         <main className="flex-1">{children}</main>
 
-        <footer className="bg-toi text-chu-toi">
+        <footer className="border-t border-vien-toi bg-toi text-chu-toi">
           <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <Logo nenDen={false} />
@@ -72,7 +83,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </div>
             {NHOM_MENU.map((n) => (
               <div key={n.ten}>
-                <p className="text-[11px] font-semibold tracking-[0.09em] text-nhan-sang uppercase">{n.ten}</p>
+                <p className="font-semibold">{n.ten}</p>
                 <ul className="mt-3 space-y-2">
                   {n.trang.map((m) => (
                     <li key={m.href}>

@@ -66,19 +66,17 @@ export function MenuNhom() {
             >
               {n.ten}
               <MuiTen len={mo === n.ten} />
-              {coTrangMo && <span className="absolute inset-x-3 bottom-0 h-0.5 bg-nhan-sang" />}
+              {coTrangMo && <span className="absolute inset-x-3 bottom-3 h-0.5 rounded-full bg-nhan-sang" />}
             </button>
             {mo === n.ten && (
-              <div className="absolute top-full left-0 z-40 w-80 border border-vien-toi border-t-2 border-t-nhan-sang bg-toi shadow-xl">
+              <div className="absolute top-full left-0 z-40 w-80 overflow-hidden rounded-2xl border border-vien-toi bg-toi-phu p-1.5 shadow-2xl">
                 {n.trang.map((t) => {
                   const dang = dangMo(pathname, t.href);
                   return (
                     <Link
                       key={t.href}
                       href={t.href}
-                      className={`block border-b border-vien-toi px-4 py-2.5 last:border-b-0 hover:bg-toi-phu ${
-                        dang ? "shadow-[inset_2px_0_0_0_var(--nhan-sang)]" : ""
-                      }`}
+                      className={`block rounded-xl px-3.5 py-2.5 hover:bg-white/5 ${dang ? "bg-white/5" : ""}`}
                     >
                       <span className={`block font-semibold ${dang ? "text-nhan-sang" : "text-chu-toi"}`}>{t.nhan}</span>
                       <span className="block text-[12px] text-chu-toi-phu">{t.moTa}</span>
@@ -120,7 +118,7 @@ export function MenuDiDong() {
         onClick={() => setMo((x) => !x)}
         aria-label={mo ? "Đóng menu" : "Mở menu"}
         aria-expanded={mo}
-        className="flex h-9 w-9 items-center justify-center border border-vien-toi text-chu-toi-phu hover:border-nhan-sang hover:text-nhan-sang md:hidden"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-toi-phu text-chu-toi-phu hover:text-chu-toi md:hidden"
       >
         <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           {mo ? <path d="M3 3l10 10M13 3L3 13" /> : <path d="M2 4h12M2 8h12M2 12h12" />}
@@ -131,7 +129,7 @@ export function MenuDiDong() {
           {NHOM_MENU.map((n) => (
             <section key={n.ten} className="mt-5">
               <p className="text-[11px] font-semibold tracking-[0.09em] text-nhan-sang uppercase">{n.ten}</p>
-              <div className="mt-2 border border-vien-toi">
+              <div className="mt-2 overflow-hidden rounded-2xl bg-toi-phu">
                 {n.trang.map((t) => {
                   const dang = dangMo(pathname, t.href);
                   return (

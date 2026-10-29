@@ -80,7 +80,7 @@ export function TimMa({ nenToi = false, className = "" }: { nenToi?: boolean; cl
   };
 
   const kieuO = nenToi
-    ? "border-vien-toi bg-toi-phu text-chu-toi placeholder:text-chu-toi-phu focus:border-nhan-sang"
+    ? "border-transparent bg-toi-phu text-chu-toi placeholder:text-chu-toi-phu focus:border-nhan-sang"
     : "border-vien bg-nen text-chu placeholder:text-chu-phu focus:border-nhan";
 
   return (
@@ -117,15 +117,15 @@ export function TimMa({ nenToi = false, className = "" }: { nenToi?: boolean; cl
         }}
         placeholder={nenToi ? "Tìm mã, trang…" : "Tra cứu mã cổ phiếu, ví dụ FPT hoặc sữa việt nam"}
         aria-label={nenToi ? "Tìm mã cổ phiếu hoặc trang" : "Tra cứu mã cổ phiếu"}
-        className={`h-9 w-full border px-3 outline-none ${nenToi ? "pr-14" : ""} ${kieuO}`}
+        className={`h-9 w-full rounded-full border px-4 outline-none ${nenToi ? "pr-16" : ""} ${kieuO}`}
       />
       {nenToi && !q && (
-        <kbd className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 border border-vien-toi px-1.5 text-[10px] text-chu-toi-phu sm:block">
+        <kbd className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded border border-vien-toi px-1.5 text-[10px] text-chu-toi-phu sm:block">
           Ctrl K
         </kbd>
       )}
       {mo && q.trim() && (
-        <ul className="absolute top-full right-0 left-0 z-30 mt-1 min-w-72 border border-vien bg-nen text-chu shadow-lg">
+        <ul className="absolute top-full right-0 left-0 z-30 mt-2 min-w-72 overflow-hidden rounded-xl border border-vien bg-nen-phu text-chu shadow-2xl">
           {ketQua.length === 0 ? (
             <li className="px-3 py-2.5 text-chu-phu">{ds.length ? "Không tìm thấy mã hoặc trang phù hợp" : "Đang tải danh sách mã…"}</li>
           ) : (
