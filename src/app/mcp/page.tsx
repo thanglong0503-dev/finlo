@@ -60,6 +60,7 @@ const NHOM: { ten: string; moTa: string; congCu: CongCu[] }[] = [
       { ten: "Lịch sự kiện", ma: "lich_su_kien", moTa: "Nghỉ lễ, đáo hạn phái sinh, hạn báo cáo tài chính, cổ tức, đại hội.", viDu: "Tháng tới có sự kiện gì đáng chú ý?" },
       { ten: "Thị trường tiền số", ma: "thi_truong_tien_so", moTa: "Vốn hoá, tỷ trọng BTC, chỉ số Sợ hãi & Tham lam, đồng tăng giảm mạnh.", viDu: "Tuần này coin nào tăng mạnh nhất?" },
       { ten: "Phái sinh tiền số", ma: "phai_sinh_tien_so", moTa: "Funding, Open Interest, tỷ lệ Long/Short, funding cao nhất toàn thị trường.", viDu: "Funding BTC đang dương hay âm?" },
+      { ten: "Theo dõi cá mập", ma: "ca_map", moTa: "Bitcoin chuyển lớn trên chuỗi và lệnh lớn trên Binance Futures, mua hay bán ròng.", viDu: "Cá mập đang mua hay bán BTC?" },
     ],
   },
 ];

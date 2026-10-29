@@ -33,6 +33,7 @@ export const NHOM_MENU: NhomMenu[] = [
     trang: [
       { href: "/tai-san-so", nhan: "Tài sản số", moTa: "Bitcoin, Ethereum, sổ lệnh realtime", tuKhoa: "tien so crypto bitcoin btc eth" },
       { href: "/tai-san-so/phai-sinh", nhan: "Phái sinh tiền số", moTa: "Funding, Open Interest, Long/Short, thanh lý", tuKhoa: "phai sinh futures funding open interest long short thanh ly liquidation" },
+      { href: "/tai-san-so/ca-map", nhan: "Theo dõi cá mập", moTa: "Bitcoin chuyển lớn, lệnh lớn trên Binance", tuKhoa: "ca map whale vi lon giao dich lon bitcoin dong tien" },
       { href: "/kim-loai-quy", nhan: "Kim loại quý", moTa: "Giá vàng SJC, nhẫn trơn theo thương hiệu", tuKhoa: "vang sjc kim loai quy pnj" },
     ],
   },
@@ -40,7 +41,7 @@ export const NHOM_MENU: NhomMenu[] = [
     ten: "Finlo",
     trang: [
       { href: "/gioi-thieu", nhan: "Giới thiệu", moTa: "Finlo là gì, dữ liệu lấy từ đâu", tuKhoa: "gioi thieu ve finlo" },
-      { href: "/mcp", nhan: "Finlo MCP", moTa: "Hỏi Claude bằng dữ liệu Finlo: 21 công cụ", tuKhoa: "mcp claude ai tro ly cong cu" },
+      { href: "/mcp", nhan: "Finlo MCP", moTa: "Hỏi Claude bằng dữ liệu Finlo: 22 công cụ", tuKhoa: "mcp claude ai tro ly cong cu" },
       { href: "/doi-tac", nhan: "Đối tác", moTa: "Hợp tác dữ liệu, nội dung, quảng bá", tuKhoa: "doi tac hop tac partner quang cao" },
       { href: "/lien-he", nhan: "Liên hệ", moTa: "Góp ý, báo lỗi dữ liệu", tuKhoa: "lien he email gop y bao loi" },
     ],
