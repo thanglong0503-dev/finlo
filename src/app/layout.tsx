@@ -52,7 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <MenuNhom />
             </Suspense>
             <div className="ml-auto flex items-center gap-2">
-              <TimMa nenToi className="w-40 sm:w-72" />
+              <TimMa nenToi className="hidden w-56 sm:block lg:w-72" />
               <Link
                 href="/#cai-app"
                 className="hidden h-9 items-center rounded-full bg-chu-toi px-4 font-semibold text-toi hover:bg-nhan-sang lg:flex"

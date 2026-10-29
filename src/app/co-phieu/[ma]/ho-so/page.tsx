@@ -99,9 +99,9 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   return (
     <>
       <p className="nhan-muc">Thông tin cơ bản</p>
-      <dl className="mt-3 grid border-t border-l border-vien sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="mt-3 grid gap-px overflow-hidden rounded-2xl border border-vien bg-vien sm:grid-cols-2 lg:grid-cols-4">
         {thongTin.map((x) => (
-          <div key={x.nhan} className="border-r border-b border-vien p-4">
+          <div key={x.nhan} className="bg-nen p-4">
             <dt className="text-chu-phu">{x.nhan}</dt>
             <dd className="mt-1 font-semibold tabular-nums">{x.gt}</dd>
           </div>
@@ -129,7 +129,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
       {muoiNam.length > 0 && (
         <>
           <TieuDe nhan="Kết quả kinh doanh" ten={`${tenDt} và lợi nhuận sau thuế`} phu="Tỷ đồng, báo cáo năm" />
-          <div className="mt-4 border border-vien p-4">
+          <div className="mt-4 border border-vien p-4 rounded-2xl overflow-hidden">
             <div className="flex gap-4 text-[12px] text-chu-phu">
               <span className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 bg-chu-phu/40" /> {tenDt}
@@ -159,7 +159,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
             </div>
           </div>
 
-          <div className="mt-4 overflow-x-auto border border-vien">
+          <div className="mt-4 overflow-x-auto border border-vien rounded-2xl">
             <table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-b border-vien text-[12px] text-chu-phu">
@@ -229,7 +229,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         {coCau && tongCoCau > 0 && (
           <section>
             <TieuDe nhan="Cơ cấu" ten={`Nguồn thu năm ${coCau.nam}`} phu="Tỷ đồng" />
-            <ul className="mt-4 border border-vien">
+            <ul className="mt-4 border border-vien rounded-2xl overflow-hidden">
               {[...coCau.phan]
                 .sort((a, b) => b.gt - a.gt)
                 .map((p) => {
@@ -258,7 +258,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         {dsNam.length > 0 && (
           <section>
             <TieuDe nhan="Vốn và cổ tức" ten="Vốn điều lệ, cổ tức tiền mặt đã trả" phu="Tỷ đồng" />
-            <table className="mt-4 w-full border border-vien">
+            <table className="mt-4 w-full border border-vien rounded-2xl overflow-hidden">
               <thead>
                 <tr className="border-b border-vien text-[12px] text-chu-phu">
                   <th className="px-4 py-2 text-left font-medium">Năm</th>

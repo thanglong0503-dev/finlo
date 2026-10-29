@@ -42,7 +42,7 @@ export function BangTienSoTrucTiep({ ds, tyGia }: { ds: TienSoTop[]; tyGia: numb
       <div className="mt-4 flex justify-end">
         <TrangThaiKetNoi trangThai={trangThai} />
       </div>
-      <div className="mt-2 overflow-x-auto border border-vien border-t-2 border-t-nhan">
+      <div className="mt-2 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>

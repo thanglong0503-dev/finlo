@@ -49,7 +49,7 @@ export function TinClient({ tin }: { tin: TinDoanhNghiep[] }) {
   }, [tin, loai, quanTrong, chiTheoDoi, theoDoi, tuKhoa]);
 
   const nut = (dang: boolean) =>
-    `h-8 border px-3 text-[12px] font-medium whitespace-nowrap ${
+    `h-8 rounded-full border px-3 text-[12px] font-medium whitespace-nowrap ${
       dang ? "border-nhan bg-nhan text-white" : "border-vien text-chu-phu hover:text-chu"
     }`;
 
@@ -60,7 +60,7 @@ export function TinClient({ tin }: { tin: TinDoanhNghiep[] }) {
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
           placeholder="Tìm mã hoặc nội dung…"
-          className="h-8 w-full border border-vien bg-nen px-3 outline-none focus:border-nhan sm:w-60"
+          className="h-8 w-full border border-vien bg-nen px-4 outline-none focus:border-nhan sm:w-60 rounded-full"
         />
         <button onClick={() => setQuanTrong((x) => !x)} className={nut(quanTrong)}>
           Chỉ tin quan trọng
@@ -87,7 +87,7 @@ export function TinClient({ tin }: { tin: TinDoanhNghiep[] }) {
               <span className="h-3 w-1 bg-nhan" />
               {ngayVN(ngay)}
             </h2>
-            <ul className="mt-2 border border-vien">
+            <ul className="mt-2 border border-vien rounded-2xl overflow-hidden">
               {ds.map((t, i) => (
                 <li key={`${t.ma}-${i}`} className="flex gap-3 border-b border-vien px-3 py-2.5 last:border-b-0 hover:bg-nhan-nhat">
                   <Link href={`/co-phieu/${t.ma}`} className="w-12 shrink-0 font-bold text-nhan hover:underline">
@@ -96,8 +96,8 @@ export function TinClient({ tin }: { tin: TinDoanhNghiep[] }) {
                   <div className="min-w-0 flex-1">
                     <p className={t.mucDo === "cao" ? "font-semibold" : ""}>{t.tieuDe}</p>
                     <p className="mt-1 flex flex-wrap gap-2 text-[11px]">
-                      <span className="border border-vien px-1.5 text-chu-phu">{t.loai}</span>
-                      <span className={`border px-1.5 ${MUC_DO[t.mucDo].kieu}`}>{MUC_DO[t.mucDo].nhan}</span>
+                      <span className="border border-vien px-1.5 text-chu-phu rounded-md">{t.loai}</span>
+                      <span className={`rounded-md border px-1.5 ${MUC_DO[t.mucDo].kieu}`}>{MUC_DO[t.mucDo].nhan}</span>
                     </p>
                   </div>
                 </li>
@@ -105,7 +105,7 @@ export function TinClient({ tin }: { tin: TinDoanhNghiep[] }) {
             </ul>
           </section>
         ))}
-        {theoNgay.length === 0 && <p className="border border-dashed border-vien p-8 text-center text-chu-phu">Không có tin phù hợp.</p>}
+        {theoNgay.length === 0 && <p className="border border-dashed border-vien p-8 text-center text-chu-phu rounded-2xl overflow-hidden">Không có tin phù hợp.</p>}
       </div>
     </>
   );

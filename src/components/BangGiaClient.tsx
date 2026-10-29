@@ -108,9 +108,9 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
             setSoDong(MOI_TRANG);
           }}
           placeholder="Tìm mã hoặc tên công ty…"
-          className="h-9 w-full border border-vien bg-nen px-3 outline-none focus:border-nhan sm:w-72"
+          className="h-9 w-full border border-vien bg-nen px-4 outline-none focus:border-nhan sm:w-72 rounded-full"
         />
-        <div className="flex max-w-full overflow-x-auto border border-vien">
+        <div className="flex max-w-full gap-1 overflow-x-auto rounded-full bg-nen-noi p-1">
           {SAN.map((s) => (
             <button
               key={s}
@@ -118,7 +118,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
                 setSan(s);
                 setSoDong(MOI_TRANG);
               }}
-              className={`h-9 px-4 font-medium whitespace-nowrap ${san === s ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"}`}
+              className={`h-7 rounded-full px-4 font-medium whitespace-nowrap ${san === s ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
             >
               {s}
               {s === "Theo dõi" && theoDoi.length > 0 && ` (${theoDoi.length})`}
@@ -127,7 +127,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
         </div>
       </div>
 
-      <div className="mt-5 overflow-x-auto border border-vien border-t-2 border-t-nhan">
+      <div className="mt-5 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>
@@ -228,7 +228,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
         <div className="mt-5 text-center">
           <button
             onClick={() => setSoDong((n) => n + MOI_TRANG)}
-            className="h-9 border border-nhan px-5 font-medium text-nhan hover:bg-nhan hover:text-white"
+            className="h-9 border border-nhan px-5 font-medium text-nhan hover:bg-nhan hover:text-white rounded-full"
           >
             Xem thêm {Math.min(MOI_TRANG, ds.length - soDong)} mã
           </button>

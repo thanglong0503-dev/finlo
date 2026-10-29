@@ -85,7 +85,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
           {nb.dong.length} giao dịch từ {nb.dong[nb.dong.length - 1].ngay.split("-").reverse().join("/")}
         </p>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-px border border-vien bg-vien lg:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-px border border-vien bg-vien lg:grid-cols-4 rounded-2xl overflow-hidden">
         {the.map((t) => (
           <div key={t.nhan} className="bg-nen p-4">
             <p className="text-chu-phu">{t.nhan}</p>

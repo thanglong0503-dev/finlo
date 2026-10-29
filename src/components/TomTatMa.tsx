@@ -76,7 +76,7 @@ export async function TomTat({
   ];
 
   return (
-    <div className="mt-6 grid grid-cols-1 gap-px border border-vien bg-vien sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-6 grid grid-cols-1 gap-px border border-vien bg-vien sm:grid-cols-2 lg:grid-cols-4 rounded-2xl overflow-hidden">
       {the.map((t) => (
         <Link key={t.href} href={t.href} className="group bg-nen p-4 hover:bg-nhan-nhat">
           <p className="flex items-center justify-between text-chu-phu">

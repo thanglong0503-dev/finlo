@@ -45,7 +45,10 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
       grid: { vertLines: { color: mau("--vien") }, horzLines: { color: mau("--vien") } },
       rightPriceScale: { borderColor: mau("--vien") },
       timeScale: { borderColor: mau("--vien") },
-      localization: { locale: "vi-VN", priceFormatter: (p: number) => (p / 1000).toFixed(2) },
+      localization: {
+        locale: "vi-VN",
+        priceFormatter: (p: number) => (p / 1000).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      },
     });
 
     const nenSeries = chart.addSeries(CandlestickSeries, {
@@ -58,7 +61,13 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
     nenSeries.setData(nen.map((n) => ({ ...n, time: n.time as UTCTimestamp })));
 
     // Khối lượng nằm ở 20% dưới cùng của biểu đồ
-    const klSeries = chart.addSeries(HistogramSeries, { priceScaleId: "kl", priceFormat: { type: "volume" } });
+    // Ẩn nhãn khối lượng cuối trên trục để không đè lên nhãn giá (nhất là màn hình hẹp)
+    const klSeries = chart.addSeries(HistogramSeries, {
+      priceScaleId: "kl",
+      priceFormat: { type: "volume" },
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
     chart.priceScale("kl").applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
     klSeries.setData(
       nen.map((n) => ({
@@ -91,12 +100,12 @@ export function BieuDoNen({ nen }: { nen: Nen[] }) {
 
   return (
     <div>
-      <div className="mb-3 flex w-fit border border-vien">
+      <div className="mb-3 flex w-fit gap-1 rounded-full bg-nen-noi p-1">
         {KHOANG.map((k) => (
           <button
             key={k.nhan}
             onClick={() => setKhoang(k.ngay)}
-            className={`h-8 px-3 font-medium ${khoang === k.ngay ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"}`}
+            className={`h-7 rounded-full px-3 font-medium ${khoang === k.ngay ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
           >
             {k.nhan}
           </button>

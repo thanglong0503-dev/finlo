@@ -25,7 +25,7 @@ export function GiaoDichTienSo({ ma, tyGia }: { ma: string; tyGia: number | null
 
   if (coCap === false) {
     return (
-      <div className="mt-6 border border-dashed border-vien p-8 text-center text-chu-phu">
+      <div className="mt-6 border border-dashed border-vien p-8 text-center text-chu-phu rounded-2xl overflow-hidden">
         {ma} hiện không có cặp {cap} đang giao dịch trên Binance nên chưa có dữ liệu realtime. Giá tham khảo vẫn xem
         được trong bảng Tài sản số.
       </div>
@@ -82,8 +82,8 @@ export function GiaoDichTienSo({ ma, tyGia }: { ma: string; tyGia: number | null
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="border border-vien">{coCap && <BieuDoTuongTac nguon="ts" ma={ma} />}</div>
-        <div className="border border-vien">
+        <div className="border border-vien rounded-2xl overflow-hidden">{coCap && <BieuDoTuongTac nguon="ts" ma={ma} />}</div>
+        <div className="border border-vien rounded-2xl overflow-hidden">
           <BangSoLenh ma={ma} soLenh={soLenh} khop={khop} le={le} />
         </div>
       </div>

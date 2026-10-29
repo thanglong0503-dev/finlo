@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { TimMa } from "@/components/TimMa";
 import { NHOM_MENU } from "@/lib/menu";
 
 // Trang đang mở: "/chi-so" sáng cả khi ở "/chi-so/VN30"; trang chủ chỉ sáng đúng "/"
@@ -92,10 +94,11 @@ export function MenuNhom() {
   );
 }
 
-// Menu điện thoại: nút mở bảng toàn màn hình, trang chia theo nhóm
+// Menu điện thoại: nút kính lúp và nút 3 gạch mở cùng một bảng toàn màn hình (ô tìm kiếm ở trên, trang chia theo nhóm).
+// Bảng được gắn thẳng vào <body>: header có hiệu ứng làm mờ nền nên phần tử "fixed" bên trong sẽ bị giới hạn trong header.
 export function MenuDiDong() {
   const pathname = usePathname();
-  const [mo, setMo] = useState(false);
+  const [mo, setMo] = useState<false | "menu" | "tim">(false);
   const [trangTruoc, setTrangTruoc] = useState(pathname);
   if (trangTruoc !== pathname) {
     setTrangTruoc(pathname);
@@ -112,42 +115,61 @@ export function MenuDiDong() {
     };
   }, [mo]);
 
+  const nut = "flex h-9 w-9 items-center justify-center rounded-full bg-toi-phu text-chu-toi-phu hover:text-chu-toi md:hidden";
+
   return (
     <>
+      <button onClick={() => setMo((x) => (x ? false : "tim"))} aria-label="Tìm mã" className={`${nut} sm:hidden`}>
+        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+          <circle cx="7" cy="7" r="4.8" />
+          <path d="m10.5 10.5 3.5 3.5" strokeLinecap="round" />
+        </svg>
+      </button>
       <button
-        onClick={() => setMo((x) => !x)}
+        onClick={() => setMo((x) => (x ? false : "menu"))}
         aria-label={mo ? "Đóng menu" : "Mở menu"}
-        aria-expanded={mo}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-toi-phu text-chu-toi-phu hover:text-chu-toi md:hidden"
+        aria-expanded={!!mo}
+        className={nut}
       >
         <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           {mo ? <path d="M3 3l10 10M13 3L3 13" /> : <path d="M2 4h12M2 8h12M2 12h12" />}
         </svg>
       </button>
-      {mo && (
-        <div className="fixed inset-x-0 top-[60px] bottom-0 z-40 overflow-y-auto bg-toi px-4 pb-8 md:hidden">
-          {NHOM_MENU.map((n) => (
-            <section key={n.ten} className="mt-5">
-              <p className="text-[11px] font-semibold tracking-[0.09em] text-nhan-sang uppercase">{n.ten}</p>
-              <div className="mt-2 overflow-hidden rounded-2xl bg-toi-phu">
-                {n.trang.map((t) => {
-                  const dang = dangMo(pathname, t.href);
-                  return (
-                    <Link
-                      key={t.href}
-                      href={t.href}
-                      className={`block border-b border-vien-toi px-3 py-3 last:border-b-0 ${dang ? "bg-toi-phu" : ""}`}
-                    >
-                      <span className={`block font-semibold ${dang ? "text-nhan-sang" : "text-chu-toi"}`}>{t.nhan}</span>
-                      <span className="block text-[12px] text-chu-toi-phu">{t.moTa}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
+      {mo &&
+        createPortal(
+          <div className="fixed inset-x-0 top-[60px] bottom-0 z-40 overflow-y-auto bg-toi px-4 pt-4 pb-10 text-chu-toi md:hidden">
+            <TimMa nenToi phimTat={false} tuDongChon={mo === "tim"} className="w-full" />
+            {NHOM_MENU.map((n) => (
+              <section key={n.ten} className="mt-6">
+                <p className="px-1 text-[13px] font-semibold text-chu-toi-phu">{n.ten}</p>
+                <div className="mt-2 overflow-hidden rounded-2xl bg-toi-phu">
+                  {n.trang.map((t) => {
+                    const dang = dangMo(pathname, t.href);
+                    return (
+                      <Link
+                        key={t.href}
+                        href={t.href}
+                        onClick={() => setMo(false)}
+                        className={`block border-b border-vien-toi px-4 py-3 last:border-b-0 ${dang ? "bg-white/5" : ""}`}
+                      >
+                        <span className={`block font-semibold ${dang ? "text-nhan-sang" : "text-chu-toi"}`}>{t.nhan}</span>
+                        <span className="block text-[12px] text-chu-toi-phu">{t.moTa}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+            <Link
+              href="/#cai-app"
+              onClick={() => setMo(false)}
+              className="mt-6 flex h-12 items-center justify-center rounded-full bg-chu-toi font-semibold text-toi"
+            >
+              Cài ứng dụng Finlo
+            </Link>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

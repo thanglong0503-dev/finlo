@@ -548,13 +548,13 @@ export function BieuDoTuongTac({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-vien px-2 py-2">
-        <div className="flex border border-vien">
+        <div className="flex gap-1 rounded-full bg-nen-noi p-1">
           {nguon === "ts"
             ? KHUNG_TS.map((k) => (
                 <button
                   key={k.ma}
                   onClick={() => setKhung(k.ma)}
-                  className={`h-7 px-2.5 font-medium ${khung === k.ma ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"}`}
+                  className={`h-7 rounded-full px-2.5 font-medium ${khung === k.ma ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
                 >
                   {k.nhan}
                 </button>
@@ -574,7 +574,7 @@ export function BieuDoTuongTac({
       {/* Biểu đồ giãn hết chiều cao còn lại; màn hình nhỏ (không giới hạn chiều cao) dùng chiều cao tối thiểu */}
       <div className="relative min-h-0 flex-1" style={{ minHeight: 440 + soKhungPhu * 120 }}>
         {tomTatGiaTri && tomTatGiaTri.diem != null && (
-          <div className="pointer-events-none absolute top-1 right-16 z-10 hidden border border-nhan bg-nen/90 px-2 py-1 text-[11px] tabular-nums sm:block">
+          <div className="pointer-events-none absolute top-1 right-16 z-10 hidden rounded-lg border border-nhan bg-nen/90 px-2 py-1 text-[11px] tabular-nums sm:block">
             <p className="font-semibold text-nhan">FL Giá trị · {tomTatGiaTri.thuoc}</p>
             <p>
               {tomTatGiaTri.thuoc} hiện tại <b>{tomTatGiaTri.boiNay?.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}</b>

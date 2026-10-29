@@ -172,16 +172,16 @@ export async function BangDieuKhien() {
           <Link
             key={cs.ma}
             href={cs.ma === "VNINDEX" ? "/chi-so" : `/chi-so/${cs.ma}`}
-            className="group flex items-center gap-3 rounded-2xl bg-nen-phu px-4 py-3 hover:bg-nen-noi"
+            className="group flex min-w-0 flex-col gap-2 rounded-2xl bg-nen-phu px-4 py-3 hover:bg-nen-noi sm:flex-row sm:items-center sm:gap-3"
           >
             <div className="min-w-0">
               <p className="text-[11px] text-chu-phu group-hover:text-chu">{cs.ten}</p>
-              <p className="so text-[17px] font-semibold">{diem(cs.diem)}</p>
+              <p className="so truncate text-[17px] font-semibold">{diem(cs.diem)}</p>
               <p className={`so text-[12px] ${mauTangGiam(cs.phanTram)}`}>
                 {thayDoi(cs.thayDoi)} {phanTram(cs.phanTram)}
               </p>
             </div>
-            <div className="ml-auto w-24 shrink-0">
+            <div className="w-full min-w-0 sm:ml-auto sm:w-24 sm:shrink-0">
               <DuongNho diem={cs.lichSu} tang={cs.lichSu[cs.lichSu.length - 1] >= cs.lichSu[0]} />
             </div>
           </Link>

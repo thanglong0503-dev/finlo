@@ -141,7 +141,7 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
           <button
             key={n.ma}
             onClick={() => setMo((x) => (x === n.ma ? null : n.ma))}
-            className={`flex h-7 items-center gap-1 border px-2 text-[12px] font-semibold ${
+            className={`flex h-7 items-center gap-1 rounded-full border px-3 text-[12px] font-semibold ${
               mo === n.ma ? "border-nhan text-nhan" : "border-vien text-chu-phu hover:text-chu"
             }`}
           >
@@ -159,7 +159,7 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
       {bat.map((c) => (
         <span
           key={c.ma}
-          className={`flex h-6 items-center gap-1 pl-2 text-[11px] font-semibold ${c.finlo ? "bg-nhan text-white" : "bg-chu text-nen"}`}
+          className={`flex h-6 items-center gap-1 rounded-full pl-2.5 text-[11px] font-semibold ${c.finlo ? "bg-nhan text-white" : "bg-chu text-nen"}`}
         >
           {c.ten}
           <button onClick={() => batTatChiBao(c.ma)} aria-label={`Tắt ${c.ten}`} className="px-1.5 opacity-70 hover:opacity-100">
@@ -170,7 +170,7 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
       {bat.length === 0 && <span className="text-[12px] text-chu-phu">Chưa bật chỉ báo nào</span>}
 
       {mo && (
-        <div className="absolute top-full left-2 z-30 mt-1 w-[min(420px,calc(100vw-2rem))] border border-vien bg-nen shadow-lg">
+        <div className="absolute top-full left-2 z-30 mt-2 w-[min(420px,calc(100vw-2rem))] border border-vien bg-nen shadow-lg rounded-2xl overflow-hidden">
           <p className="border-b border-vien px-3 py-2 text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             {NHOM.find((n) => n.ma === mo)?.ten}
           </p>
@@ -185,7 +185,7 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
                   className="flex w-full items-start gap-3 border-b border-vien px-3 py-2 text-left last:border-b-0 hover:bg-nhan-nhat"
                 >
                   <span
-                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border ${
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                       daBat ? "border-nhan bg-nhan text-white" : "border-vien"
                     }`}
                   >
@@ -198,7 +198,7 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
                   <span className="min-w-0">
                     <span className="flex items-center gap-2 font-semibold">
                       {c.ten}
-                      {c.finlo && <span className="border border-nhan px-1 text-[10px] text-nhan">Finlo</span>}
+                      {c.finlo && <span className="rounded border border-nhan px-1 text-[10px] text-nhan">Finlo</span>}
                     </span>
                     <span className="block text-[12px] text-chu-phu">{c.moTa}</span>
                   </span>

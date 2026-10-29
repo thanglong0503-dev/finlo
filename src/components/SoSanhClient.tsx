@@ -22,7 +22,7 @@ export function SoSanhClient({ ma, dong, trungVi }: { ma: string; dong: DongLoc[
   });
 
   return (
-    <div className="mt-4 overflow-x-auto border border-vien">
+    <div className="mt-4 overflow-x-auto border border-vien rounded-2xl">
       <table className="w-full min-w-[980px]">
         <thead>
           <tr className="border-b border-vien text-[12px] text-chu-phu">

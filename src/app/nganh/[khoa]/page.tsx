@@ -51,11 +51,11 @@ async function NoiDung({ params }: { params: Promise<{ khoa: string }> }) {
   return (
     <>
       <p className="nhan-muc mt-4">Ngành</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">{n.ten}</h1>
+      <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">{n.ten}</h1>
 
-      <div className="mt-6 grid grid-cols-2 border-t border-l border-vien md:grid-cols-5">
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-vien bg-vien md:grid-cols-5">
         {the.map((t) => (
-          <div key={t.nhan} className="border-r border-b border-vien p-4">
+          <div key={t.nhan} className="bg-nen p-4">
             <p className="text-chu-phu">{t.nhan}</p>
             <p className={`mt-1 text-lg font-semibold tabular-nums ${t.mau != null ? mauTangGiam(t.mau) : ""}`}>
               {t.giaTri}
@@ -64,7 +64,7 @@ async function NoiDung({ params }: { params: Promise<{ khoa: string }> }) {
         ))}
       </div>
 
-      <div className="mt-6 overflow-x-auto border border-vien border-t-2 border-t-nhan">
+      <div className="mt-6 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>

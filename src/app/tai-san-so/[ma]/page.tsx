@@ -47,7 +47,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
     <>
       <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <p className="nhan-muc">Tài sản số</p>
-        <h1 className="text-2xl font-bold tracking-[-0.03em]">
+        <h1 className="text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">
           {thongTin?.ten ?? ma} <span className="text-chu-phu">({ma})</span>
         </h1>
         {thongTin && (

@@ -59,11 +59,11 @@ async function DauTrang({ params }: { params: Promise<{ ma: string }> }) {
         <div className="flex w-full items-center gap-3 sm:w-auto">
           <Link
             href={`/bieu-do?loai=ck&ma=${cp.ma}`}
-            className="flex h-9 shrink-0 items-center bg-nhan px-3 font-semibold text-white hover:brightness-110"
+            className="flex h-9 shrink-0 items-center bg-nhan px-4 font-semibold text-white hover:brightness-110 rounded-full"
           >
             Biểu đồ kỹ thuật
           </Link>
-          <TimMa className="min-w-0 flex-1 sm:w-80" />
+          <TimMa className="hidden min-w-0 flex-1 sm:block sm:w-80" />
         </div>
       </div>
 

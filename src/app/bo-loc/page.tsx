@@ -12,7 +12,7 @@ export default function TrangBoLoc() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="nhan-muc">Bộ lọc</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Bộ lọc cổ phiếu</h1>
+      <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Bộ lọc cổ phiếu</h1>
       <p className="mt-1 text-chu-phu">
         Lọc hơn 1.500 mã theo định giá, hiệu quả, tăng trưởng và cổ tức. Chọn bộ lọc mẫu hoặc tự đặt điều kiện.
       </p>

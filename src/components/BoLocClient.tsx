@@ -88,7 +88,7 @@ const COT: Cot[] = [
 ];
 
 const MOI_TRANG = 50;
-const KIEU_O = "h-9 w-full border border-vien bg-nen px-2 outline-none focus:border-nhan";
+const KIEU_O = "h-9 w-full rounded-full border border-vien bg-nen px-3 outline-none focus:border-nhan";
 
 // Ô nhập số của điều kiện lọc (khai báo ngoài component chính để không bị dựng lại khi gõ)
 function OSo({ nhan, goiY, giaTri, khiDoi }: { nhan: string; goiY: string; giaTri: string; khiDoi: (v: string) => void }) {
@@ -189,7 +189,7 @@ export function BoLocClient({
               setMauDangChon(m.ten);
               setSoDong(MOI_TRANG);
             }}
-            className={`h-9 border px-4 font-semibold ${
+            className={`h-9 rounded-full border px-4 font-semibold ${
               mauDangChon === m.ten ? "border-nhan bg-nhan text-white" : "border-vien hover:border-nhan hover:text-nhan"
             }`}
           >
@@ -199,7 +199,7 @@ export function BoLocClient({
       </div>
       {mauDangChon && <p className="mt-2 text-chu-phu">{MAU.find((m) => m.ten === mauDangChon)?.moTa}</p>}
 
-      <div className="mt-4 grid grid-cols-2 gap-3 border border-vien p-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="mt-4 grid grid-cols-2 gap-3 border border-vien p-4 sm:grid-cols-3 lg:grid-cols-6 rounded-2xl overflow-hidden">
         <label className="block">
           <span className="text-[11px] text-chu-phu">Sàn</span>
           <select value={dk.san} onChange={(e) => doi("san", e.target.value)} className={o}>
@@ -238,7 +238,7 @@ export function BoLocClient({
               setDk(TRONG);
               setMauDangChon("Tất cả");
             }}
-            className="h-9 w-full border border-vien font-medium text-chu-phu hover:text-chu"
+            className="h-9 w-full border border-vien font-medium text-chu-phu hover:text-chu rounded-full"
           >
             Xoá điều kiện
           </button>
@@ -253,7 +253,7 @@ export function BoLocClient({
         <NhanPhien phien={phien} />
       </div>
 
-      <div className="mt-2 overflow-x-auto border border-vien border-t-2 border-t-nhan">
+      <div className="mt-2 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>
@@ -305,7 +305,7 @@ export function BoLocClient({
         <div className="mt-4 text-center">
           <button
             onClick={() => setSoDong((x) => x + MOI_TRANG)}
-            className="h-9 border border-nhan px-5 font-medium text-nhan hover:bg-nhan hover:text-white"
+            className="h-9 border border-nhan px-5 font-medium text-nhan hover:bg-nhan hover:text-white rounded-full"
           >
             Xem thêm {Math.min(MOI_TRANG, ketQua.length - soDong)} mã
           </button>

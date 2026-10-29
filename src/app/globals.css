@@ -75,23 +75,14 @@ body {
   font-size: 13px;
 }
 
-/* Nhãn mục nhỏ phía trên tiêu đề, kèm vạch xanh thương hiệu */
+/* Nhãn nhỏ phía trên tiêu đề (đường dẫn mục), chữ xám thường */
 .nhan-muc {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--nhan);
-}
-
-.nhan-muc::before {
-  content: "";
-  width: 14px;
-  height: 2px;
-  background: var(--nhan);
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--chu-phu);
 }
 
 /* Chấm xanh nhấp nháy báo dữ liệu đang cập nhật */

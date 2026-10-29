@@ -23,7 +23,7 @@ export default function TrangKimLoaiQuy() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="nhan-muc">Kim loại quý</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Giá vàng hôm nay</h1>
+      <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Giá vàng hôm nay</h1>
       <p className="mt-1 text-chu-phu">Giá mua vào và bán ra theo bảng giá công khai của từng thương hiệu, đơn vị đồng.</p>
       <Suspense
         fallback={
@@ -52,7 +52,7 @@ async function NoiDung() {
 
   return (
     <>
-      <div className="mt-6 grid grid-cols-2 border-t border-l border-vien md:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-vien bg-vien md:grid-cols-4">
         {[
           { nhan: "Vàng thế giới", giaTri: `$${usd(theGioi.usdOz)}`, phu: "USD / ounce" },
           { nhan: "Thế giới quy đổi", giaTri: vnd(theGioi.vndLuong), phu: "đồng / lượng" },
@@ -66,7 +66,7 @@ async function NoiDung() {
                 : "",
           },
         ].map((o) => (
-          <div key={o.nhan} className="border-r border-b border-vien p-4">
+          <div key={o.nhan} className="bg-nen p-4">
             <p className="text-chu-phu">{o.nhan}</p>
             <p className="mt-1 text-lg font-semibold tabular-nums">{o.giaTri}</p>
             <p className="text-[11px] text-chu-phu">{o.phu}</p>
@@ -84,7 +84,7 @@ async function NoiDung() {
         <p className="nhan-muc">Lịch sử</p>
         <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Giá bán vàng miếng 1 lượng</h2>
         <p className="mt-1 text-chu-phu">Triệu đồng / lượng, giá bán cuối ngày.</p>
-        <div className="mt-4 border border-vien p-4">
+        <div className="mt-4 border border-vien p-4 rounded-2xl overflow-hidden">
           <BieuDoVang duong={vang.lichSu.map((d) => ({ ten: d.ten, diem: d.diem }))} />
         </div>
       </section>
@@ -127,7 +127,7 @@ function BangSanPham({
       <h2 className="text-[15px] font-semibold">
         {ten} <span className="font-normal text-chu-phu">· tuổi {tuoi}</span>
       </h2>
-      <div className="mt-3 overflow-x-auto border border-vien">
+      <div className="mt-3 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>

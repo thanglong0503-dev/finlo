@@ -55,7 +55,7 @@ export async function TrangChiSo({ ma }: { ma: string }) {
 
   return (
     <>
-      <div className="mt-4 flex max-w-full overflow-x-auto border border-vien">
+      <div className="mt-4 flex max-w-full overflow-x-auto rounded-2xl border border-vien">
         {tatCa.map((c) => (
           <Link
             key={c.ma}
@@ -88,12 +88,11 @@ export async function TrangChiSo({ ma }: { ma: string }) {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_280px]">
-        <div className="border border-vien p-4">
+        <div className="border border-vien p-4 rounded-2xl overflow-hidden">
           <BieuDoNen nen={nen} />
         </div>
-        <div className="border border-vien">
+        <div className="border border-vien rounded-2xl overflow-hidden">
           <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
-            <span className="h-3.5 w-1 bg-nhan" />
             Hiệu suất
           </h2>
           <dl>
@@ -127,7 +126,7 @@ export async function TrangChiSo({ ma }: { ma: string }) {
         <p className="mt-1 text-chu-phu">
           P/E của từng mã (bỏ mã lỗ và P/E trên 200 lần), lấy trung vị toàn thị trường mỗi phiên, từ {pe.ngay[0].slice(0, 4)}.
         </p>
-        <div className="mt-4 grid grid-cols-2 border-t border-l border-vien md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-vien bg-vien md:grid-cols-4">
           {[
             { nhan: "P/E hiện tại", giaTri: `${peHienTai.toLocaleString("vi-VN", { maximumFractionDigits: 2 })} lần` },
             {
@@ -140,13 +139,13 @@ export async function TrangChiSo({ ma }: { ma: string }) {
             },
             { nhan: "VN-INDEX cùng ngày", giaTri: diem(pe.vnindex[pe.vnindex.length - 1]) },
           ].map((o) => (
-            <div key={o.nhan} className="border-r border-b border-vien p-4">
+            <div key={o.nhan} className="bg-nen p-4">
               <p className="text-chu-phu">{o.nhan}</p>
               <p className="mt-1 text-lg font-semibold tabular-nums">{o.giaTri}</p>
             </div>
           ))}
         </div>
-        <div className="mt-4 border border-vien p-4">
+        <div className="mt-4 border border-vien p-4 rounded-2xl overflow-hidden">
           <BieuDoSo
             donVi="lan"
             duong={[{ ten: "P/E trung vị", diem: pe.ngay.map((n, i) => ({ time: n, value: pe.pe[i] })) }]}

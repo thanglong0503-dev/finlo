@@ -54,9 +54,8 @@ function DongHo({ ten, th }: { ten: string; th: TongHopTH }) {
 
 function BangTH({ tieuDe, ds, laGia }: { tieuDe: string; ds: DongTH[]; laGia?: boolean }) {
   return (
-    <section className="border border-vien">
+    <section className="border border-vien rounded-2xl overflow-hidden">
       <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
-        <span className="h-3.5 w-1 bg-nhan" />
         {tieuDe}
       </h2>
       <table className="w-full">
@@ -108,7 +107,7 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
         theo quy tắc cố định, không phải khuyến nghị đầu tư.
       </p>
 
-      <div className="mt-4 grid gap-px border border-vien bg-vien md:grid-cols-3">
+      <div className="mt-4 grid gap-px border border-vien bg-vien md:grid-cols-3 rounded-2xl overflow-hidden">
         <DongHo ten="Tổng hợp" th={kt.tong} />
         <DongHo ten="Đường trung bình" th={kt.tongTB} />
         <DongHo ten="Dao động" th={kt.tongDD} />
@@ -118,9 +117,8 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
         <BangTH tieuDe="Đường trung bình" ds={kt.trungBinh} laGia />
         <div className="flex flex-col gap-6">
           <BangTH tieuDe="Dao động" ds={kt.daoDong} />
-          <section className="border border-vien">
+          <section className="border border-vien rounded-2xl overflow-hidden">
             <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
-              <span className="h-3.5 w-1 bg-nhan" />
               Biến động và thanh khoản
             </h2>
             <dl className="grid grid-cols-2">
@@ -142,9 +140,8 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <section className="border border-vien">
+        <section className="border border-vien rounded-2xl overflow-hidden">
           <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
-            <span className="h-3.5 w-1 bg-nhan" />
             Hỗ trợ và kháng cự (pivot cổ điển)
           </h2>
           <ul>
@@ -173,9 +170,8 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
           </ul>
         </section>
 
-        <section className="border border-vien">
+        <section className="border border-vien rounded-2xl overflow-hidden">
           <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
-            <span className="h-3.5 w-1 bg-nhan" />
             Vị trí giá trong biên độ
           </h2>
           <div className="divide-y divide-vien">
@@ -207,10 +203,9 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
 
       <section className="mt-6">
         <h2 className="flex items-center gap-2 font-semibold">
-          <span className="h-3.5 w-1 bg-nhan" />
           Hiệu suất giá
         </h2>
-        <dl className="mt-3 grid grid-cols-3 gap-px border border-vien bg-vien md:grid-cols-6">
+        <dl className="mt-3 grid grid-cols-3 gap-px border border-vien bg-vien md:grid-cols-6 rounded-2xl overflow-hidden">
           {kt.hieuSuat.map((h) => (
             <div key={h.ten} className="bg-nen px-4 py-3">
               <dt className="text-chu-phu">{h.ten}</dt>
@@ -228,10 +223,10 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
 
       <section className="mt-8">
         <p className="nhan-muc">Chỉ báo Finlo</p>
-        <div className="mt-3 grid gap-px border border-vien bg-vien md:grid-cols-3">
+        <div className="mt-3 grid gap-px border border-vien bg-vien md:grid-cols-3 rounded-2xl overflow-hidden">
           <div className="bg-nen p-4">
             <p className="flex items-center gap-2 font-semibold">
-              FL Xu hướng <span className="border border-nhan px-1 text-[10px] text-nhan">Finlo</span>
+              FL Xu hướng <span className="rounded border border-nhan px-1 text-[10px] text-nhan">Finlo</span>
             </p>
             <p
               className={`mt-1 text-2xl font-bold tabular-nums ${
@@ -246,7 +241,7 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
           </div>
           <div className="bg-nen p-4">
             <p className="flex items-center gap-2 font-semibold">
-              FL Dòng tiền <span className="border border-nhan px-1 text-[10px] text-nhan">Finlo</span>
+              FL Dòng tiền <span className="rounded border border-nhan px-1 text-[10px] text-nhan">Finlo</span>
             </p>
             <p
               className={`mt-1 text-2xl font-bold tabular-nums ${
@@ -261,7 +256,7 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
           </div>
           <div className="bg-nen p-4">
             <p className="flex items-center gap-2 font-semibold">
-              FL Vùng giá <span className="border border-nhan px-1 text-[10px] text-nhan">Finlo</span>
+              FL Vùng giá <span className="rounded border border-nhan px-1 text-[10px] text-nhan">Finlo</span>
             </p>
             <p
               className={`mt-1 text-2xl font-bold ${
@@ -285,7 +280,7 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
         </div>
 
         {fl.tinHieu.length > 0 && (
-          <div className="mt-4 border border-vien">
+          <div className="mt-4 border border-vien rounded-2xl overflow-hidden">
             <p className="border-b border-vien px-4 py-2.5 font-semibold">Tín hiệu Finlo gần đây</p>
             <ul>
               {fl.tinHieu.map((t) => (
@@ -305,7 +300,7 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
 
         <Link
           href={`/bieu-do?loai=ck&ma=${ma}`}
-          className="mt-4 inline-flex h-9 items-center bg-nhan px-3 font-semibold text-white hover:brightness-110"
+          className="mt-4 inline-flex h-9 items-center bg-nhan px-4 font-semibold text-white hover:brightness-110 rounded-full"
         >
           Mở biểu đồ tương tác với các chỉ báo →
         </Link>

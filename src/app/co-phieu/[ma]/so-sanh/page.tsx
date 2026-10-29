@@ -100,7 +100,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         </p>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-px border border-vien bg-vien md:grid-cols-3 lg:grid-cols-6">
+      <div className="mt-4 grid grid-cols-2 gap-px border border-vien bg-vien md:grid-cols-3 lg:grid-cols-6 rounded-2xl overflow-hidden">
         {the.map((t) => {
           // Vị trí trên thước: 0 là tốt nhất ngành, 100 là kém nhất
           const viTri = t.hang > 0 && t.tong > 1 ? ((t.hang - 1) / (t.tong - 1)) * 100 : null;

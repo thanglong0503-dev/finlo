@@ -13,7 +13,7 @@ export default function TrangNganh() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="nhan-muc">Ngành</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Diễn biến theo ngành</h1>
+      <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Diễn biến theo ngành</h1>
       <p className="mt-1 text-chu-phu">
         Mỗi ô là một ngành, màu theo % thay đổi bình quân theo vốn hoá. Bấm vào ngành để xem các mã.
       </p>
@@ -38,7 +38,7 @@ async function NoiDung() {
 
   return (
     <>
-      <div className="mt-6 grid grid-cols-2 gap-px border border-vien bg-vien sm:grid-cols-4 lg:grid-cols-6">
+      <div className="mt-6 grid grid-cols-2 gap-px border border-vien bg-vien sm:grid-cols-4 lg:grid-cols-6 rounded-2xl overflow-hidden">
         {ds.map((n) => (
           <Link
             key={n.khoa}
@@ -55,7 +55,7 @@ async function NoiDung() {
         ))}
       </div>
 
-      <div className="mt-6 overflow-x-auto border border-vien border-t-2 border-t-nhan">
+      <div className="mt-6 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full min-w-[720px]">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>

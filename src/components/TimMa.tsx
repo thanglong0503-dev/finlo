@@ -28,7 +28,17 @@ const boDau = (s: string) =>
     .replace(/Đ/g, "D")
     .toLowerCase();
 
-export function TimMa({ nenToi = false, className = "" }: { nenToi?: boolean; className?: string }) {
+export function TimMa({
+  nenToi = false,
+  className = "",
+  phimTat = nenToi,
+  tuDongChon = false,
+}: {
+  nenToi?: boolean;
+  className?: string;
+  phimTat?: boolean; // nghe phím "/" và Ctrl K (chỉ ô trên header)
+  tuDongChon?: boolean; // đặt con trỏ vào ô ngay khi hiện (ô trong menu điện thoại)
+}) {
   const router = useRouter();
   const o = useRef<HTMLInputElement>(null);
   const [ds, setDs] = useState<Ma[]>([]);
@@ -38,7 +48,7 @@ export function TimMa({ nenToi = false, className = "" }: { nenToi?: boolean; cl
 
   // Phím "/" hoặc Ctrl/Cmd+K ở bất kỳ đâu (trừ khi đang gõ) để nhảy vào ô tìm kiếm trên header
   useEffect(() => {
-    if (!nenToi) return;
+    if (!phimTat) return;
     const bamPhim = (e: KeyboardEvent) => {
       const dangGo = (e.target as HTMLElement).closest("input, textarea, select, [contenteditable]");
       const ctrlK = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k";
@@ -50,7 +60,7 @@ export function TimMa({ nenToi = false, className = "" }: { nenToi?: boolean; cl
     };
     window.addEventListener("keydown", bamPhim);
     return () => window.removeEventListener("keydown", bamPhim);
-  }, [nenToi]);
+  }, [phimTat]);
 
   // Kết quả gồm trang của Finlo (khớp tên, mô tả, từ khoá) và mã cổ phiếu
   const ketQua = useMemo((): KetQua[] => {
@@ -87,6 +97,7 @@ export function TimMa({ nenToi = false, className = "" }: { nenToi?: boolean; cl
     <div className={`relative ${className}`}>
       <input
         ref={o}
+        autoFocus={tuDongChon}
         value={q}
         onChange={(e) => {
           setQ(e.target.value);

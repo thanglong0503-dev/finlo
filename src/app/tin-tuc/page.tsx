@@ -11,7 +11,7 @@ export default function TrangTin() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <p className="nhan-muc">Tin tức</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Tin công bố của doanh nghiệp</h1>
+      <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Tin công bố của doanh nghiệp</h1>
       <p className="mt-1 text-chu-phu">
         Cổ tức, giao dịch cổ đông lớn, nhân sự, niêm yết… theo công bố thông tin trên HOSE và HNX.
       </p>

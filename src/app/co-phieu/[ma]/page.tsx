@@ -82,13 +82,12 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 pb-10">
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <div className="border border-vien p-4">
+        <div className="border border-vien p-4 rounded-2xl overflow-hidden">
           <BieuDoNen nen={nen} />
         </div>
 
-        <div className="border border-vien">
+        <div className="border border-vien rounded-2xl overflow-hidden">
           <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
-            <span className="h-3.5 w-1 bg-nhan" />
             Giao dịch
           </h2>
           <dl>
@@ -110,13 +109,13 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         <section className="mt-8">
           <p className="nhan-muc">Tin doanh nghiệp</p>
           <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Công bố gần đây của {cp.ma}</h2>
-          <ul className="mt-4 border border-vien">
+          <ul className="mt-4 border border-vien rounded-2xl overflow-hidden">
             {tinMa.map((t, i) => (
               <li key={i} className="flex gap-3 border-b border-vien px-3 py-2.5 last:border-b-0">
                 <span className="w-20 shrink-0 text-chu-phu tabular-nums">{t.ngay.split("-").reverse().join("/")}</span>
                 <div className="min-w-0 flex-1">
                   <p className={t.mucDo === "cao" ? "font-semibold" : ""}>{t.tieuDe}</p>
-                  <span className="mt-1 inline-block border border-vien px-1.5 text-[11px] text-chu-phu">{t.loai}</span>
+                  <span className="mt-1 inline-block border border-vien px-1.5 text-[11px] text-chu-phu rounded-md">{t.loai}</span>
                 </div>
               </li>
             ))}

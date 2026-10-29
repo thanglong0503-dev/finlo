@@ -42,7 +42,7 @@ export default function TrangViMo() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="nhan-muc">Vĩ mô</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Lãi suất & Kinh tế vĩ mô</h1>
+      <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Lãi suất & Kinh tế vĩ mô</h1>
       <p className="mt-1 text-chu-phu">
         Lãi suất tiết kiệm các ngân hàng, thị trường tiền tệ và các chỉ số kinh tế Việt Nam.
       </p>
@@ -97,7 +97,7 @@ async function NoiDung() {
           </div>
           <p className="text-chu-phu">{laiSuat.coSo} · %/năm</p>
         </div>
-        <div className="mt-4 overflow-x-auto border border-vien border-t-2 border-t-nhan">
+        <div className="mt-4 overflow-x-auto border border-vien rounded-2xl">
           <table className="w-full min-w-[760px]">
             <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
               <tr>
@@ -152,9 +152,8 @@ async function NoiDung() {
         <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Lãi suất điều hành, liên ngân hàng và tỷ giá</h2>
         <LuoiChiTieu chuoi={tienTe} />
         {lnh.length > 0 && (
-          <div className="mt-4 border border-vien p-4">
+          <div className="mt-4 border border-vien p-4 rounded-2xl overflow-hidden">
             <h3 className="flex items-center gap-2 font-semibold">
-              <span className="h-3.5 w-1 bg-nhan" />
               Lãi suất liên ngân hàng
             </h3>
             <div className="mt-3">
@@ -176,9 +175,8 @@ async function NoiDung() {
         <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Các chỉ số kinh tế vĩ mô</h2>
         <LuoiChiTieu chuoi={kinhTe} />
         {gdpNam && cpiNam && (
-          <div className="mt-4 border border-vien p-4">
+          <div className="mt-4 border border-vien p-4 rounded-2xl overflow-hidden">
             <h3 className="flex items-center gap-2 font-semibold">
-              <span className="h-3.5 w-1 bg-nhan" />
               Tăng trưởng GDP và lạm phát theo năm
             </h3>
             <div className="mt-3">
@@ -207,7 +205,7 @@ async function NoiDung() {
 function LuoiChiTieu({ chuoi }: { chuoi: (ChuoiViMo | null)[] }) {
   const co = chuoi.filter((c): c is ChuoiViMo => c != null);
   return (
-    <div className="mt-4 grid grid-cols-2 border-t border-l border-vien md:grid-cols-4">
+    <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-vien bg-vien md:grid-cols-4">
       {co.map((c) => {
         const { cuoi, truoc } = giaTriCuoi(c);
         if (!cuoi) return null;
@@ -216,7 +214,7 @@ function LuoiChiTieu({ chuoi }: { chuoi: (ChuoiViMo | null)[] }) {
         const doi = !truoc ? null : laPhanTram ? cuoi.gt - truoc.gt : truoc.gt ? (cuoi.gt / truoc.gt - 1) * 100 : null;
         const xuHuong = diemCo(c).slice(-24).map((d) => d.gt);
         return (
-          <div key={c.ma} className="border-r border-b border-vien p-4" title={`Nguồn: ${c.nguon}`}>
+          <div key={c.ma} className="bg-nen p-4" title={`Nguồn: ${c.nguon}`}>
             <p className="line-clamp-2 min-h-[2.5em] text-chu-phu">{c.ten}</p>
             <p className="mt-1 text-lg font-semibold tabular-nums">{dinhDangViMo(cuoi.gt, c.donVi)}</p>
             <p className="text-[11px] text-chu-phu">

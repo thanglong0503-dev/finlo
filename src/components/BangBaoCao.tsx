@@ -35,20 +35,20 @@ export function BangBaoCao({ duLieu }: { duLieu: DuLieuBang }) {
   return (
     <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex max-w-full overflow-x-auto border border-vien">
+        <div className="flex max-w-full gap-1 overflow-x-auto rounded-full bg-nen-noi p-1">
           {duLieu.nhom.map((x) => (
             <button
               key={x.nhom}
               onClick={() => setNhom(x.nhom)}
-              className={`h-9 px-4 font-medium whitespace-nowrap ${
-                nhom === x.nhom ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"
+              className={`h-7 rounded-full px-4 font-medium whitespace-nowrap ${
+                nhom === x.nhom ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"
               }`}
             >
               {TEN_NHOM[x.nhom]}
             </button>
           ))}
         </div>
-        <div className="flex border border-vien">
+        <div className="flex gap-1 rounded-full bg-nen-noi p-1">
           {[
             { nhan: "Quý", nam: false },
             { nhan: "Năm", nam: true },
@@ -56,7 +56,7 @@ export function BangBaoCao({ duLieu }: { duLieu: DuLieuBang }) {
             <button
               key={o.nhan}
               onClick={() => setTheoNam(o.nam)}
-              className={`h-9 px-4 font-medium ${theoNam === o.nam ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
+              className={`h-7 rounded-full px-4 font-medium ${theoNam === o.nam ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
             >
               {o.nhan}
             </button>
@@ -64,7 +64,7 @@ export function BangBaoCao({ duLieu }: { duLieu: DuLieuBang }) {
         </div>
       </div>
 
-      <div className="mt-3 overflow-x-auto border border-vien border-t-2 border-t-nhan">
+      <div className="mt-3 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full min-w-[720px]">
           <thead className="border-b border-vien text-[10px] font-bold tracking-wider text-chu-phu uppercase">
             <tr>

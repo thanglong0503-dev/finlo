@@ -14,7 +14,7 @@ export default function TrangTaiSanSo() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="nhan-muc">Tài sản số</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Giá tài sản số</h1>
+      <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Giá tài sản số</h1>
       <p className="mt-1 text-chu-phu">Giá tham khảo theo USD, quy đổi VND theo tỷ giá bán của Vietcombank.</p>
       <Suspense
         fallback={
@@ -46,7 +46,7 @@ async function NoiDung() {
           // Giá theo bảng vốn hoá mới hơn nến ngày, dùng chung để thẻ và bảng khớp nhau
           const gia = bang.ds.find((x) => x.ma === ts.ma)?.gia ?? ts.gia;
           return (
-            <div key={ts.ma} className="border border-vien p-4">
+            <div key={ts.ma} className="border border-vien p-4 rounded-2xl overflow-hidden">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-semibold">
@@ -74,7 +74,7 @@ async function NoiDung() {
         })}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 border-t border-l border-vien md:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-vien bg-vien md:grid-cols-4">
         {[
           { nhan: "Tổng vốn hoá (top ~1.000)", giaTri: `$${usdGon(bang.tongVonHoa)}` },
           { nhan: "Thị phần Bitcoin", giaTri: thiPhanBtc != null ? `${thiPhanBtc.toFixed(2).replace(".", ",")}%` : "—" },
@@ -90,7 +90,7 @@ async function NoiDung() {
             }),
           },
         ].map((o) => (
-          <div key={o.nhan} className="border-r border-b border-vien p-4">
+          <div key={o.nhan} className="bg-nen p-4">
             <p className="text-chu-phu">{o.nhan}</p>
             <p className="mt-1 text-lg font-semibold tabular-nums">{o.giaTri}</p>
           </div>

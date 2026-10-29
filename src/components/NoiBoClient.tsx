@@ -11,13 +11,13 @@ const ngayVN = (s: string | null) => (s ? s.split("-").reverse().join("/") : "�
 
 function NutLoc<T extends string>({ ds, gt, doi }: { ds: { ma: T; nhan: string }[]; gt: T; doi: (x: T) => void }) {
   return (
-    <div className="flex border border-vien">
+    <div className="flex gap-1 rounded-full bg-nen-noi p-1">
       {ds.map((x) => (
         <button
           key={x.ma}
           onClick={() => doi(x.ma)}
-          className={`h-8 border-r border-vien px-3 text-[12px] font-semibold last:border-r-0 ${
-            gt === x.ma ? "bg-toi text-chu-toi" : "text-chu-phu hover:text-chu"
+          className={`h-7 rounded-full px-3 text-[12px] font-semibold ${
+            gt === x.ma ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"
           }`}
         >
           {x.nhan}
@@ -74,7 +74,7 @@ export function NoiBoClient({ dong }: { dong: GiaoDichNoiBo[] }) {
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto border border-vien">
+      <div className="mt-4 overflow-x-auto border border-vien rounded-2xl">
         <table className="w-full min-w-[860px]">
           <thead>
             <tr className="border-b border-vien text-left text-[12px] text-chu-phu">
@@ -96,7 +96,7 @@ export function NoiBoClient({ dong }: { dong: GiaoDichNoiBo[] }) {
                 </td>
                 <td className="px-3 py-2">
                   <span className="font-medium">{d.ten}</span>
-                  {d.toChuc && <span className="ml-1.5 border border-vien px-1 text-[10px] text-chu-phu">Tổ chức</span>}
+                  {d.toChuc && <span className="ml-1.5 border border-vien px-1 text-[10px] text-chu-phu rounded-md">Tổ chức</span>}
                   {d.chucVu && <span className="block text-[12px] text-chu-phu">{d.chucVu}</span>}
                 </td>
                 <td className="px-3 py-2">
@@ -134,7 +134,7 @@ export function NoiBoClient({ dong }: { dong: GiaoDichNoiBo[] }) {
       {loc.length > soDong && (
         <button
           onClick={() => setSoDong((x) => x + 30)}
-          className="mt-3 h-9 border border-vien px-4 font-semibold hover:border-nhan hover:text-nhan"
+          className="mt-3 h-9 border border-vien px-4 font-semibold hover:border-nhan hover:text-nhan rounded-full"
         >
           Xem thêm ({loc.length - soDong} giao dịch)
         </button>

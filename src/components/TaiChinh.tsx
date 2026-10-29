@@ -94,9 +94,9 @@ export function TaiChinh({
       <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Định giá và hiệu quả</h2>
       <p className="mt-1 text-chu-phu">Tính từ báo cáo 4 quý gần nhất (đến {cs.ky}) và giá hiện tại.</p>
 
-      <dl className="mt-4 grid grid-cols-2 border-t border-l border-vien sm:grid-cols-5">
+      <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-vien bg-vien sm:grid-cols-5">
         {the.map((t) => (
-          <div key={t.nhan} title={t.giaiThich} className="border-r border-b border-vien p-4 hover:bg-nhan-nhat">
+          <div key={t.nhan} title={t.giaiThich} className="bg-nen p-4 hover:bg-nhan-nhat">
             <dt className="text-chu-phu">{t.nhan}</dt>
             <dd
               className={`mt-1 text-lg font-semibold tabular-nums ${
@@ -110,10 +110,9 @@ export function TaiChinh({
         ))}
       </dl>
 
-      <div className="mt-6 border border-vien p-4">
+      <div className="mt-6 border border-vien p-4 rounded-2xl overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="flex items-center gap-2 font-semibold">
-            <span className="h-3.5 w-1 bg-nhan" />
             {nganHang ? "Thu nhập hoạt động" : "Doanh thu thuần"} và lợi nhuận theo quý
           </h3>
           <div className="flex gap-4 text-chu-phu">

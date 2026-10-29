@@ -38,7 +38,7 @@ export function NutTheoDoi({ ma, gon = false }: { ma: string; gon?: boolean }) {
     <button
       onClick={() => batTatTheoDoi(ma)}
       aria-label={nhan}
-      className={`flex h-9 items-center gap-2 border px-3 font-semibold ${
+      className={`flex h-9 items-center gap-2 rounded-full border px-4 font-semibold ${
         dangTheoDoi ? "border-nhan bg-nhan text-white" : "border-nhan text-nhan hover:bg-nhan-nhat"
       }`}
     >

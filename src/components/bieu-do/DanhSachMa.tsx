@@ -110,12 +110,12 @@ export function DanhSachMa({
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
           placeholder="Tìm mã hoặc tên…"
-          className="h-8 min-w-0 flex-1 border border-vien bg-nen px-2 outline-none focus:border-nhan"
+          className="h-8 min-w-0 flex-1 border border-vien bg-nen px-4 outline-none focus:border-nhan rounded-full"
         />
         <button
           onClick={() => setChiTheoDoi((x) => !x)}
           title="Chỉ hiện mã đang theo dõi"
-          className={`h-8 border px-2 text-[12px] font-medium ${
+          className={`h-8 rounded-full border px-3 text-[12px] font-medium ${
             chiTheoDoi ? "border-nhan bg-nhan text-white" : "border-vien text-chu-phu hover:text-chu"
           }`}
         >
