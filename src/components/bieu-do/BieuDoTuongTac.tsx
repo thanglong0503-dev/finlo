@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AreaSeries,
   CandlestickSeries,
   ColorType,
   createChart,
@@ -223,7 +224,7 @@ export function BieuDoTuongTac({
 
     const nc: NguCanh = {
       nguon,
-      mau: { tang, giam, nhan, phu: mauCss("--chu-phu") },
+      mau: { tang, giam, nhan, phu: mauCss("--chu-phu"), chu: mauCss("--chu") },
       dinhGia: giaTriCuaMa,
       noiBo: noiBoCuaMa,
     };
@@ -241,7 +242,10 @@ export function BieuDoTuongTac({
     };
 
     // Tạo series cho từng chỉ báo theo kết quả tính lần đầu; chỉ báo khung riêng mỗi cái một khung
-    type Ve1 = { c: ChiBao; ts: Record<string, number>; series: (ISeriesApi<"Line"> | ISeriesApi<"Histogram">)[] };
+    type MotSeries = ISeriesApi<"Line"> | ISeriesApi<"Histogram"> | ISeriesApi<"Area">;
+    // Mỗi phần vẽ có thể cần nhiều series (vùng tô = hai vùng trên/dưới)
+    type Ve1 = { c: ChiBao; ts: Record<string, number>; series: MotSeries[][] };
+    const khongDoiThang = () => null;
     const dsVe: Ve1[] = [];
     let soKhung = 0;
     let klS: ISeriesApi<"Histogram"> | null = null;
@@ -251,15 +255,37 @@ export function BieuDoTuongTac({
       if (!kq) continue;
       const khungSo = c.khung === "rieng" ? ++soKhung : 0;
       const tyLe = c.khung === "kl" ? { priceScaleId: "kl" } : {};
-      const series = kq.ve.map((v) => {
+      const series = kq.ve.map((v): MotSeries[] => {
+        if (v.loai === "vung") {
+          // Hai vùng tô: dưới đường (rẻ) và trên đường (đắt); không tham gia tính thang giá
+          const vung = (mau: string, tren: boolean) =>
+            chart.addSeries(
+              AreaSeries,
+              {
+                lineVisible: false,
+                lineColor: "transparent",
+                topColor: mau + (tren ? "08" : "38"),
+                bottomColor: mau + (tren ? "38" : "08"),
+                invertFilledArea: tren,
+                priceLineVisible: false,
+                lastValueVisible: false,
+                crosshairMarkerVisible: false,
+                autoscaleInfoProvider: khongDoiThang,
+                // Cùng định dạng với giá để trục và nhãn không bị đổi sang số thô
+                priceFormat: khungSo === 0 ? dinhDangGia : undefined,
+              },
+              khungSo,
+            );
+          return [vung(v.mauDuoi, false), vung(v.mauTren, true)];
+        }
         const dd = v.dinhDang === "gia" ? dinhDangGia : dinhDangKhac(v.dinhDang);
         if (v.loai === "cot")
-          return chart.addSeries(
+          return [chart.addSeries(
             HistogramSeries,
             { priceLineVisible: false, lastValueVisible: c.khung === "rieng", priceFormat: dd, ...tyLe },
             khungSo,
-          );
-        return chart.addSeries(
+          )];
+        return [chart.addSeries(
           LineSeries,
           {
             color: v.mau,
@@ -269,23 +295,26 @@ export function BieuDoTuongTac({
             pointMarkersVisible: !!v.chiCham,
             pointMarkersRadius: 1.5,
             priceLineVisible: false,
-            lastValueVisible: c.khung === "rieng",
+            lastValueVisible: c.khung === "rieng" || !!v.nhan,
+            title: v.nhan ?? "",
             crosshairMarkerVisible: false,
             priceFormat: dd,
             ...tyLe,
           },
           khungSo,
-        );
+        )];
       });
       if (c.khung === "kl") {
         chart.priceScale("kl").applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
-        klS = series[0] as ISeriesApi<"Histogram">;
+        klS = series[0][0] as ISeriesApi<"Histogram">;
       }
       for (const m of kq.muc ?? [])
-        series[0]?.createPriceLine({ price: m.gia, color: m.mau, lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: false });
+        series[0]?.[0]?.createPriceLine({ price: m.gia, color: m.mau, lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: false });
       dsVe.push({ c, ts: tsC, series });
     }
     klSeries.current = klS;
+    // Nến luôn vẽ trên cùng (đè lên vùng tô và đường chỉ báo)
+    nen.setSeriesOrder(chart.panes()[0].getSeries().length - 1);
     // Khung giá chiếm phần lớn, mỗi khung chỉ báo khoảng 1/4
     chart.panes().forEach((p, i) => p.setStretchFactor(i === 0 ? 1 : 0.28));
 
@@ -318,8 +347,13 @@ export function BieuDoTuongTac({
         const kq = c.tinh(ds, ts, nc);
         if (!kq) continue;
         kq.ve.forEach((v, i) => {
-          const s = series[i];
-          if (!s) return;
+          const nhom = series[i];
+          if (!nhom) return;
+          const s = nhom[0];
+          if (v.loai === "vung") {
+            for (const x of nhom) x.setData(duong(ds, v.gt));
+            return;
+          }
           if (v.loai === "cot")
             s.setData(
               ds.flatMap((x, j) => (v.gt[j] == null ? [] : [{ time: x.time as UTCTimestamp, value: v.gt[j]!, color: v.mau(v.gt[j]!, j) }])),
@@ -451,11 +485,33 @@ export function BieuDoTuongTac({
   };
 
   const soKhungPhu = chiBao.filter((c) => c.khung === "rieng").length;
-  // Tóm tắt FL Giá trị cho nhãn góc phải biểu đồ
+  // Tóm tắt FL Giá trị cho dòng chú thích trên biểu đồ
   const tomTatGiaTri = useMemo(
     () => (batGiaTri && nenGoc && giaTriCuaMa ? flGiaTri(nenGoc, giaTriCuaMa.moc, giaTriCuaMa.loai, giaTriCuaMa.peNganh) : null),
     [batGiaTri, nenGoc, giaTriCuaMa],
   );
+  // Câu tóm tắt kiểu "giá hôm nay rẻ hơn X% số phiên trong N năm qua" cho FL Giá trị
+  const camNhanGiaTri = useMemo(() => {
+    const g = tomTatGiaTri;
+    if (!g || g.diem == null || !nenGoc || !giaTriCuaMa) return null;
+    const i = nenGoc.length - 1;
+    const re = g.re[i];
+    const thuongLe = re != null ? (re * g.p50) / g.p20 : null;
+    const dauTien = Math.min(...giaTriCuaMa.moc.map((m) => m.tu));
+    const soNam = Math.max(1, Math.round((nenGoc[i].time - Math.max(dauTien, nenGoc[0].time)) / (365 * 86400)));
+    return {
+      thuoc: g.thuoc,
+      soVoi: g.thuoc === "P/E" ? "so với lợi nhuận" : "so với tài sản",
+      re: g.diem < 50,
+      phanTram: Math.round(g.diem < 50 ? 100 - g.diem : g.diem),
+      soNam,
+      thuongLe,
+      chenh: thuongLe ? (nenGoc[i].close / thuongLe - 1) * 100 : null,
+      boiNay: g.boiNay,
+      p50: g.p50,
+      peNganh: g.peNganh,
+    };
+  }, [tomTatGiaTri, nenGoc, giaTriCuaMa]);
   const cuoi = nenGoc?.[nenGoc.length - 1];
   const hien = chuThich ?? (cuoi ? { nen: cuoi, phanTram: null, gt: [] } : null);
   const giaHien = (x: number) =>
@@ -491,27 +547,6 @@ export function BieuDoTuongTac({
 
       {/* Biểu đồ giãn hết chiều cao còn lại; màn hình nhỏ (không giới hạn chiều cao) dùng chiều cao tối thiểu */}
       <div className="relative min-h-0 flex-1" style={{ minHeight: 440 + soKhungPhu * 120 }}>
-        {tomTatGiaTri && tomTatGiaTri.diem != null && (
-          <div className="pointer-events-none absolute top-1 right-16 z-10 hidden rounded-lg border border-nhan bg-nen/90 px-2 py-1 text-[11px] tabular-nums sm:block">
-            <p className="font-semibold text-nhan">FL Giá trị · {tomTatGiaTri.thuoc}</p>
-            <p>
-              {tomTatGiaTri.thuoc} hiện tại <b>{tomTatGiaTri.boiNay?.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}</b>
-              {" · "}trung vị {tomTatGiaTri.p50.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}
-              {tomTatGiaTri.peNganh != null && <> · ngành {tomTatGiaTri.peNganh.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}</>}
-            </p>
-            <p>
-              Đắt hơn <b>{Math.round(tomTatGiaTri.diem)}%</b> lịch sử
-              {tomTatGiaTri.chenh != null && (
-                <>
-                  {" · "}
-                  <b className={tomTatGiaTri.chenh < 0 ? "text-tang" : "text-giam"}>
-                    {tomTatGiaTri.chenh < 0 ? "thấp" : "cao"} hơn hợp lý {Math.abs(tomTatGiaTri.chenh).toFixed(0)}%
-                  </b>
-                </>
-              )}
-            </p>
-          </div>
-        )}
         {hien && (
           <div className="pointer-events-none absolute top-1 left-2 z-10 flex max-w-[calc(100%-80px)] flex-wrap gap-x-3 gap-y-0.5 text-[12px] tabular-nums">
             <span className="text-chu-phu">
@@ -554,6 +589,49 @@ export function BieuDoTuongTac({
                 {g.giaTri}
               </span>
             ))}
+            {camNhanGiaTri && (
+              <span className="mt-1 flex basis-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-vien bg-nen/85 px-3 py-1.5 text-[12px] backdrop-blur-sm">
+                <span className="font-semibold">
+                  FL Giá trị · {camNhanGiaTri.thuoc} <span className="font-normal text-chu-phu">{camNhanGiaTri.soVoi}</span>
+                </span>
+                <span>
+                  Giá hôm nay{" "}
+                  {camNhanGiaTri.phanTram >= 99 ? (
+                    <>
+                      <b className={camNhanGiaTri.re ? "text-tang" : "text-giam"}>{camNhanGiaTri.re ? "rẻ nhất" : "đắt nhất"}</b> trong{" "}
+                      {camNhanGiaTri.soNam} năm qua
+                    </>
+                  ) : (
+                    <>
+                      <b className={camNhanGiaTri.re ? "text-tang" : "text-giam"}>
+                        {camNhanGiaTri.re ? "rẻ" : "đắt"} hơn {camNhanGiaTri.phanTram}%
+                      </b>{" "}
+                      số phiên trong {camNhanGiaTri.soNam} năm qua
+                    </>
+                  )}
+                </span>
+                {camNhanGiaTri.thuongLe != null && camNhanGiaTri.chenh != null && (
+                  <span className="text-chu-phu">
+                    Thường lệ <b className="text-chu">{giaHien(camNhanGiaTri.thuongLe)}</b> (
+                    <span className={camNhanGiaTri.chenh < 0 ? "text-tang" : "text-giam"}>
+                      {camNhanGiaTri.chenh > 0 ? "+" : ""}
+                      {camNhanGiaTri.chenh.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%
+                    </span>
+                    ) · {camNhanGiaTri.thuoc} {camNhanGiaTri.boiNay?.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}, trung vị{" "}
+                    {camNhanGiaTri.p50.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}
+                    {camNhanGiaTri.peNganh != null && <>, ngành {camNhanGiaTri.peNganh.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}</>}
+                  </span>
+                )}
+                <span className="flex items-center gap-3 text-chu-phu">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-tang/40" /> rẻ so với chính {ma}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-giam/40" /> đắt so với chính {ma}
+                  </span>
+                </span>
+              </span>
+            )}
           </div>
         )}
         {loi ? (

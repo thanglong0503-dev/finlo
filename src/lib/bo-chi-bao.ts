@@ -62,9 +62,12 @@ export type Ve =
       rong?: 1 | 2 | 3;
       net?: "lien" | "dut" | "cham";
       chiCham?: boolean; // vẽ thành chấm rời (Parabolic SAR)
+      nhan?: string; // hiện nhãn tên + giá trị cuối trên trục giá
       dinhDang: DinhDang;
     }
-  | { loai: "cot"; ten: string; gt: Chuoi; mau: (v: number, i: number) => string; dinhDang: DinhDang };
+  | { loai: "cot"; ten: string; gt: Chuoi; mau: (v: number, i: number) => string; dinhDang: DinhDang }
+  // Tô nền phía trên đường (mauTren) và phía dưới đường (mauDuoi) tới mép khung, không làm đổi thang giá
+  | { loai: "vung"; ten: string; gt: Chuoi; mauTren: string; mauDuoi: string };
 
 export type Moc = { time: number; len: boolean; mau: string; chu: string };
 
@@ -75,7 +78,7 @@ export type KetQuaChiBao = {
   moc?: Moc[];
 };
 
-export type MauChiBao = { tang: string; giam: string; nhan: string; phu: string };
+export type MauChiBao = { tang: string; giam: string; nhan: string; phu: string; chu: string };
 
 export type NguCanh = {
   nguon: "ck" | "ts";
@@ -672,17 +675,20 @@ export const CHI_BAO: ChiBao[] = [
     finlo: true,
     chiCoPhieu: true,
     can: "dinh-gia",
-    moTa: "Hai đường đứt: mức rẻ / đắt theo lịch sử bội số (P/E hoặc P/B) của chính mã. Đường liền: giá trị hợp lý FL, trộn trung vị của mã với của ngành. Chỉ dùng báo cáo đã công bố tại từng thời điểm.",
+    moTa: "Mức giá thường lệ của chính mã theo lịch sử bội số (P/E, hoặc P/B với ngân hàng, chứng khoán, bảo hiểm, doanh nghiệp lỗ). Nền xanh là vùng rẻ, nền hồng là vùng đắt so với chính mã; hai đường chấm là mép rẻ (P20) và đắt (P80). Chỉ dùng báo cáo đã công bố tại từng phiên.",
     thamSo: [],
     tinh: (nen, _ts, nc) => {
       if (!nc.dinhGia) return null;
       const g = flGiaTri(nen, nc.dinhGia.moc, nc.dinhGia.loai, nc.dinhGia.peNganh);
       if (!g) return null;
+      // Mức thường lệ = trung vị bội số của chính mã nhân EPS/BVPS hiện hành (re = neo × P20)
+      const thuongLe = g.re.map((v) => (v == null ? null : (v * g.p50) / g.p20));
       return {
         ve: [
-          { loai: "duong", ten: "FL Lịch sử đắt", gt: g.dat, mau: nc.mau.giam, rong: 1, net: "dut", dinhDang: "gia" },
-          { loai: "duong", ten: "FL Hợp lý", gt: g.hopLy, mau: nc.mau.nhan, rong: 2, dinhDang: "gia" },
-          { loai: "duong", ten: "FL Lịch sử rẻ", gt: g.re, mau: nc.mau.tang, rong: 1, net: "dut", dinhDang: "gia" },
+          { loai: "vung", ten: "Vùng định giá", gt: thuongLe, mauTren: nc.mau.giam, mauDuoi: nc.mau.tang },
+          { loai: "duong", ten: "Đắt (P80)", gt: g.dat, mau: nc.mau.giam, rong: 1, net: "cham", nhan: "Đắt", dinhDang: "gia" },
+          { loai: "duong", ten: "Thường lệ", gt: thuongLe, mau: nc.mau.chu, rong: 2, nhan: "Thường lệ", dinhDang: "gia" },
+          { loai: "duong", ten: "Rẻ (P20)", gt: g.re, mau: nc.mau.tang, rong: 1, net: "cham", nhan: "Rẻ", dinhDang: "gia" },
         ],
       };
     },
@@ -708,6 +714,46 @@ export const CHI_BAO: ChiBao[] = [
     moTa: "Giá / giá trị sổ sách mỗi cổ phiếu tại từng phiên, kèm trung vị và vùng rẻ/đắt. Hợp cho ngân hàng, chứng khoán.",
     thamSo: [],
     tinh: boiSoLichSu("P/B", "bvps"),
+  },
+  {
+    ma: "gia-vs-ln",
+    ten: "Giá vs Lợi nhuận",
+    nhom: "dinh-gia",
+    khung: "rieng",
+    chiCoPhieu: true,
+    can: "dinh-gia",
+    moTa: "Đưa giá và lợi nhuận mỗi cổ phiếu (4 quý) về cùng mốc 100 từ N năm trước. Giá chạy trước lợi nhuận quá xa là đang được kỳ vọng cao; tụt lại phía sau là đang bị định giá thấp đi.",
+    thamSo: [{ khoa: "nam", nhan: "Số năm", macDinh: 5, min: 1, max: 20 }],
+    tenNgan: (ts) => `Giá vs LN ${ts.nam} năm`,
+    tinh: (nen, ts, nc) => {
+      if (!nc.dinhGia || nen.length === 0) return null;
+      const moc = [...nc.dinhGia.moc].sort((a, b) => a.tu - b.tu);
+      const tu = nen[nen.length - 1].time - ts.nam * 365 * 86400;
+      let j = -1;
+      const eps = nen.map((x) => {
+        while (j + 1 < moc.length && moc[j + 1].tu <= x.time) j++;
+        return j >= 0 ? moc[j].eps : null;
+      });
+      // Mốc 100: phiên đầu tiên trong khoảng xét có EPS dương
+      const dau = nen.findIndex((x, i) => x.time >= tu && eps[i] != null && eps[i]! > 0);
+      if (dau < 0) return null;
+      const g0 = nen[dau].close;
+      const e0 = eps[dau]!;
+      return {
+        ve: [
+          { loai: "duong", ten: "Giá", gt: nen.map((x, i) => (i < dau ? null : (x.close / g0) * 100)), mau: "#3b82f6", nhan: "Giá", dinhDang: "so" },
+          {
+            loai: "duong",
+            ten: "Lợi nhuận/CP",
+            gt: eps.map((e, i) => (i < dau || e == null ? null : (e / e0) * 100)),
+            mau: nc.mau.nhan,
+            nhan: "LN/CP",
+            dinhDang: "so",
+          },
+        ],
+        muc: [{ gia: 100, mau: nc.mau.phu }],
+      };
+    },
   },
   {
     ma: "noi-bo",
@@ -750,5 +796,5 @@ export const BO_MAU: { ten: string; moTa: string; ds: string[] }[] = [
   { ten: "Dòng tiền", moTa: "Khối lượng, OBV, MFI, CMF", ds: ["kl", "obv", "mfi", "cmf"] },
   { ten: "Theo sóng", moTa: "SuperTrend, Ichimoku, ADX", ds: ["supertrend", "ichimoku", "adx", "kl"] },
   { ten: "Bộ Finlo", moTa: "Các chỉ báo riêng của Finlo", ds: ["fl-vung-gia", "fl-ht-kc", "fl-xu-huong", "fl-dong-tien", "kl"] },
-  { ten: "Định giá", moTa: "FL Giá trị, P/E lịch sử, nội bộ", ds: ["fl-gia-tri", "pe", "noi-bo", "kl"] },
+  { ten: "Định giá", moTa: "FL Giá trị, Giá vs Lợi nhuận, P/E lịch sử, nội bộ", ds: ["fl-gia-tri", "gia-vs-ln", "pe", "noi-bo", "kl"] },
 ];

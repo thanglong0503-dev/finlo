@@ -10,6 +10,7 @@ const TAB = [
   { duoi: "/ky-thuat", nhan: "Phân tích kỹ thuật" },
   { duoi: "/so-sanh", nhan: "So sánh ngành" },
   { duoi: "/noi-bo", nhan: "Giao dịch nội bộ" },
+  { duoi: "/gia-dinh", nhan: "Giả định đầu tư" },
 ];
 
 // Thanh tab của trang mã: dính dưới header khi cuộn, cuộn ngang trên màn hình hẹp
