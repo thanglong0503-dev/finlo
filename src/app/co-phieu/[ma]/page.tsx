@@ -3,44 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BieuDoNen } from "@/components/BieuDoNen";
-import { BangMo, KhoiMo } from "@/components/KhungCho";
-import { NutTheoDoi } from "@/components/NutTheoDoi";
-import { TimMa } from "@/components/TimMa";
-import {
-  giaNghin,
-  khoiLuong,
-  mauGia,
-  phanTram,
-  soNguyen,
-  thayDoi,
-  trieuDong,
-  tyDong,
-  vonHoa,
-} from "@/lib/dinh-dang";
-import { NhanPhien } from "@/components/NhanPhien";
-import { TaiChinh } from "@/components/TaiChinh";
-import { layBangGia, layBaoCao, layHoSo, layNen, layNganh, layTin } from "@/lib/mofi";
-
-// Báo cáo tài chính tải riêng để biểu đồ giá hiện ra trước; mã không có báo cáo thì ẩn phần này
-async function PhanTaiChinh({
-  ma,
-  gia,
-  soCoPhieu,
-  peNganh,
-}: {
-  ma: string;
-  gia: number;
-  soCoPhieu: number | null;
-  peNganh: number | null;
-}) {
-  const bc = await layBaoCao(ma);
-  if (!bc || bc.quy.length === 0) return null;
-  return <TaiChinh bc={bc} gia={gia} soCoPhieu={soCoPhieu} peNganh={peNganh} />;
-}
+import { KhoiMo, LuoiMo } from "@/components/KhungCho";
+import { TomTat } from "@/components/TomTatMa";
+import { giaNghin, khoiLuong, trieuDong, tyDong, vonHoa } from "@/lib/dinh-dang";
+import { layBangGia, layNen, layNganh, layTin } from "@/lib/mofi";
 
 export async function generateMetadata({ params }: PageProps<"/co-phieu/[ma]">): Promise<Metadata> {
   const { ma } = await params;
-  return { title: `${ma.toUpperCase()} — Giá cổ phiếu` };
+  return { title: `${ma.toUpperCase()} — Tổng quan cổ phiếu` };
 }
 
 // params chỉ có khi có request, nên phần nội dung được stream sau khung trang
@@ -48,20 +18,9 @@ export default function TrangCoPhieu({ params }: PageProps<"/co-phieu/[ma]">) {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-6xl px-4 py-8">
-          <KhoiMo className="h-3 w-20" />
-          <div className="mt-6 flex justify-between border-b border-vien pb-5">
-            <div>
-              <KhoiMo className="h-3 w-28" />
-              <KhoiMo className="mt-3 h-8 w-24" />
-              <KhoiMo className="mt-2 h-3 w-56" />
-            </div>
-            <KhoiMo className="h-10 w-28" />
-          </div>
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
-            <KhoiMo className="h-[470px]" />
-            <KhoiMo className="h-[470px]" />
-          </div>
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 pt-6 lg:grid-cols-[1fr_300px]">
+          <KhoiMo className="h-[470px]" />
+          <KhoiMo className="h-[470px]" />
         </div>
       }
     >
@@ -76,9 +35,8 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   const cp = bangGia.coPhieu.find((c) => c.ma === ma);
   if (!cp) notFound();
 
-  const [nen, hoSo, nganh, tinTuc] = await Promise.all([
+  const [nen, nganh, tinTuc] = await Promise.all([
     layNen(ma),
-    layHoSo(ma),
     layNganh().catch(() => null),
     layTin().catch(() => null),
   ]);
@@ -121,67 +79,9 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
     { nhan: "Đáy 52 tuần", giaTri: giaNghin(day) },
   ];
 
-  const doanhNghiep = hoSo
-    ? [
-        { nhan: "Sàn", giaTri: cp.san },
-        { nhan: "Ngành", giaTri: tenNganh ?? "—" },
-        { nhan: "Vốn điều lệ", giaTri: hoSo.vonDieuLe ? tyDong(hoSo.vonDieuLe) : "—" },
-        { nhan: "CP lưu hành", giaTri: hoSo.soCoPhieu ? soNguyen(hoSo.soCoPhieu) : "—" },
-        {
-          nhan: "Ngày GD đầu tiên",
-          giaTri: hoSo.ngayGiaoDichDau ? new Date(hoSo.ngayGiaoDichDau).toLocaleDateString("vi-VN") : "—",
-        },
-        { nhan: "Lãnh đạo", giaTri: hoSo.lanhDao ?? "—" },
-      ].filter((ct) => ct.giaTri !== "—")
-    : [];
-
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href="/bang-gia" className="text-chu-phu hover:text-chu">
-          ← Bảng giá
-        </Link>
-        <div className="flex w-full items-center gap-3 sm:w-auto">
-          <Link
-            href={`/bieu-do?loai=ck&ma=${cp.ma}`}
-            className="flex h-9 shrink-0 items-center bg-nhan px-3 font-semibold text-white hover:brightness-110"
-          >
-            Biểu đồ kỹ thuật
-          </Link>
-          <TimMa className="min-w-0 flex-1 sm:w-80" />
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-b border-vien pb-5">
-        <div>
-          <p className="nhan-muc">
-            {cp.san} ·{" "}
-            {khoaNganh ? (
-              <Link href={`/nganh/${khoaNganh}`} className="hover:underline">
-                {tenNganh}
-              </Link>
-            ) : (
-              (tenNganh ?? "Cổ phiếu")
-            )}
-          </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-[-0.03em]">{cp.ma}</h1>
-          <p className="mt-1 text-[15px] text-chu-phu">{cp.ten}</p>
-        </div>
-        <div className="flex items-end gap-5">
-          <NutTheoDoi ma={cp.ma} />
-          <div className="text-right">
-            <div className={`text-3xl font-bold tabular-nums ${mauGia(cp)}`}>{giaNghin(cp.gia)}</div>
-            <div className={`tabular-nums ${mauGia(cp)}`}>
-              {thayDoi(cp.thayDoi / 1000)} ({phanTram(cp.phanTram)})
-            </div>
-            <div className="mt-1 text-[12px]">
-              <NhanPhien phien={bangGia.phien} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
+    <div className="mx-auto max-w-6xl px-4 pt-6 pb-10">
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="border border-vien p-4">
           <BieuDoNen nen={nen} />
         </div>
@@ -202,8 +102,8 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
         </div>
       </div>
 
-      <Suspense fallback={<BangMo dong={8} />}>
-        <PhanTaiChinh ma={cp.ma} gia={cp.gia} soCoPhieu={hoSo?.soCoPhieu ?? null} peNganh={peNganh} />
+      <Suspense fallback={<LuoiMo so={4} />}>
+        <TomTat ma={cp.ma} nen={nen} vonHoa={cp.vonHoa} peNganh={peNganh} tenNganh={tenNganh ?? null} />
       </Suspense>
 
       {tinMa.length > 0 && (
@@ -224,39 +124,6 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
           <Link href="/tin-tuc" className="mt-2 inline-block font-medium text-nhan hover:underline">
             Tất cả tin doanh nghiệp →
           </Link>
-        </section>
-      )}
-
-      {hoSo && (
-        <section className="mt-8">
-          <p className="nhan-muc">Hồ sơ doanh nghiệp</p>
-          <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">{cp.ten}</h2>
-          <dl className="mt-4 grid border-t border-l border-vien sm:grid-cols-2 lg:grid-cols-3">
-            {doanhNghiep.map((ct) => (
-              <div key={ct.nhan} className="border-r border-b border-vien p-4">
-                <dt className="text-chu-phu">{ct.nhan}</dt>
-                <dd className="mt-1 font-semibold tabular-nums">{ct.giaTri}</dd>
-              </div>
-            ))}
-          </dl>
-          {(hoSo.diaChi || hoSo.website) && (
-            <p className="mt-3 text-chu-phu">
-              {hoSo.diaChi}
-              {hoSo.website && (
-                <>
-                  {" · "}
-                  <a
-                    href={hoSo.website.startsWith("http") ? hoSo.website : `https://${hoSo.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-nhan hover:underline"
-                  >
-                    {hoSo.website}
-                  </a>
-                </>
-              )}
-            </p>
-          )}
         </section>
       )}
 

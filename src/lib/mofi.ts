@@ -782,3 +782,88 @@ export async function layTin(): Promise<{ capNhat: string; tin: TinDoanhNghiep[]
   tin.sort((a, b) => b.ngay.localeCompare(a.ngay) || a.ma.localeCompare(b.ma));
   return { capNhat: tho.meta.asOf, tin };
 }
+
+// ---- Hồ sơ doanh nghiệp: kết quả kinh doanh, vốn điều lệ, cổ tức theo năm (đồng) ----
+
+export type ChiTieuNam = { khoa: string; nhan: string; gt: number };
+
+export type HoSoDoanhNghiep = {
+  loai: string;
+  nguon: string | null;
+  kinhDoanh: { nam: number; chiTieu: ChiTieuNam[] }[];
+  coCauDoanhThu: { nam: number; phan: { nhan: string; gt: number }[] }[];
+  vonDieuLe: { nam: number; gt: number }[];
+  coTuc: { nam: number; gt: number }[];
+};
+
+export async function layHoSoDoanhNghiep(ma: string): Promise<HoSoDoanhNghiep | null> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<{
+    loai: string;
+    nguon?: string;
+    doanhThu?: { nam: number; phan: { nhan: string; gt: number }[] }[];
+    mach?: { nam: number; so: Record<string, { gt: number; nhan: string }> }[];
+    von?: { nam: number; gt: number }[];
+    coTuc?: { nam: number; gt: number }[];
+  }>(`financial/ho-so/${encodeURIComponent(ma)}.json`).catch(() => null);
+  if (!tho) return null;
+  return {
+    loai: tho.loai,
+    nguon: tho.nguon ?? null,
+    kinhDoanh: (tho.mach ?? []).map((x) => ({
+      nam: x.nam,
+      chiTieu: Object.entries(x.so)
+        .filter(([, v]) => typeof v?.gt === "number")
+        .map(([khoa, v]) => ({ khoa, nhan: v.nhan, gt: v.gt })),
+    })),
+    coCauDoanhThu: tho.doanhThu ?? [],
+    vonDieuLe: tho.von ?? [],
+    coTuc: tho.coTuc ?? [],
+  };
+}
+
+// ---- Giao dịch của người nội bộ và cổ đông lớn ----
+
+export type GiaoDichNoiBo = {
+  ngay: string;
+  congBo: string | null;
+  ten: string;
+  chucVu: string | null;
+  toChuc: boolean;
+  mua: boolean;
+  soCp: number;
+  daXong: boolean;
+  trangThai: string;
+  cpTruoc: number | null;
+  cpSau: number | null;
+  tyLeSau: number | null; // phần của 1
+  giaTri: number | null; // đồng, ước tính theo giá đóng cửa
+};
+
+export async function layNoiBo(ma: string): Promise<{ capNhat: string; ghiChu: string | null; dong: GiaoDichNoiBo[] } | null> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<{ capNhat: string; ghiChu?: string; dong: GiaoDichNoiBo[] }>(
+    `noi-bo/${encodeURIComponent(ma)}.json`,
+  ).catch(() => null);
+  if (!tho) return null;
+  const dong = tho.dong.map((d) => ({
+    ngay: d.ngay,
+    congBo: d.congBo ?? null,
+    ten: d.ten,
+    chucVu: d.chucVu ?? null,
+    toChuc: !!d.toChuc,
+    mua: !!d.mua,
+    soCp: d.soCp,
+    daXong: !!d.daXong,
+    trangThai: d.trangThai,
+    cpTruoc: d.cpTruoc ?? null,
+    cpSau: d.cpSau ?? null,
+    tyLeSau: d.tyLeSau ?? null,
+    giaTri: d.giaTri ?? null,
+  }));
+  // Mới nhất trước; cùng ngày thì giao dịch đã thực hiện đứng trước lệnh đăng ký
+  dong.sort((a, b) => b.ngay.localeCompare(a.ngay) || Number(b.daXong) - Number(a.daXong));
+  return { capNhat: tho.capNhat, ghiChu: tho.ghiChu ?? null, dong };
+}
