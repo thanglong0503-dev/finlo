@@ -35,7 +35,7 @@ export function ema(gt: number[], n: number): Chuoi {
 }
 
 // EMA trên chuỗi có null ở đầu (dùng cho đường tín hiệu MACD)
-function emaChuoi(gt: Chuoi, n: number): Chuoi {
+export function emaChuoi(gt: Chuoi, n: number): Chuoi {
   const dau = gt.findIndex((x) => x != null);
   if (dau < 0) return gt.map(() => null);
   const phan = ema(gt.slice(dau) as number[], n);
