@@ -16,7 +16,7 @@ export const NHOM_MENU: NhomMenu[] = [
       { href: "/vi-mo", nhan: "Lãi suất & Vĩ mô", moTa: "Lãi suất tiết kiệm, liên ngân hàng, GDP, CPI", tuKhoa: "lai suat tiet kiem gdp cpi lam phat ty gia vi mo" },
       { href: "/bao-chi", nhan: "Tin báo chí", moTa: "CafeF, Vietstock, VnEconomy, gắn mã liên quan", tuKhoa: "tin tuc bao chi cafef vietstock phan tich" },
       { href: "/tin-tuc", nhan: "Tin công bố", moTa: "Cổ tức, giao dịch cổ đông lớn, nhân sự", tuKhoa: "tin tuc cong bo co tuc" },
-      { href: "/lich-su-kien", nhan: "Lịch sự kiện", moTa: "Nghỉ lễ, đáo hạn phái sinh, cổ tức, đại hội cổ đông", tuKhoa: "lich su kien co tuc dai hoi dao han nghi le" },
+      { href: "/lich-su-kien", nhan: "Lịch sự kiện", moTa: "Nghỉ lễ, cổ tức, đại hội; họp FED, CPI Mỹ, halving", tuKhoa: "lich su kien co tuc dai hoi dao han nghi le fed fomc cpi lai suat halving quyen chon crypto" },
     ],
   },
   {

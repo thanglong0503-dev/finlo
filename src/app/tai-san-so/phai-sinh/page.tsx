@@ -41,6 +41,9 @@ export default function TrangPhaiSinh() {
         Đòn bẩy trên thị trường đang ở mức nào: funding, Open Interest, tỷ lệ Long/Short và thanh lý theo thời gian thực từ Binance
         Futures, sàn phái sinh tiền số lớn nhất.
       </p>
+      <Link href="/lich-su-kien?nhom=quoc-te" className="mt-3 inline-block text-[14px] font-semibold text-nhan hover:underline">
+        Lịch họp FED, CPI Mỹ, đáo hạn quyền chọn và halving →
+      </Link>
 
       <PhaiSinhTienSo />
 

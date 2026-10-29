@@ -3,19 +3,26 @@
 
 import { laNgayGiaoDich, NGAY_NGHI } from "@/lib/lich-nghi";
 import type { TinDoanhNghiep } from "@/lib/mofi";
+import { suKienQuocTe } from "@/lib/su-kien-the-gioi";
 
-export type LoaiSuKien = "nghi" | "phai-sinh" | "bctc" | "etf" | "co-tuc" | "dai-hoi" | "kqkd";
+export type LoaiSuKien = "nghi" | "phai-sinh" | "bctc" | "etf" | "co-tuc" | "dai-hoi" | "kqkd" | "fomc" | "cpi" | "quyen-chon" | "halving";
 
-export type SuKien = { ngay: string; loai: LoaiSuKien; tieuDe: string; ma?: string; duKien?: boolean; ghiChu?: string };
+// gio: giờ Việt Nam (HH:MM) cho sự kiện quốc tế có giờ cụ thể
+export type SuKien = { ngay: string; loai: LoaiSuKien; tieuDe: string; ma?: string; duKien?: boolean; ghiChu?: string; gio?: string };
 
-export const LOAI_SU_KIEN: { ma: LoaiSuKien; ten: string; mau: string }[] = [
-  { ma: "co-tuc", ten: "Cổ tức & quyền", mau: "#19c26b" },
-  { ma: "dai-hoi", ten: "Đại hội cổ đông", mau: "#3b82f6" },
-  { ma: "kqkd", ten: "Kết quả kinh doanh", mau: "#a855f7" },
-  { ma: "bctc", ten: "Hạn báo cáo tài chính", mau: "#14b8a6" },
-  { ma: "phai-sinh", ten: "Đáo hạn phái sinh", mau: "#e3a008" },
-  { ma: "etf", ten: "Cơ cấu ETF", mau: "#f97316" },
-  { ma: "nghi", ten: "Nghỉ lễ", mau: "#f0506e" },
+export type NhomSuKien = "vn" | "quoc-te";
+export const LOAI_SU_KIEN: { ma: LoaiSuKien; ten: string; mau: string; nhom: NhomSuKien }[] = [
+  { ma: "co-tuc", ten: "Cổ tức & quyền", mau: "#19c26b", nhom: "vn" },
+  { ma: "dai-hoi", ten: "Đại hội cổ đông", mau: "#3b82f6", nhom: "vn" },
+  { ma: "kqkd", ten: "Kết quả kinh doanh", mau: "#a855f7", nhom: "vn" },
+  { ma: "bctc", ten: "Hạn báo cáo tài chính", mau: "#14b8a6", nhom: "vn" },
+  { ma: "phai-sinh", ten: "Đáo hạn phái sinh", mau: "#e3a008", nhom: "vn" },
+  { ma: "etf", ten: "Cơ cấu ETF", mau: "#f97316", nhom: "vn" },
+  { ma: "nghi", ten: "Nghỉ lễ", mau: "#f0506e", nhom: "vn" },
+  { ma: "fomc", ten: "Lãi suất FED", mau: "#e879f9", nhom: "quoc-te" },
+  { ma: "cpi", ten: "Lạm phát Mỹ (CPI)", mau: "#38bdf8", nhom: "quoc-te" },
+  { ma: "quyen-chon", ten: "Đáo hạn quyền chọn BTC/ETH", mau: "#facc15", nhom: "quoc-te" },
+  { ma: "halving", ten: "Halving Bitcoin", mau: "#fb923c", nhom: "quoc-te" },
 ];
 
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
@@ -77,6 +84,7 @@ export function suKienLich(tu: string, den: string): SuKien[] {
     kq.push({ ngay: `${nam}-03-31`, loai: "bctc", tieuDe: `Hạn BCTC năm ${nam - 1} đã kiểm toán`, ghiChu: "90 ngày sau khi kết thúc năm tài chính." });
     kq.push({ ngay: `${nam}-08-14`, loai: "bctc", tieuDe: `Hạn BCTC bán niên ${nam} đã soát xét`, ghiChu: "45 ngày sau khi kết thúc 6 tháng đầu năm." });
   }
+  kq.push(...suKienQuocTe(tu, den));
   for (const n of NGAY_NGHI)
     kq.push({ ngay: n.ngay, loai: "nghi", tieuDe: `Nghỉ giao dịch: ${n.ten}`, duKien: n.duKien });
   return kq.filter((s) => s.ngay >= tu && s.ngay <= den);

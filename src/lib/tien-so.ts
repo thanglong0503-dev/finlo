@@ -162,3 +162,19 @@ export async function layMuaAltcoin(dsMa: string[]): Promise<MuaAltcoin | null> 
   const vuot = top.filter((x) => x.p90 > btc).sort((a, b) => b.p90 - a.p90);
   return { diem: Math.round((vuot.length / top.length) * 100), soVuot: vuot.length, soXet: top.length, btc90: btc, vuot: vuot.slice(0, 8) };
 }
+
+// Độ cao khối Bitcoin hiện tại (mempool.space) để đếm ngược halving; khối mới ~10 phút nên lưu đệm theo giờ là đủ
+export async function layKhoiBitcoin(): Promise<{ khoi: number; luc: number } | null> {
+  "use cache";
+  cacheLife("hours");
+  try {
+    const r = await fetch("https://mempool.space/api/blocks/tip/height", {
+      signal: AbortSignal.timeout(8000),
+      headers: { "user-agent": "FinloBot/1.0 (+https://www.finlo.id.vn)" },
+    });
+    const khoi = Number(await r.text());
+    return r.ok && khoi > 0 ? { khoi, luc: Date.now() } : null;
+  } catch {
+    return null;
+  }
+}
