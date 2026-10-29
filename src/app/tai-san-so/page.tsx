@@ -7,6 +7,8 @@ import { BieuDoTienSo } from "@/components/BieuDoTienSo";
 import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { giaUsd, mauTangGiam, phanTram, usdGon, vnd } from "@/lib/dinh-dang";
 import { layBangTienSo, layBangVang, layTienSo } from "@/lib/mofi";
+import { layMuaAltcoin, layTamLy, layThiTruongTienSo } from "@/lib/tien-so";
+import { TongQuanTienSo } from "@/components/TongQuanTienSo";
 
 export const metadata: Metadata = { title: "Tài sản số" };
 
@@ -16,6 +18,9 @@ export default function TrangTaiSanSo() {
       <p className="nhan-muc">Tài sản số</p>
       <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Giá tài sản số</h1>
       <p className="mt-1 text-chu-phu">Giá tham khảo theo USD, quy đổi VND theo tỷ giá bán của Vietcombank.</p>
+      <Suspense fallback={<LuoiMo so={4} />}>
+        <TongQuan />
+      </Suspense>
       <Suspense
         fallback={
           <>
@@ -29,6 +34,15 @@ export default function TrangTaiSanSo() {
       </Suspense>
     </div>
   );
+}
+
+// Tổng quan thị trường: vốn hoá, tỷ trọng, mùa altcoin, Sợ hãi & Tham lam, bản đồ nhiệt, tăng/giảm mạnh
+async function TongQuan() {
+  await connection();
+  const [tt, tamLy] = await Promise.all([layThiTruongTienSo(), layTamLy()]);
+  if (!tt) return null;
+  const altcoin = await layMuaAltcoin(tt.coin.map((c) => c.ma)).catch(() => null);
+  return <TongQuanTienSo tt={tt} tamLy={tamLy} altcoin={altcoin} />;
 }
 
 async function NoiDung() {
