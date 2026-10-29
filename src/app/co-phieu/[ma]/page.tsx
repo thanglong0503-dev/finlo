@@ -19,7 +19,7 @@ import {
 } from "@/lib/dinh-dang";
 import { NhanPhien } from "@/components/NhanPhien";
 import { TaiChinh } from "@/components/TaiChinh";
-import { layBangGia, layBaoCao, layHoSo, layNen, layNganh } from "@/lib/mofi";
+import { layBangGia, layBaoCao, layHoSo, layNen, layNganh, layTin } from "@/lib/mofi";
 
 // Báo cáo tài chính tải riêng để biểu đồ giá hiện ra trước; mã không có báo cáo thì ẩn phần này
 async function PhanTaiChinh({
@@ -76,7 +76,13 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   const cp = bangGia.coPhieu.find((c) => c.ma === ma);
   if (!cp) notFound();
 
-  const [nen, hoSo, nganh] = await Promise.all([layNen(ma), layHoSo(ma), layNganh().catch(() => null)]);
+  const [nen, hoSo, nganh, tinTuc] = await Promise.all([
+    layNen(ma),
+    layHoSo(ma),
+    layNganh().catch(() => null),
+    layTin().catch(() => null),
+  ]);
+  const tinMa = (tinTuc?.tin ?? []).filter((t) => t.ma === ma).slice(0, 8);
   // Ngành theo phân loại của Mofi (đầy đủ hơn nhãn ngành của Sở), kèm P/E trung vị ngành để so sánh
   const khoaNganh = nganh?.maNganh[ma];
   const tenNganh = khoaNganh ? nganh?.ten[khoaNganh] : cp.nganh;
@@ -199,6 +205,27 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
       <Suspense fallback={<BangMo dong={8} />}>
         <PhanTaiChinh ma={cp.ma} gia={cp.gia} soCoPhieu={hoSo?.soCoPhieu ?? null} peNganh={peNganh} />
       </Suspense>
+
+      {tinMa.length > 0 && (
+        <section className="mt-8">
+          <p className="nhan-muc">Tin doanh nghiệp</p>
+          <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Công bố gần đây của {cp.ma}</h2>
+          <ul className="mt-4 border border-vien">
+            {tinMa.map((t, i) => (
+              <li key={i} className="flex gap-3 border-b border-vien px-3 py-2.5 last:border-b-0">
+                <span className="w-20 shrink-0 text-chu-phu tabular-nums">{t.ngay.split("-").reverse().join("/")}</span>
+                <div className="min-w-0 flex-1">
+                  <p className={t.mucDo === "cao" ? "font-semibold" : ""}>{t.tieuDe}</p>
+                  <span className="mt-1 inline-block border border-vien px-1.5 text-[11px] text-chu-phu">{t.loai}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <Link href="/tin-tuc" className="mt-2 inline-block font-medium text-nhan hover:underline">
+            Tất cả tin doanh nghiệp →
+          </Link>
+        </section>
+      )}
 
       {hoSo && (
         <section className="mt-8">

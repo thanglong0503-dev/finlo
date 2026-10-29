@@ -34,21 +34,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" aria-label="Finlo — trang chủ">
               <Logo nenDen={false} />
             </Link>
-            <div className="hidden h-full items-center gap-5 xl:flex">
-              <Suspense fallback={<MenuTinh />}>
-                <Menu />
-              </Suspense>
-            </div>
             <div className="ml-auto flex items-center gap-2">
-              <TimMa nenToi className="w-36 sm:w-52" />
+              <TimMa nenToi className="w-36 sm:w-64" />
               <NutGiaoDien />
             </div>
           </nav>
-          {/* Màn hình nhỏ hơn 1280px: menu cuộn ngang dưới thanh logo */}
-          <div className="flex gap-5 overflow-x-auto border-t border-vien-toi px-4 xl:hidden">
-            <Suspense fallback={<MenuTinh diDong />}>
-              <Menu diDong />
-            </Suspense>
+          {/* Thanh menu riêng dưới logo (10 mục, cuộn ngang khi màn hình hẹp) */}
+          <div className="border-t border-vien-toi">
+            <div className="mx-auto flex max-w-7xl gap-6 overflow-x-auto px-4">
+              <Suspense fallback={<MenuTinh diDong />}>
+                <Menu diDong />
+              </Suspense>
+            </div>
           </div>
         </header>
 

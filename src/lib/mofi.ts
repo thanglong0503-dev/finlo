@@ -690,3 +690,87 @@ export async function layNganh(): Promise<DuLieuNganh> {
   for (const v of Object.values(pe.ma)) if (v.ro && peNganh[v.ro] == null) peNganh[v.ro] = v.tv;
   return { ten: n.meta.tenRo, maNganh, pe: peNganh };
 }
+
+// ---- Số liệu tài chính 4 quý gần nhất của toàn thị trường (cho bộ lọc), triệu đồng ----
+
+export type TaiChinhMa = {
+  loai: string;
+  ky: string;
+  lnst: number | null; // lợi nhuận sau thuế công ty mẹ, 4 quý
+  lnstTruoc: number | null; // cùng kỳ năm trước
+  doanhThu: number | null; // ngân hàng: tổng thu nhập hoạt động
+  doanhThuTruoc: number | null;
+  lnGop: number | null;
+  coTuc: number | null; // cổ tức tiền mặt đã trả 4 quý (số dương)
+  vonChu: number | null;
+  tongTaiSan: number | null;
+  noPhaiTra: number | null;
+};
+
+type TaiChinhTho = {
+  ma: Record<
+    string,
+    {
+      loai: string;
+      ky: string;
+      ttm?: Record<string, number>;
+      ttmTruoc?: Record<string, number>;
+      diem?: Record<string, number>;
+    }
+  >;
+};
+
+export async function layTaiChinhToanThiTruong(): Promise<Record<string, TaiChinhMa>> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<TaiChinhTho>("financial/danh-gia/_toan-thi-truong.json");
+  const so = (x: number | undefined) => (typeof x === "number" && Number.isFinite(x) ? x : null);
+  const kq: Record<string, TaiChinhMa> = {};
+  for (const [ma, x] of Object.entries(tho.ma)) {
+    const t = x.ttm ?? {};
+    const tt = x.ttmTruoc ?? {};
+    const d = x.diem ?? {};
+    const doanhThu = (o: Record<string, number>) => so(o.doanhThu ?? o.tongThuNhapHD);
+    const vonChu = so(d.vonChu);
+    const tongTaiSan = so(d.tongTaiSan);
+    kq[ma] = {
+      loai: x.loai,
+      ky: x.ky,
+      lnst: so(t.lnstMe ?? t.lnst),
+      lnstTruoc: so(tt.lnstMe ?? tt.lnst),
+      doanhThu: doanhThu(t),
+      doanhThuTruoc: doanhThu(tt),
+      lnGop: so(t.lnGop),
+      coTuc: t.coTucDaTra != null ? Math.abs(t.coTucDaTra) : null,
+      vonChu,
+      tongTaiSan,
+      // Ngân hàng không có dòng "nợ phải trả" trong số liệu gộp: lấy tổng tài sản trừ vốn chủ
+      noPhaiTra: so(d.noPhaiTra) ?? (tongTaiSan != null && vonChu != null ? tongTaiSan - vonChu : null),
+    };
+  }
+  return kq;
+}
+
+// ---- Tin công bố của doanh nghiệp (HOSE/HNX qua Mofi) ----
+
+export type TinDoanhNghiep = { ma: string; tieuDe: string; ngay: string; loai: string; mucDo: "cao" | "vua" | "thap" };
+
+export async function layTin(): Promise<{ capNhat: string; tin: TinDoanhNghiep[] }> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<{
+    meta: { asOf: string };
+    news: Record<string, { title: string; at: string; tag?: { level?: string; kind?: string } }[]>;
+  }>("tong-hop/tin.json");
+  const tin = Object.entries(tho.news).flatMap(([ma, ds]) =>
+    ds.map((x) => ({
+      ma,
+      tieuDe: x.title,
+      ngay: x.at,
+      loai: x.tag?.kind ?? "Khác",
+      mucDo: (x.tag?.level === "cao" || x.tag?.level === "thap" ? x.tag.level : "vua") as TinDoanhNghiep["mucDo"],
+    })),
+  );
+  tin.sort((a, b) => b.ngay.localeCompare(a.ngay) || a.ma.localeCompare(b.ma));
+  return { capNhat: tho.meta.asOf, tin };
+}
