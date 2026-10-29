@@ -90,7 +90,7 @@ export function TinClient({ tin }: { tin: TinDoanhNghiep[] }) {
             <ul className="mt-2 border border-vien rounded-2xl overflow-hidden">
               {ds.map((t, i) => (
                 <li key={`${t.ma}-${i}`} className="flex gap-3 border-b border-vien px-3 py-2.5 last:border-b-0 hover:bg-nhan-nhat">
-                  <Link href={`/co-phieu/${t.ma}`} className="w-12 shrink-0 font-bold text-nhan hover:underline">
+                  <Link prefetch={false} href={`/co-phieu/${t.ma}`} className="w-12 shrink-0 font-bold text-nhan hover:underline">
                     {t.ma}
                   </Link>
                   <div className="min-w-0 flex-1">

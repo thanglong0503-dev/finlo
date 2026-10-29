@@ -84,7 +84,7 @@ async function NoiDung({ params }: { params: Promise<{ khoa: string }> }) {
                   <NutTheoDoi ma={cp.ma} gon />
                 </td>
                 <td className="max-w-[14rem] px-3 py-2 sm:max-w-sm">
-                  <Link href={`/co-phieu/${cp.ma}`} className="block">
+                  <Link prefetch={false} href={`/co-phieu/${cp.ma}`} className="block">
                     <span className="font-semibold">{cp.ma}</span>
                     <span className="ml-2 text-[11px] text-chu-phu">{cp.san}</span>
                     <div className="truncate text-[11px] text-chu-phu">{cp.ten}</div>

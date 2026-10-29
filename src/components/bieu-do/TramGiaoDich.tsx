@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLamMoi } from "@/lib/lam-moi";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BieuDoTuongTac, type Nguon } from "@/components/bieu-do/BieuDoTuongTac";
 import { DanhSachMa } from "@/components/bieu-do/DanhSachMa";
@@ -22,16 +23,16 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
   const [coCap, setCoCap] = useState<boolean | null>(null);
 
   // Bảng giá cổ phiếu làm mới mỗi phút (giá trong danh sách và khung thông tin chớp khi đổi)
-  useEffect(() => {
-    const tai = () =>
+  // Tải ngay khi mở; sau đó chỉ làm mới khi tab đang mở và trong giờ giao dịch
+  useLamMoi(
+    () =>
       fetch("/api/bang-gia")
         .then((r) => (r.ok ? r.json() : null))
         .then((d: BangGia | null) => d && setBangGia(d))
-        .catch(() => {});
-    tai();
-    const id = setInterval(tai, 60_000);
-    return () => clearInterval(id);
-  }, []);
+        .catch(() => {}),
+    60_000,
+    { taiNgay: true },
+  );
 
   useEffect(() => {
     fetch("/api/tien-so")

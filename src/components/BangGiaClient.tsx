@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useLamMoi } from "@/lib/lam-moi";
+import { useMemo, useState } from "react";
 import { GiaChop } from "@/components/GiaChop";
 import { NhanPhien } from "@/components/NhanPhien";
 import { NutTheoDoi } from "@/components/NutTheoDoi";
@@ -40,18 +41,15 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
   const [soDong, setSoDong] = useState(MOI_TRANG);
   const theoDoi = useTheoDoi();
 
-  // Làm mới mỗi 30 giây: trong phiên, ảnh chụp bảng giá đổi mỗi phút
-  useEffect(() => {
-    const id = setInterval(async () => {
-      try {
-        const res = await fetch("/api/bang-gia");
-        if (res.ok) setDuLieu(await res.json());
-      } catch {
-        // Mất mạng tạm thời: giữ dữ liệu cũ, lần sau thử lại
-      }
-    }, 30_000);
-    return () => clearInterval(id);
-  }, []);
+  // Ảnh chụp bảng giá đổi mỗi phút: làm mới mỗi phút, chỉ khi tab đang mở và trong giờ giao dịch
+  useLamMoi(async () => {
+    try {
+      const res = await fetch("/api/bang-gia");
+      if (res.ok) setDuLieu(await res.json());
+    } catch {
+      // Mất mạng tạm thời: giữ dữ liệu cũ, lần sau thử lại
+    }
+  }, 60_000);
 
   const ds = useMemo(() => {
     const tk = tuKhoa.trim().toUpperCase();
@@ -156,7 +154,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
                     <NutTheoDoi ma={cp.ma} gon />
                   </td>
                   <td className="max-w-[12rem] px-3 py-2 sm:max-w-xs">
-                    <Link href={`/co-phieu/${cp.ma}`} className="block">
+                    <Link prefetch={false} href={`/co-phieu/${cp.ma}`} className="block">
                       <span className={`font-semibold ${mau}`}>{cp.ma}</span>
                       <span className="ml-2 text-[11px] text-chu-phu">{cp.san}</span>
                       <div className="truncate text-[11px] text-chu-phu">

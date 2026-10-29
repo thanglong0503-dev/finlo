@@ -52,7 +52,7 @@ export function SoSanhClient({ ma, dong, trungVi }: { ma: string; dong: DongLoc[
                 className={`border-b border-vien ${laMa ? "bg-nhan-nhat shadow-[inset_2px_0_0_0_var(--nhan)]" : "hover:bg-nen-phu"}`}
               >
                 <td className={`sticky left-0 z-[1] px-3 py-2 ${laMa ? "bg-nhan-nhat" : "bg-nen"}`}>
-                  <Link href={`/co-phieu/${d.ma}/so-sanh`} className="font-semibold hover:text-nhan">
+                  <Link prefetch={false} href={`/co-phieu/${d.ma}/so-sanh`} className="font-semibold hover:text-nhan">
                     {d.ma}
                   </Link>
                   <span className="ml-2 hidden max-w-48 truncate align-bottom text-[12px] text-chu-phu xl:inline-block">

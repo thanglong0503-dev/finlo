@@ -246,7 +246,7 @@ export async function BangDieuKhien() {
                 <ul key={k} className="bg-nen-phu py-1.5">
                   {nhom.map((x) => (
                     <li key={x.cp.ma}>
-                      <Link href={`/co-phieu/${x.cp.ma}`} className="relative flex items-center px-3 py-[3px] hover:bg-nen-noi">
+                      <Link prefetch={false} href={`/co-phieu/${x.cp.ma}`} className="relative flex items-center px-3 py-[3px] hover:bg-nen-noi">
                         <span
                           className={`absolute inset-y-0.5 left-0 ${k === 0 ? "bg-tang/15" : "bg-giam/15"}`}
                           style={{ width: `${(Math.abs(x.diem) / dinhGop) * 100}%` }}
@@ -269,7 +269,7 @@ export async function BangDieuKhien() {
                 <ul key={k} className="bg-nen-phu py-1.5">
                   {nhom.map((cp) => (
                     <li key={cp.ma}>
-                      <Link href={`/co-phieu/${cp.ma}`} className="flex items-center gap-2 px-3 py-[3px] hover:bg-nen-noi">
+                      <Link prefetch={false} href={`/co-phieu/${cp.ma}`} className="flex items-center gap-2 px-3 py-[3px] hover:bg-nen-noi">
                         <span className="font-semibold">{cp.ma}</span>
                         <span className={`so ml-auto ${mauGia(cp)}`}>{phanTram(cp.phanTram)}</span>
                       </Link>
@@ -296,7 +296,7 @@ export async function BangDieuKhien() {
                 <ul key={k} className="bg-nen-phu py-1.5">
                   {nhom.map((x) => (
                     <li key={x.cp.ma}>
-                      <Link href={`/co-phieu/${x.cp.ma}`} className="relative flex items-center px-3 py-[3px] hover:bg-nen-noi">
+                      <Link prefetch={false} href={`/co-phieu/${x.cp.ma}`} className="relative flex items-center px-3 py-[3px] hover:bg-nen-noi">
                         <span
                           className={`absolute inset-y-0.5 left-0 ${k === 0 ? "bg-tang/15" : "bg-giam/15"}`}
                           style={{ width: `${(Math.abs(x.nn) / dinhNN) * 100}%` }}
@@ -330,7 +330,7 @@ export async function BangDieuKhien() {
             {tinHienThi.map((t, i) => (
               <li key={i} className="flex gap-3 border-b border-vien px-3 py-1.5 last:border-b-0">
                 <span className="so w-12 shrink-0 text-[12px] text-chu-phu">{t.ngay.slice(5).split("-").reverse().join("/")}</span>
-                <Link href={`/co-phieu/${t.ma}`} className="w-10 shrink-0 font-semibold hover:text-nhan">
+                <Link prefetch={false} href={`/co-phieu/${t.ma}`} className="w-10 shrink-0 font-semibold hover:text-nhan">
                   {t.ma}
                 </Link>
                 <span className="min-w-0 truncate" title={t.tieuDe}>

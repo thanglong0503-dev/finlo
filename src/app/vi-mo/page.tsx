@@ -114,7 +114,7 @@ async function NoiDung() {
                 <tr key={b.ma} className="border-t border-vien hover:bg-nhan-nhat">
                   <td className="sticky left-0 bg-nen px-3 py-2">
                     {b.maCk ? (
-                      <Link href={`/co-phieu/${b.maCk}`} className="font-semibold hover:underline">
+                      <Link prefetch={false} href={`/co-phieu/${b.maCk}`} className="font-semibold hover:underline">
                         {b.ten}
                       </Link>
                     ) : (

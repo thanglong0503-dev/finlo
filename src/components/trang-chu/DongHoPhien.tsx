@@ -1,8 +1,11 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { laNgayGiaoDich, ngayGiaoDichKe, ngayNghiCua } from "@/lib/lich-nghi";
 
-// Lịch phiên HOSE theo giờ Việt Nam (phút tính từ 0h). Chưa tính ngày nghỉ lễ.
+const THU = ["Chủ nhật", "thứ Hai", "thứ Ba", "thứ Tư", "thứ Năm", "thứ Sáu", "thứ Bảy"];
+
+// Lịch phiên HOSE theo giờ Việt Nam (phút tính từ 0h); ngày nghỉ lễ lấy từ lib/lich-nghi
 const LICH = [
   { tu: 0, den: 9 * 60, ten: "Chờ mở cửa", mo: false },
   { tu: 9 * 60, den: 9 * 60 + 15, ten: "ATO", mo: true },
@@ -28,29 +31,36 @@ export function DongHoPhien() {
 
   // Đổi sang giờ Việt Nam (UTC+7) bằng phép cộng để không phụ thuộc múi giờ của máy
   const vn = new Date((giay + 7 * 3600) * 1000);
-  const thu = vn.getUTCDay();
+  const homNay = vn.toISOString().slice(0, 10);
   const giayTrongNgay = vn.getUTCHours() * 3600 + vn.getUTCMinutes() * 60 + vn.getUTCSeconds();
-  const cuoiTuan = thu === 0 || thu === 6;
+
+  // Thời gian còn lại tới 9h ngày giao dịch kế tiếp, kèm cách gọi ngày đó
+  const denPhienKe = () => {
+    const ke = ngayGiaoDichKe(homNay);
+    const soNgay = Math.round((Date.parse(`${ke}T00:00:00Z`) - Date.parse(`${homNay}T00:00:00Z`)) / 864e5);
+    const thuKe = new Date(`${ke}T00:00:00Z`).getUTCDay();
+    return {
+      conLai: soNgay * 86400 - giayTrongNgay + 9 * 3600,
+      moc: soNgay === 1 ? "mở cửa ngày mai" : `mở cửa ${THU[thuKe]} ${ke.slice(8)}/${ke.slice(5, 7)}`,
+    };
+  };
 
   let ten: string;
   let mo = false;
   let conLai: number;
   let moc: string;
-  if (cuoiTuan) {
-    ten = "Nghỉ cuối tuần";
-    const soNgay = thu === 6 ? 2 : 1;
-    conLai = soNgay * 86400 - giayTrongNgay + 9 * 3600;
-    moc = "mở cửa thứ Hai";
+  if (!laNgayGiaoDich(homNay)) {
+    const le = ngayNghiCua(homNay);
+    ten = le ? `Nghỉ lễ ${le.ten}` : "Nghỉ cuối tuần";
+    ({ conLai, moc } = denPhienKe());
   } else {
     const phut = Math.floor(giayTrongNgay / 60);
     const i = LICH.findIndex((x) => phut >= x.tu && phut < x.den);
     const p = LICH[i];
     ten = p.ten;
     mo = p.mo;
-    if (i === LICH.length - 1) {
-      conLai = (thu === 5 ? 3 : 1) * 86400 - giayTrongNgay + 9 * 3600;
-      moc = thu === 5 ? "mở cửa thứ Hai" : "mở cửa ngày mai";
-    } else {
+    if (i === LICH.length - 1) ({ conLai, moc } = denPhienKe());
+    else {
       conLai = p.den * 60 - giayTrongNgay;
       moc = `đến ${LICH[i + 1].ten === "Đã đóng cửa" ? "đóng cửa" : LICH[i + 1].ten}`;
     }

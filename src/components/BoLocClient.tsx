@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useLamMoi } from "@/lib/lam-moi";
+import { useMemo, useState } from "react";
 import { NhanPhien } from "@/components/NhanPhien";
 import { NutTheoDoi } from "@/components/NutTheoDoi";
 import type { DongLoc } from "@/lib/bo-loc";
@@ -117,20 +118,17 @@ export function BoLocClient({
   const [soDong, setSoDong] = useState(MOI_TRANG);
 
   // Giá trong phiên đổi mỗi phút: làm mới để P/E, P/B, cổ tức theo giá hiện tại
-  useEffect(() => {
-    const id = setInterval(async () => {
-      try {
-        const r = await fetch("/api/bo-loc");
-        if (!r.ok) return;
-        const j = (await r.json()) as { phien: Phien | null; dong: DongLoc[] };
-        setDong(j.dong);
-        setPhien(j.phien);
-      } catch {
-        // giữ dữ liệu cũ
-      }
-    }, 60_000);
-    return () => clearInterval(id);
-  }, []);
+  useLamMoi(async () => {
+    try {
+      const r = await fetch("/api/bo-loc");
+      if (!r.ok) return;
+      const j = (await r.json()) as { phien: Phien | null; dong: DongLoc[] };
+      setDong(j.dong);
+      setPhien(j.phien);
+    } catch {
+      // giữ dữ liệu cũ
+    }
+  }, 60_000);
 
   const doi = (khoa: keyof DieuKien, gt: string | boolean) => {
     setDk((x) => ({ ...x, [khoa]: gt }));
@@ -281,7 +279,7 @@ export function BoLocClient({
                   <NutTheoDoi ma={d.ma} gon />
                 </td>
                 <td className="max-w-[12rem] px-3 py-2">
-                  <Link href={`/co-phieu/${d.ma}`} className="font-semibold hover:underline">
+                  <Link prefetch={false} href={`/co-phieu/${d.ma}`} className="font-semibold hover:underline">
                     {d.ma}
                   </Link>
                   <span className="ml-2 text-[11px] text-chu-phu">{d.san}</span>

@@ -23,7 +23,7 @@ export function TheoDoiGon({ coPhieu }: { coPhieu: GiaGon[] }) {
     <ul>
       {ds.map((cp) => (
         <li key={cp.ma}>
-          <Link href={`/co-phieu/${cp.ma}`} className="flex items-center gap-3 border-t border-vien px-3 py-1.5 hover:bg-nen-phu">
+          <Link prefetch={false} href={`/co-phieu/${cp.ma}`} className="flex items-center gap-3 border-t border-vien px-3 py-1.5 hover:bg-nen-phu">
             <span className="w-12 font-semibold">{cp.ma}</span>
             <span className={`so ml-auto ${mauGia(cp)}`}>{giaNghin(cp.gia)}</span>
             <span className={`so w-16 text-right ${mauGia(cp)}`}>{phanTram(cp.phanTram)}</span>

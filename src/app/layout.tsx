@@ -89,8 +89,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </div>
             ))}
           </div>
-          <div className="border-t border-vien-toi py-4 text-center text-chu-toi-phu">
-            © 2026 Finlo · finlo.id.vn
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-vien-toi py-4 text-chu-toi-phu">
+            <span>© 2026 Finlo · finlo.id.vn</span>
+            <Link href="/gioi-thieu" className="hover:text-chu-toi">
+              Giới thiệu
+            </Link>
+            <Link href="/dieu-khoan" className="hover:text-chu-toi">
+              Điều khoản
+            </Link>
+            <Link href="/lien-he" className="hover:text-chu-toi">
+              Liên hệ
+            </Link>
           </div>
         </footer>
       </body>

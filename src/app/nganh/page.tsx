@@ -92,7 +92,7 @@ async function NoiDung() {
                 <td className="px-3 py-2 text-right text-chu-phu tabular-nums">{vonHoa(n.vonHoa)}</td>
                 <td className="px-3 py-2">
                   {n.coPhieu.slice(0, 3).map((cp) => (
-                    <Link key={cp.ma} href={`/co-phieu/${cp.ma}`} className="mr-2 font-medium hover:underline">
+                    <Link key={cp.ma} prefetch={false} href={`/co-phieu/${cp.ma}`} className="mr-2 font-medium hover:underline">
                       {cp.ma}
                     </Link>
                   ))}

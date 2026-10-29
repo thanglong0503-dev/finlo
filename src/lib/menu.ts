@@ -13,6 +13,7 @@ export const NHOM_MENU: NhomMenu[] = [
       { href: "/nganh", nhan: "Ngành", moTa: "Bản đồ nhiệt 34 ngành, P/E ngành", tuKhoa: "nganh heatmap ban do nhiet" },
       { href: "/vi-mo", nhan: "Lãi suất & Vĩ mô", moTa: "Lãi suất tiết kiệm, liên ngân hàng, GDP, CPI", tuKhoa: "lai suat tiet kiem gdp cpi lam phat ty gia vi mo" },
       { href: "/tin-tuc", nhan: "Tin doanh nghiệp", moTa: "Cổ tức, giao dịch cổ đông lớn, nhân sự", tuKhoa: "tin tuc cong bo co tuc" },
+      { href: "/lich-su-kien", nhan: "Lịch sự kiện", moTa: "Nghỉ lễ, đáo hạn phái sinh, cổ tức, đại hội cổ đông", tuKhoa: "lich su kien co tuc dai hoi dao han nghi le" },
     ],
   },
   {
@@ -21,6 +22,7 @@ export const NHOM_MENU: NhomMenu[] = [
       { href: "/bang-gia", nhan: "Bảng giá", moTa: "1.525 mã, trần/sàn, khối ngoại, cập nhật mỗi phút", tuKhoa: "bang gia co phieu hose hnx" },
       { href: "/bieu-do", nhan: "Biểu đồ kỹ thuật", moTa: "Chỉ báo kỹ thuật và chỉ báo riêng FL của Finlo", tuKhoa: "bieu do chart chi bao ky thuat" },
       { href: "/bo-loc", nhan: "Bộ lọc cổ phiếu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức", tuKhoa: "bo loc loc co phieu screener pe roe" },
+      { href: "/so-sanh", nhan: "So sánh mã", moTa: "Chồng tối đa 5 mã và chỉ số theo % thay đổi", tuKhoa: "so sanh nhieu ma hieu suat compare" },
     ],
   },
   {
