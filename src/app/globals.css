@@ -83,6 +83,7 @@
   --color-tran: var(--tran);
   --color-san-gia: var(--san-gia);
   --font-sans: var(--font-be-vietnam);
+  --font-mono: var(--font-so);
 }
 
 body {
@@ -108,14 +109,6 @@ body {
   width: 14px;
   height: 2px;
   background: var(--nhan);
-}
-
-/* Lưới mờ phía sau phần mở đầu trang chủ */
-.luoi-nen {
-  background-image:
-    linear-gradient(var(--vien) 1px, transparent 1px), linear-gradient(90deg, var(--vien) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 75%);
 }
 
 /* Chấm xanh nhấp nháy báo dữ liệu đang cập nhật */
@@ -160,27 +153,15 @@ body {
   animation: chop-giam 0.7s ease-out;
 }
 
-/* Dải giá chạy ngang: nội dung được nhân đôi nên dịch -50% là liền mạch */
-@keyframes chay-ngang {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.dai-gia {
-  animation: chay-ngang 80s linear infinite;
-}
-
-.dai-gia:hover {
-  animation-play-state: paused;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .dai-gia,
   .cham-song {
     animation: none;
   }
+}
+
+/* Con số kiểu bảng điện: phông đơn cách, chữ số đều cột */
+.so {
+  font-family: var(--font-so), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }

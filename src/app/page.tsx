@@ -1,324 +1,379 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
-import { DaiGia, type NhomGia } from "@/components/DaiGia";
-import { DanhMucTheoDoi } from "@/components/DanhMucTheoDoi";
+import { Suspense, type ReactNode } from "react";
 import { DuongNho } from "@/components/DuongNho";
-import { NhanPhien } from "@/components/NhanPhien";
-import { BangMo, LuoiMo } from "@/components/KhungCho";
-import { diem, giaNghin, mauTangGiam, phanTram, thayDoi, tyDong, usd, vonHoa } from "@/lib/dinh-dang";
-import { layBangGia, layBangVang, layChiSo, layTienSo, type CoPhieu } from "@/lib/mofi";
+import { KhoiMo } from "@/components/KhungCho";
+import { DongHoPhien } from "@/components/trang-chu/DongHoPhien";
+import { TheoDoiGon } from "@/components/trang-chu/TheoDoiGon";
+import { diem, mauGia, mauTangGiam, phanTram, thayDoi, trieuDong, tyDong, usd } from "@/lib/dinh-dang";
+import { layBangGia, layBangVang, layChiSo, layNganh, layTienSo, layTin, type CoPhieu } from "@/lib/mofi";
+import { mauNhiet, tongHopNganh } from "@/lib/nganh";
 
-const LOP_TAI_SAN = [
-  {
-    ten: "Chứng khoán",
-    moTa: "Cổ phiếu niêm yết trên HOSE, HNX và UPCOM, cập nhật trong phiên.",
-    trangThai: "1.525 mã",
-    href: "/bang-gia",
-  },
-  {
-    ten: "Tài sản số",
-    moTa: "Bitcoin, Ethereum và top 30 tài sản mã hoá theo vốn hoá.",
-    trangThai: "30 tài sản",
-    href: "/tai-san-so",
-  },
-  {
-    ten: "Kim loại quý",
-    moTa: "Vàng miếng, vàng nhẫn của PNJ, Bảo Tín Mạnh Hải, Phú Quý và vàng thế giới.",
-    trangThai: "Vàng SJC, nhẫn trơn",
-    href: "/kim-loai-quy",
-  },
-  {
-    ten: "Hàng hoá",
-    moTa: "Dầu, cà phê, kim loại công nghiệp và nông sản quốc tế.",
-    trangThai: "Sắp có",
-    href: null,
-  },
-];
-
+// Trang chủ kiểu bảng điện: mở ra là số liệu của phiên, không có phần giới thiệu.
 export default function TrangChu() {
   return (
-    <>
-      <section className="relative overflow-hidden">
-        <div className="luoi-nen absolute inset-0" aria-hidden />
-        <div className="relative mx-auto max-w-6xl px-4 pt-16 pb-14 text-center sm:pt-20">
-          <p className="inline-flex items-center gap-2 border border-nhan/30 bg-nhan-nhat px-3 py-1 text-[12px] font-medium text-nhan">
-            <span className="cham-song h-1.5 w-1.5 bg-nhan" />
-            Dữ liệu thị trường cập nhật mỗi phút
-          </p>
-          <h1 className="mt-5 text-[34px] leading-tight font-bold tracking-[-0.035em] sm:text-5xl">
-            Nền tảng theo dõi
-            <br />
-            <span className="text-nhan">đa lớp tài sản</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-[15px] text-chu-phu">
-            Chứng khoán, hàng hoá, tài sản số và kim loại quý trên cùng một màn hình.
-          </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/bang-gia"
-              className="flex h-10 items-center bg-nhan px-6 text-sm font-semibold text-white hover:brightness-110"
-            >
-              Xem bảng giá
-            </Link>
-            <Link
-              href="/co-phieu/VNM"
-              className="flex h-10 items-center border border-chu bg-nen px-6 text-sm font-semibold hover:bg-chu hover:text-nen"
-            >
-              Phân tích cổ phiếu
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <Suspense
-        fallback={
-          <>
-            <div className="h-[42px] border-y-2 border-nhan bg-toi" />
-            <div className="mx-auto max-w-6xl px-4 py-12">
-              <p className="nhan-muc">Tổng quan</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Thị trường hôm nay</h2>
-              <LuoiMo so={5} cot="md:grid-cols-5" />
-              <BangMo dong={8} />
-            </div>
-          </>
-        }
-      >
-        <ThiTruong />
-      </Suspense>
-
-      <DanhMucTheoDoi />
-
-      <section className="border-t border-vien bg-nen-phu">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <p className="nhan-muc">Một nơi</p>
-          <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Bốn lớp tài sản, một màn hình.</h2>
-          <p className="mt-2 max-w-xl text-chu-phu">
-            Finlo gom dữ liệu của nhiều thị trường về một chỗ để bạn so sánh và ra quyết định nhanh hơn.
-          </p>
-          <div className="mt-8 grid border-t border-l border-vien sm:grid-cols-2 lg:grid-cols-4">
-            {LOP_TAI_SAN.map((lop, i) => {
-              const noiDung = (
-                <>
-                  <p className="text-3xl font-bold tracking-tight text-nhan tabular-nums">0{i + 1}</p>
-                  <h3 className="mt-3 text-[15px] font-semibold">{lop.ten}</h3>
-                  <p className="mt-1 text-chu-phu">{lop.moTa}</p>
-                  <p className={`mt-4 font-medium ${lop.href ? "text-nhan" : "text-dung"}`}>
-                    {lop.trangThai}
-                    {lop.href && " →"}
-                  </p>
-                </>
-              );
-              return lop.href ? (
-                <Link
-                  key={lop.ten}
-                  href={lop.href}
-                  className="border-r border-b border-vien bg-nen p-5 shadow-[inset_0_0_0_0_var(--nhan)] transition-shadow hover:shadow-[inset_0_-3px_0_0_var(--nhan)]"
-                >
-                  {noiDung}
-                </Link>
-              ) : (
-                <div key={lop.ten} className="border-r border-b border-vien bg-nen p-5">
-                  {noiDung}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t-2 border-nhan bg-toi text-chu-toi">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-4 py-14">
-          <div>
-            <h2 className="text-2xl font-bold tracking-[-0.03em]">
-              Theo dõi thị trường <span className="text-nhan-sang">ngay hôm nay.</span>
-            </h2>
-            <p className="mt-2 text-chu-toi-phu">Miễn phí, không cần đăng ký.</p>
-          </div>
-          <Link
-            href="/bang-gia"
-            className="inline-flex h-10 items-center bg-nhan-sang px-6 text-sm font-semibold text-toi hover:brightness-110"
-          >
-            Mở bảng giá
-          </Link>
-        </div>
-      </section>
-    </>
+    <Suspense fallback={<KhungCho />}>
+      <BangDieuKhien />
+    </Suspense>
   );
 }
 
-// Phần số liệu: tải lúc có người truy cập (đã cache ~1 phút), không tải lúc build
-async function ThiTruong() {
+function KhungCho() {
+  return (
+    <div className="mx-auto max-w-[1440px]">
+      <KhoiMo className="h-10" />
+      <div className="mt-px grid grid-cols-5 gap-px">
+        {Array.from({ length: 5 }, (_, i) => (
+          <KhoiMo key={i} className="h-16" />
+        ))}
+      </div>
+      <div className="mt-px grid gap-px lg:grid-cols-[1.6fr_1fr_1fr]">
+        <KhoiMo className="h-[460px]" />
+        <KhoiMo className="h-[460px]" />
+        <KhoiMo className="h-[460px]" />
+      </div>
+    </div>
+  );
+}
+
+// Một ô trong lưới: thanh tiêu đề thấp, chữ thường, liên kết phụ bên phải
+function O({ ten, phu, href, children, className = "" }: { ten: string; phu?: ReactNode; href?: string; children: ReactNode; className?: string }) {
+  return (
+    <section className={`flex min-w-0 flex-col bg-nen ${className}`}>
+      <header className="flex h-8 shrink-0 items-center gap-2 border-b border-vien px-3">
+        <h2 className="shrink-0 font-semibold whitespace-nowrap">{ten}</h2>
+        {phu && <span className="min-w-0 truncate text-[11px] text-chu-phu">{phu}</span>}
+        {href && (
+          <Link href={href} className="ml-auto shrink-0 text-[11px] whitespace-nowrap text-chu-phu hover:text-nhan">
+            Xem hết →
+          </Link>
+        )}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+// Phông số không có dấu tiếng Việt: chỉ phần số dùng phông đơn cách, đơn vị ("tỷ", "tr/lượng") giữ phông chữ thường
+function So({ t, className = "" }: { t: string; className?: string }) {
+  const m = t.match(/^(.*[\d%])(\D*)$/);
+  return (
+    <span className={className}>
+      <span className="so">{m ? m[1] : t}</span>
+      {m?.[2]}
+    </span>
+  );
+}
+
+const dau = (x: number) => (x > 0 ? "+" : x < 0 ? "−" : "");
+
+async function BangDieuKhien() {
   await connection();
-  const [bangGia, chiSo, tienSoKq, vangKq] = await Promise.all([
+  const [bangGia, chiSo, nganh, tin, vang, tienSo] = await Promise.all([
     layBangGia(),
     layChiSo(),
-    // Tiền số và vàng là phần phụ: lỗi thì chỉ ẩn nhóm đó trên dải giá
-    layTienSo().catch(() => null),
+    layNganh().catch(() => null),
+    layTin().catch(() => null),
     layBangVang().catch(() => null),
+    layTienSo().catch(() => null),
   ]);
-  const tienSo = tienSoKq ?? [];
   const ds = bangGia.coPhieu;
+  const coGD = ds.filter((c) => c.khoiLuong > 0);
+  const soTang = coGD.filter((c) => c.phanTram > 0).length;
+  const soGiam = coGD.filter((c) => c.phanTram < 0).length;
+  const soDung = coGD.length - soTang - soGiam;
+  const soTran = coGD.filter((c) => c.tran != null && c.gia >= c.tran).length;
+  const soSan = coGD.filter((c) => c.giaSan != null && c.giaSan > 0 && c.gia <= c.giaSan).length;
+  const tongGT = ds.reduce((s, c) => s + c.giaTri, 0);
+  const nnCua = (c: CoPhieu) => (c.nnMua != null && c.nnBan != null ? c.nnMua - c.nnBan : null);
+  const nnTong = ds.reduce((s, c) => s + (nnCua(c) ?? 0), 0);
+  const vni = chiSo.find((c) => c.ma === "VNINDEX");
 
-  // Chỉ xét mã có thanh khoản đáng kể để danh sách tăng/giảm không toàn mã ít giao dịch
-  const thanhKhoan = ds.filter((cp) => cp.giaTri >= 10e9);
-  const tangManh = [...thanhKhoan].sort((a, b) => b.phanTram - a.phanTram).slice(0, 8);
-  const giamManh = [...thanhKhoan].sort((a, b) => a.phanTram - b.phanTram).slice(0, 8);
-  const vonHoaLon = [...ds].sort((a, b) => (b.vonHoa ?? 0) - (a.vonHoa ?? 0)).slice(0, 8);
+  // Điểm đóng góp vào VN-Index (ước tính theo vốn hoá, chưa tính free-float)
+  const hose = ds.filter((c) => c.san === "HOSE" && c.vonHoa);
+  const vonTruoc = (c: CoPhieu) => c.vonHoa! / (1 + c.phanTram / 100);
+  const tongVonTruoc = hose.reduce((s, c) => s + vonTruoc(c), 0);
+  const vniTruoc = vni ? vni.diem - vni.thayDoi : 0;
+  const dongGop = hose
+    .map((c) => ({ cp: c, diem: tongVonTruoc ? ((c.vonHoa! - vonTruoc(c)) / tongVonTruoc) * vniTruoc : 0 }))
+    .sort((a, b) => b.diem - a.diem);
+  const keoLen = dongGop.filter((x) => x.diem > 0).slice(0, 7);
+  const deXuong = dongGop.filter((x) => x.diem < 0).slice(-7).reverse();
+  const dinhGop = Math.max(0.01, ...[...keoLen, ...deXuong].map((x) => Math.abs(x.diem)));
 
-  const coGiaoDich = ds.filter((cp) => cp.khoiLuong > 0);
-  const soTang = coGiaoDich.filter((cp) => cp.phanTram > 0).length;
-  const soGiam = coGiaoDich.filter((cp) => cp.phanTram < 0).length;
-  const soDung = coGiaoDich.length - soTang - soGiam;
-  const tongGiaTri = ds.reduce((s, cp) => s + cp.giaTri, 0);
+  const thanhKhoan = coGD.filter((c) => c.giaTri >= 10e9);
+  const tangManh = [...thanhKhoan].sort((a, b) => b.phanTram - a.phanTram).slice(0, 7);
+  const giamManh = [...thanhKhoan].sort((a, b) => a.phanTram - b.phanTram).slice(0, 7);
 
-  const nhom: NhomGia[] = [
-    {
-      ten: "Chỉ số",
-      moTa: `${chiSo.length} chỉ số`,
-      href: "/bang-gia",
-      muc: chiSo.map((cs) => ({ ten: cs.ten, gia: diem(cs.diem), phanTram: cs.phanTram })),
-    },
-    {
-      ten: "Chứng khoán",
-      moTa: `+${ds.length.toLocaleString("vi-VN")} mã`,
-      href: "/bang-gia",
-      muc: ds.slice(0, 8).map((cp) => ({ ten: cp.ma, gia: giaNghin(cp.gia), phanTram: cp.phanTram })),
-    },
-    {
-      ten: "Tài sản số",
-      moTa: "Top 30",
-      href: "/tai-san-so",
-      muc: tienSo.map((ts) => ({ ten: ts.ma, gia: usd(ts.gia), phanTram: ts.phanTram })),
-    },
-    {
-      ten: "Kim loại quý",
-      moTa: `${vangKq?.thuongHieu.length ?? 0} thương hiệu`,
-      href: "/kim-loai-quy",
-      // Giá bán vàng miếng 1 lượng, đổi sang triệu đồng; % so với phiên trước từ lịch sử
-      muc: (vangKq?.lichSu ?? []).map((d) => {
-        const n = d.diem.length;
-        const cuoi = d.diem[n - 1]?.value ?? 0;
-        const truoc = d.diem[n - 2]?.value ?? cuoi;
-        return {
-          ten: d.ma === "the-gioi" ? "Vàng TG" : `SJC ${d.ten}`,
-          gia: (cuoi / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 }),
-          phanTram: truoc ? ((cuoi - truoc) / truoc) * 100 : 0,
-        };
-      }),
-    },
-  ].filter((n) => n.muc.length > 0);
+  const theoNN = ds.map((c) => ({ cp: c, nn: nnCua(c) ?? 0 })).filter((x) => x.nn !== 0);
+  const nnMua = [...theoNN].sort((a, b) => b.nn - a.nn).slice(0, 7);
+  const nnBan = [...theoNN].sort((a, b) => a.nn - b.nn).slice(0, 7);
+  const dinhNN = Math.max(1, ...[...nnMua, ...nnBan].map((x) => Math.abs(x.nn)));
+
+  // Bản đồ ngành: 18 ngành lớn nhất, chia lần lượt thành 4 hàng. Kích thước ô theo căn bậc hai vốn hoá
+  // để vài ngành rất lớn (bất động sản, ngân hàng) không chiếm trọn một hàng.
+  const cacNganh = nganh ? tongHopNganh(ds, nganh).slice(0, 18) : [];
+  const coO = (v: number) => Math.sqrt(v);
+  const tongO = cacNganh.reduce((s, n) => s + coO(n.vonHoa), 0);
+  const hang: (typeof cacNganh)[] = [[]];
+  let daCo = 0;
+  for (const n of cacNganh) {
+    if (daCo >= (tongO / 4) * hang.length && hang.length < 4) hang.push([]);
+    hang[hang.length - 1].push(n);
+    daCo += coO(n.vonHoa);
+  }
+
+  const tinQuanTrong = (tin?.tin ?? []).filter((t) => t.mucDo === "cao").slice(0, 8);
+  const tinHienThi = tinQuanTrong.length >= 4 ? tinQuanTrong : (tin?.tin ?? []).slice(0, 8);
+
+  const sjc = vang?.lichSu.find((d) => d.ma !== "the-gioi");
+  const giaSjc = sjc?.diem.at(-1)?.value;
+  const giaSjcTruoc = sjc?.diem.at(-2)?.value;
+
+  const taiSanKhac = [
+    ...(giaSjc
+      ? [
+          {
+            ten: "Vàng miếng SJC",
+            href: "/kim-loai-quy",
+            gia: `${(giaSjc / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} tr/lượng`,
+            pt: giaSjcTruoc ? ((giaSjc - giaSjcTruoc) / giaSjcTruoc) * 100 : 0,
+          },
+        ]
+      : []),
+    ...(vang ? [{ ten: "Vàng thế giới", href: "/kim-loai-quy", gia: `${usd(vang.theGioi.usdOz)} USD/oz`, pt: null }] : []),
+    ...(tienSo ?? []).map((t) => ({ ten: t.ten, href: `/tai-san-so/${t.ma}`, gia: `${usd(t.gia)} USD`, pt: t.phanTram })),
+  ];
+
+  const capNhat = bangGia.phien
+    ? `${bangGia.phien.gio} ${bangGia.phien.ngay.split("-").reverse().slice(0, 2).join("/")}`
+    : new Date(bangGia.capNhat).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
 
   return (
-    <>
-      <DaiGia nhom={nhom} />
+    <div className="mx-auto max-w-[1440px] border-x border-vien bg-vien">
+      {/* Dòng phiên: trạng thái + một câu tóm tắt có số */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 bg-nen-phu px-3 py-2">
+        <DongHoPhien />
+        {vni && (
+          <p className="text-chu-phu">
+            VN-Index{" "}
+            <b className={`so font-semibold ${mauTangGiam(vni.phanTram)}`}>
+              {diem(vni.diem)} {dau(vni.thayDoi)}
+              {diem(Math.abs(vni.thayDoi))} ({phanTram(vni.phanTram)})
+            </b>
+            <span className="mx-2 text-vien">|</span>
+            <b className="so font-semibold text-tang">{soTang}</b> tăng ·{" "}
+            <b className="so font-semibold text-dung">{soDung}</b> đứng ·{" "}
+            <b className="so font-semibold text-giam">{soGiam}</b> giảm
+            <span className="mx-2 text-vien">|</span>
+            GTGD <So t={tyDong(tongGT)} className="font-semibold text-chu" />
+            <span className="mx-2 text-vien">|</span>
+            Khối ngoại {nnTong >= 0 ? "mua" : "bán"} ròng{" "}
+            <So t={trieuDong(Math.abs(nnTong))} className={`font-semibold ${nnTong >= 0 ? "text-tang" : "text-giam"}`} />
+          </p>
+        )}
+      </div>
 
-      <section className="mx-auto max-w-6xl px-4 py-12">
-        <p className="nhan-muc">Tổng quan</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em]">Thị trường hôm nay</h2>
-        <p className="mt-1">
-          <NhanPhien phien={bangGia.phien} />
-        </p>
-
-        <div className="mt-6 grid grid-cols-2 border-t border-l border-vien md:grid-cols-5">
-          {chiSo.map((cs, i) => (
-            // VN-INDEX nổi bật với vạch xanh phía trên và nền xanh nhạt
-            <Link
-              key={cs.ma}
-              href={cs.ma === "VNINDEX" ? "/chi-so" : `/chi-so/${cs.ma}`}
-              className={`border-r border-b border-vien p-4 shadow-[inset_0_2px_0_0_var(--nhan)] ${
-                i === 0 ? "bg-nhan-nhat" : "shadow-none hover:shadow-[inset_0_2px_0_0_var(--nhan)]"
-              }`}
-            >
-              <p className="font-semibold">{cs.ten}</p>
-              <p className="mt-1 text-lg font-semibold tabular-nums">{diem(cs.diem)}</p>
-              <p className={`tabular-nums ${mauTangGiam(cs.phanTram)}`}>
-                {thayDoi(cs.thayDoi)} ({phanTram(cs.phanTram)})
+      {/* Dải chỉ số */}
+      <div className="mt-px grid grid-cols-2 gap-px sm:grid-cols-3 lg:grid-cols-5">
+        {chiSo.map((cs) => (
+          <Link
+            key={cs.ma}
+            href={cs.ma === "VNINDEX" ? "/chi-so" : `/chi-so/${cs.ma}`}
+            className="group flex items-center gap-3 bg-nen px-3 py-2 hover:bg-nen-phu"
+          >
+            <div className="min-w-0">
+              <p className="text-[11px] text-chu-phu group-hover:text-chu">{cs.ten}</p>
+              <p className="so text-[17px] font-semibold">{diem(cs.diem)}</p>
+              <p className={`so text-[12px] ${mauTangGiam(cs.phanTram)}`}>
+                {thayDoi(cs.thayDoi)} {phanTram(cs.phanTram)}
               </p>
-              <div className="mt-3">
-                <DuongNho diem={cs.lichSu} tang={cs.lichSu[cs.lichSu.length - 1] >= cs.lichSu[0]} />
-              </div>
-              <p className="mt-1 text-[11px] text-chu-phu">3 tháng</p>
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-6 border border-vien p-4 md:grid-cols-[1fr_auto]">
-          <div>
-            <div className="flex justify-between text-chu-phu">
-              <span>
-                Tăng <b className="text-tang">{soTang}</b>
-              </span>
-              <span>
-                Đứng giá <b className="text-dung">{soDung}</b>
-              </span>
-              <span>
-                Giảm <b className="text-giam">{soGiam}</b>
-              </span>
             </div>
-            <div className="mt-2 flex h-1.5 overflow-hidden">
-              <div className="bg-tang" style={{ flex: soTang }} />
-              <div className="bg-dung" style={{ flex: soDung }} />
-              <div className="bg-giam" style={{ flex: soGiam }} />
+            <div className="ml-auto w-24 shrink-0">
+              <DuongNho diem={cs.lichSu} tang={cs.lichSu[cs.lichSu.length - 1] >= cs.lichSu[0]} />
             </div>
-          </div>
-          <div className="md:border-l md:border-vien md:pl-6">
-            <p className="text-chu-phu">Giá trị giao dịch toàn thị trường</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums">{tyDong(tongGiaTri)}</p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <BangTop tieuDe="Vốn hoá lớn nhất" ds={vonHoaLon} cotPhu="vonHoa" />
-          <BangTop tieuDe="Tăng mạnh nhất" ds={tangManh} cotPhu="giaTri" />
-          <BangTop tieuDe="Giảm mạnh nhất" ds={giamManh} cotPhu="giaTri" />
-        </div>
-
-        <div className="mt-6 text-right">
-          <Link href="/bang-gia" className="font-medium text-nhan hover:underline">
-            Xem tất cả {ds.length.toLocaleString("vi-VN")} mã →
           </Link>
-        </div>
-      </section>
-    </>
-  );
-}
+        ))}
+      </div>
 
-function BangTop({ tieuDe, ds, cotPhu }: { tieuDe: string; ds: CoPhieu[]; cotPhu: "vonHoa" | "giaTri" }) {
-  return (
-    <div className="border border-vien">
-      <h3 className="flex items-center gap-2 border-b border-vien px-3 py-2.5 font-semibold">
-        <span className="h-3.5 w-1 bg-nhan" />
-        {tieuDe}
-      </h3>
-      <table className="w-full">
-        <thead>
-          <tr className="text-[10px] font-bold tracking-wider text-chu-phu uppercase">
-            <th className="px-3 py-1.5 text-left">Mã</th>
-            <th className="px-3 py-1.5 text-right">{cotPhu === "vonHoa" ? "Vốn hoá" : "Giá trị GD"}</th>
-            <th className="px-3 py-1.5 text-right">Giá</th>
-            <th className="px-3 py-1.5 text-right">%</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ds.map((cp) => (
-            <tr key={cp.ma} className="border-t border-vien hover:bg-nhan-nhat">
-              <td className="px-3 py-2">
-                <Link href={`/co-phieu/${cp.ma}`} className="font-semibold hover:underline">
-                  {cp.ma}
+      <div className="mt-px grid gap-px lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        {/* Cột 1: bản đồ ngành + độ rộng */}
+        <O ten="Bản đồ ngành" phu="cỡ ô theo vốn hoá, màu theo % hôm nay" href="/nganh">
+          <div className="flex h-[380px] flex-col gap-px bg-vien p-px">
+            {hang.map((h, i) => (
+              <div key={i} className="flex min-h-0 flex-1 gap-px">
+                {h.map((n) => (
+                  <Link
+                    key={n.khoa}
+                    href={`/nganh/${n.khoa}`}
+                    title={`${n.ten}: ${phanTram(n.phanTram)} · ${n.soTang} tăng / ${n.soGiam} giảm`}
+                    className="flex min-w-0 flex-col justify-end overflow-hidden p-1.5 hover:outline hover:outline-2 hover:-outline-offset-2 hover:outline-chu"
+                    style={{ flex: `${coO(n.vonHoa)} 1 0`, background: mauNhiet(n.phanTram) }}
+                  >
+                    <span className="truncate text-[11px] leading-tight">{n.ten}</span>
+                    <span className="so truncate text-[12px] font-semibold">{phanTram(n.phanTram)}</span>
+                  </Link>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1 border-t border-vien px-3 py-2.5">
+            <div className="flex h-2">
+              <div className="bg-tran" style={{ flex: soTran }} />
+              <div className="bg-tang" style={{ flex: soTang - soTran }} />
+              <div className="bg-dung" style={{ flex: soDung }} />
+              <div className="bg-giam" style={{ flex: soGiam - soSan }} />
+              <div className="bg-san-gia" style={{ flex: soSan }} />
+            </div>
+            <span className="text-[12px] text-chu-phu">
+              <span className="so">{coGD.length}</span> mã có giao dịch
+            </span>
+            <p className="col-span-2 flex gap-4 text-[12px]">
+              {(
+                [
+                  ["Trần", soTran, "text-tran"],
+                  ["Tăng", soTang, "text-tang"],
+                  ["Đứng", soDung, "text-dung"],
+                  ["Giảm", soGiam, "text-giam"],
+                  ["Sàn", soSan, "text-san-gia"],
+                ] as const
+              ).map(([ten, so, mau]) => (
+                <span key={ten} className={mau}>
+                  {ten} <span className="so">{so}</span>
+                </span>
+              ))}
+            </p>
+          </div>
+        </O>
+
+        {/* Cột 2: tác động chỉ số + tăng/giảm mạnh */}
+        <div className="flex min-w-0 flex-col gap-px">
+          <O ten="Tác động lên VN-Index" phu="điểm, ước tính">
+            <div className="grid grid-cols-2 gap-px bg-vien">
+              {[keoLen, deXuong].map((nhom, k) => (
+                <ul key={k} className="bg-nen py-1">
+                  {nhom.map((x) => (
+                    <li key={x.cp.ma}>
+                      <Link href={`/co-phieu/${x.cp.ma}`} className="relative flex items-center px-3 py-[3px] hover:bg-nen-phu">
+                        <span
+                          className={`absolute inset-y-0.5 left-0 ${k === 0 ? "bg-tang/15" : "bg-giam/15"}`}
+                          style={{ width: `${(Math.abs(x.diem) / dinhGop) * 100}%` }}
+                        />
+                        <span className="relative font-semibold">{x.cp.ma}</span>
+                        <span className={`so relative ml-auto ${k === 0 ? "text-tang" : "text-giam"}`}>
+                          {dau(x.diem)}
+                          {Math.abs(x.diem).toLocaleString("vi-VN", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </O>
+          <O ten="Biến động mạnh" phu="GTGD từ 10 tỷ" href="/bo-loc" className="flex-1">
+            <div className="grid flex-1 grid-cols-2 gap-px bg-vien">
+              {[tangManh, giamManh].map((nhom, k) => (
+                <ul key={k} className="bg-nen py-1">
+                  {nhom.map((cp) => (
+                    <li key={cp.ma}>
+                      <Link href={`/co-phieu/${cp.ma}`} className="flex items-center gap-2 px-3 py-[3px] hover:bg-nen-phu">
+                        <span className="font-semibold">{cp.ma}</span>
+                        <span className={`so ml-auto ${mauGia(cp)}`}>{phanTram(cp.phanTram)}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </O>
+        </div>
+
+        {/* Cột 3: khối ngoại + danh mục */}
+        <div className="flex min-w-0 flex-col gap-px">
+          <O
+            ten="Khối ngoại"
+            phu={
+              <span className={nnTong >= 0 ? "text-tang" : "text-giam"}>
+                ròng <So t={`${dau(nnTong)}${trieuDong(Math.abs(nnTong))}`} />
+              </span>
+            }
+          >
+            <div className="grid grid-cols-2 gap-px bg-vien">
+              {[nnMua, nnBan].map((nhom, k) => (
+                <ul key={k} className="bg-nen py-1">
+                  {nhom.map((x) => (
+                    <li key={x.cp.ma}>
+                      <Link href={`/co-phieu/${x.cp.ma}`} className="relative flex items-center px-3 py-[3px] hover:bg-nen-phu">
+                        <span
+                          className={`absolute inset-y-0.5 left-0 ${k === 0 ? "bg-tang/15" : "bg-giam/15"}`}
+                          style={{ width: `${(Math.abs(x.nn) / dinhNN) * 100}%` }}
+                        />
+                        <span className="relative font-semibold">{x.cp.ma}</span>
+                        <So t={trieuDong(Math.abs(x.nn))} className={`relative ml-auto ${k === 0 ? "text-tang" : "text-giam"}`} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </O>
+          <O ten="Tài sản khác" className="flex-1">
+            <div className="grid flex-1 grid-cols-2 gap-px bg-vien">
+              {taiSanKhac.map((x) => (
+                <Link key={x.ten} href={x.href} className="bg-nen px-3 py-2.5 hover:bg-nen-phu">
+                  <p className="text-[11px] text-chu-phu">{x.ten}</p>
+                  <So t={x.gia} className="mt-0.5 block text-[15px] font-semibold" />
+                  {x.pt != null && <p className={`so text-[12px] ${mauTangGiam(x.pt)}`}>{phanTram(x.pt)}</p>}
                 </Link>
-              </td>
-              <td className="px-3 py-2 text-right text-chu-phu tabular-nums">
-                {cotPhu === "vonHoa" ? vonHoa(cp.vonHoa) : tyDong(cp.giaTri)}
-              </td>
-              <td className={`px-3 py-2 text-right tabular-nums ${mauTangGiam(cp.phanTram)}`}>{giaNghin(cp.gia)}</td>
-              <td className={`px-3 py-2 text-right tabular-nums ${mauTangGiam(cp.phanTram)}`}>
-                {phanTram(cp.phanTram)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              ))}
+            </div>
+          </O>
+        </div>
+      </div>
+
+      <div className="mt-px grid gap-px lg:grid-cols-[minmax(0,2.55fr)_minmax(0,1fr)]">
+        <O ten="Tin doanh nghiệp" phu={tinQuanTrong.length >= 4 ? "mức quan trọng cao" : "mới nhất"} href="/tin-tuc">
+          <ul>
+            {tinHienThi.map((t, i) => (
+              <li key={i} className="flex gap-3 border-b border-vien px-3 py-1.5 last:border-b-0">
+                <span className="so w-12 shrink-0 text-[12px] text-chu-phu">{t.ngay.slice(5).split("-").reverse().join("/")}</span>
+                <Link href={`/co-phieu/${t.ma}`} className="w-10 shrink-0 font-semibold hover:text-nhan">
+                  {t.ma}
+                </Link>
+                <span className="min-w-0 truncate" title={t.tieuDe}>
+                  {t.tieuDe}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </O>
+
+        <O ten="Danh mục của bạn" href="/bang-gia">
+          <TheoDoiGon
+            coPhieu={ds.map(({ ma, gia, phanTram, tran, giaSan, thamChieu }) => ({ ma, gia, phanTram, tran, giaSan, thamChieu }))}
+          />
+        </O>
+      </div>
+
+      {/* Thanh trạng thái như phần mềm giao dịch */}
+      <div className="sticky bottom-0 z-10 mt-px flex flex-wrap items-center gap-x-5 bg-toi px-3 py-1 text-[11px] text-chu-toi-phu">
+        <span className="flex items-center gap-1.5 text-nhan-sang">
+          <span className="cham-song h-1.5 w-1.5 bg-nhan-sang" />
+          <span className="font-semibold tracking-wider">FINLO</span>
+        </span>
+        <span>
+          Cập nhật <span className="so">{capNhat}</span>
+        </span>
+        <span>
+          <span className="so">{ds.length.toLocaleString("vi-VN")}</span> mã
+        </span>
+        <span className="hidden sm:inline">
+          Tra mã <kbd className="border border-vien-toi px-1 text-chu-toi">/</kbd> hoặc{" "}
+          <kbd className="border border-vien-toi px-1 text-chu-toi">Ctrl K</kbd>
+        </span>
+        <span className="ml-auto hidden md:inline">Dữ liệu tham khảo, không phải khuyến nghị đầu tư</span>
+      </div>
     </div>
   );
 }

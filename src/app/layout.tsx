@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro } from "next/font/google";
+import { Be_Vietnam_Pro, DM_Mono } from "next/font/google";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Suspense } from "react";
@@ -16,6 +16,14 @@ const beVietnam = Be_Vietnam_Pro({
   weight: ["400", "500", "600", "700"],
 });
 
+// Phông đơn cách cho con số: các cột giá thẳng hàng như bảng điện.
+// DM Mono có số 0 trơn (không chấm/gạch) nên cỡ nhỏ không bị đọc nhầm thành 8.
+const dmMono = DM_Mono({
+  variable: "--font-so",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
+
 export const metadata: Metadata = {
   title: { default: "Finlo — Nền tảng theo dõi đa lớp tài sản", template: "%s · Finlo" },
   description: "Theo dõi chứng khoán, hàng hoá, kim loại quý và tài sản số trong một nơi.",
@@ -24,7 +32,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: script đầu trang đặt data-theme trước khi React chạy
-    <html lang="vi" className={`${beVietnam.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="vi" className={`${beVietnam.variable} ${dmMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: KICH_BAN_DAU_TRANG }} />
       </head>
