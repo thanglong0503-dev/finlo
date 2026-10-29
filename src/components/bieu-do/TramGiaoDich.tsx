@@ -14,7 +14,7 @@ import type { BangGia, TienSoTop } from "@/lib/mofi";
 
 // Trạm biểu đồ: biểu đồ tương tác | khung thông tin (sổ lệnh hoặc thông số cổ phiếu) | danh sách mã.
 // Đổi mã ngay trên trang (không tải lại), đường dẫn cập nhật để chia sẻ được.
-export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: string }) {
+export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; maDau: string; logo?: Record<string, string> }) {
   const [nguon, setNguon] = useState<Nguon>(nguonDau);
   const [ma, setMa] = useState(maDau);
   const [bangGia, setBangGia] = useState<BangGia | null>(null);
@@ -134,7 +134,7 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
       </aside>
 
       <aside className="h-[560px] min-h-0 border-t border-vien lg:col-span-2 lg:h-auto xl:col-span-1 xl:border-t-0">
-        <DanhSachMa nguon={nguon} ma={ma} coPhieu={bangGia?.coPhieu ?? null} tienSo={tienSo} khiChon={khiChon} />
+        <DanhSachMa nguon={nguon} ma={ma} coPhieu={bangGia?.coPhieu ?? null} tienSo={tienSo} khiChon={khiChon} logo={logo} />
       </aside>
     </div>
   );

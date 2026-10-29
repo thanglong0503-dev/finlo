@@ -867,3 +867,49 @@ export async function layNoiBo(ma: string): Promise<{ capNhat: string; ghiChu: s
   dong.sort((a, b) => b.ngay.localeCompare(a.ngay) || Number(b.daXong) - Number(a.daXong));
   return { capNhat: tho.capNhat, ghiChu: tho.ghiChu ?? null, dong };
 }
+
+// ---- Logo doanh nghiệp (ảnh nằm trên mofi.vn, trình duyệt tải thẳng, lazy-load) ----
+
+export async function layLogo(): Promise<Record<string, string>> {
+  "use cache";
+  cacheLife("days");
+  const tho = await layJson<Record<string, { d: string; v: string }>>("tong-hop/logo.json").catch(() => ({}));
+  return Object.fromEntries(Object.entries(tho).map(([ma, x]) => [ma, `https://mofi.vn/logo/${ma}.${x.d}?v=${x.v}`]));
+}
+
+// ---- Tổng quan ngành ngân hàng / chứng khoán (Mofi tổng hợp từ báo cáo tài chính, triệu đồng) ----
+
+type SoTaiChinh = Record<string, number>;
+export type TongQuanNganhTC = {
+  dungLuc: string;
+  // Số liệu cộng gộp toàn ngành theo quý (số dư cuối kỳ hoặc phát sinh trong quý)
+  quy: { ky: string; nam: number; q: number; so: SoTaiChinh }[];
+  // Từng thành viên: cuối kỳ gần nhất, cuối năm trước, 4 quý gần nhất, 4 quý cùng kỳ
+  thanhVien: Record<string, { cuoi?: SoTaiChinh | null; cuoiNamTruoc?: SoTaiChinh | null; ttm?: SoTaiChinh | null; ttmNamTruoc?: SoTaiChinh | null }>;
+};
+
+export async function layTongQuanNganhTC(ro: "ngan-hang" | "chung-khoan"): Promise<TongQuanNganhTC | null> {
+  "use cache";
+  cacheLife("hours");
+  try {
+    const r = await fetch(`https://mofi.vn/du-lieu/tong-quan-nganh-${ro}.json`, {
+      signal: AbortSignal.timeout(10000),
+      headers: { "user-agent": "FinloBot/1.0 (+https://www.finlo.id.vn)" },
+    });
+    if (!r.ok) return null;
+    const j = (await r.json()) as TongQuanNganhTC;
+    return { dungLuc: j.dungLuc, quy: j.quy, thanhVien: j.thanhVien };
+  } catch {
+    return null;
+  }
+}
+
+// Dư nợ cho vay theo nhóm nợ 1–5 của từng ngân hàng theo quý (thuyết minh báo cáo tài chính)
+export type NoNhom = { nhom1: number; nhom2: number; nhom3: number; nhom4: number; nhom5: number; tong: number; noXau: number };
+
+export async function layNoNhom(): Promise<Record<string, Record<string, NoNhom>>> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<{ nganHang: Record<string, Record<string, NoNhom>> }>("tong-hop/no-nhom.json").catch(() => null);
+  return tho?.nganHang ?? {};
+}

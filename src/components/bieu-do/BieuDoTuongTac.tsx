@@ -2,6 +2,7 @@
 
 import {
   AreaSeries,
+  BarSeries,
   CandlestickSeries,
   ColorType,
   createChart,
@@ -10,15 +11,18 @@ import {
   HistogramSeries,
   LineSeries,
   LineStyle,
+  PriceScaleMode,
   type IChartApi,
   type ISeriesApi,
   type LogicalRange,
   type SeriesMarker,
+  type SeriesType,
   type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ThanhChiBao, thamSoCua, useChiBaoDangBat, useThamSoChiBao } from "@/components/bieu-do/ChiBaoChon";
+import { VeHinh } from "@/components/bieu-do/VeHinh";
 import { TIM_CHI_BAO, type ChiBao, type DinhDang, type NguCanh } from "@/lib/bo-chi-bao";
 import { capGiaoDich, kiemTraCap, REST, soLe, TrangThaiKetNoi, useLuongBinance } from "@/lib/binance";
 import { flGiaTri, type MocGiaTri, type Chuoi, type NenCB } from "@/lib/chi-bao";
@@ -42,11 +46,71 @@ const KHOANG_CK = [
   { nhan: "Tất cả", ngay: 0 },
 ];
 
+type KieuBieuDo = "nen" | "nen-rong" | "thanh" | "duong" | "vung" | "ha";
+const KIEU: { ma: KieuBieuDo; ten: string }[] = [
+  { ma: "nen", ten: "Nến" },
+  { ma: "nen-rong", ten: "Nến rỗng" },
+  { ma: "thanh", ten: "Thanh OHLC" },
+  { ma: "duong", ten: "Đường" },
+  { ma: "vung", ten: "Vùng" },
+  { ma: "ha", ten: "Heikin-Ashi" },
+];
+type ChuKy = "D" | "W" | "M";
+const CHU_KY: { ma: ChuKy; ten: string }[] = [
+  { ma: "D", ten: "Ngày" },
+  { ma: "W", ten: "Tuần" },
+  { ma: "M", ten: "Tháng" },
+];
+
+// Gộp nến ngày thành nến tuần (từ thứ Hai) hoặc tháng, theo giờ Việt Nam
+function gopNen(ds: NenCB[], ck: ChuKy): NenCB[] {
+  if (ck === "D") return ds;
+  const kq: NenCB[] = [];
+  let khoaTruoc = "";
+  for (const x of ds) {
+    const d = new Date((x.time + 7 * 3600) * 1000);
+    let khoa: string;
+    if (ck === "M") khoa = d.toISOString().slice(0, 7);
+    else {
+      const thu = (d.getUTCDay() + 6) % 7;
+      khoa = new Date(d.getTime() - thu * 864e5).toISOString().slice(0, 10);
+    }
+    const cuoi = kq[kq.length - 1];
+    if (khoa !== khoaTruoc || !cuoi) {
+      kq.push({ ...x });
+      khoaTruoc = khoa;
+    } else {
+      cuoi.high = Math.max(cuoi.high, x.high);
+      cuoi.low = Math.min(cuoi.low, x.low);
+      cuoi.close = x.close;
+      cuoi.volume += x.volume;
+    }
+  }
+  return kq;
+}
+
+// Nến Heikin-Ashi: làm mượt để thấy xu hướng rõ hơn (chỉ dùng để hiển thị, chỉ báo vẫn tính trên giá thật)
+function heikinAshi(ds: NenCB[]): NenCB[] {
+  const kq: NenCB[] = [];
+  ds.forEach((x, i) => {
+    const close = (x.open + x.high + x.low + x.close) / 4;
+    const open = i === 0 ? (x.open + x.close) / 2 : (kq[i - 1].open + kq[i - 1].close) / 2;
+    kq.push({ time: x.time, open, close, high: Math.max(x.high, open, close), low: Math.min(x.low, open, close), volume: x.volume });
+  });
+  return kq;
+}
+
 const mauCss = (ten: string) => getComputedStyle(document.documentElement).getPropertyValue(ten).trim();
 const duong = (nen: NenCB[], gt: Chuoi) =>
   nen.flatMap((x, i) => (gt[i] == null ? [] : [{ time: x.time as UTCTimestamp, value: gt[i] as number }]));
 
-type ChuThich = { nen: NenCB; phanTram: number | null; gt: { ten: string; giaTri: string; mau?: string }[] };
+type ChuThich = {
+  nen: NenCB;
+  phanTram: number | null;
+  gt: { ten: string; giaTri: string; mau?: string }[];
+  x?: number; // vị trí con trỏ để đặt khung thông tin
+  y?: number;
+};
 
 export function BieuDoTuongTac({
   nguon,
@@ -83,13 +147,20 @@ export function BieuDoTuongTac({
 
   const khungRef = useRef<HTMLDivElement>(null);
   const bieuDo = useRef<IChartApi | null>(null);
-  const nenSeries = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const nenSeries = useRef<ISeriesApi<SeriesType> | null>(null);
+  // Cập nhật nhanh cây nến cuối (khi đang xem nến ngày thường); khung khác thì vẽ lại theo nhịp
+  const capNhatNhanh = useRef<((moi: NenCB) => void) | null>(null);
+  const tramRef = useRef<HTMLDivElement>(null);
+  const [kieu, setKieu] = useState<KieuBieuDo>("nen");
+  const [chuKy, setChuKy] = useState<ChuKy>("D");
+  const [thangLog, setThangLog] = useState(false);
+  const [thanhVe, setThanhVe] = useState<{ chart: IChartApi; series: ISeriesApi<SeriesType>; ds: NenCB[] } | null>(null);
   const klSeries = useRef<ISeriesApi<"Histogram"> | null>(null);
   const veLai = useRef<((nen: NenCB[]) => void) | null>(null);
   const nenHienTai = useRef<NenCB[]>([]);
   const coMoi = useRef(false);
   // Vùng đang xem, gắn với bộ dữ liệu đã dùng để vẽ (đổi mã/khung thì không áp lại vùng cũ)
-  const khoangXem = useRef<{ duLieu: NenCB[]; vung: LogicalRange | null } | null>(null);
+  const khoangXem = useRef<{ duLieu: NenCB[]; khoa: string; vung: LogicalRange | null } | null>(null);
 
   // Đổi mã/nguồn thì về khung mặc định và xoá dữ liệu cũ (điều chỉnh state ngay khi vẽ)
   const [khoaTruoc, setKhoaTruoc] = useState(`${nguon}:${ma}`);
@@ -140,7 +211,7 @@ export function BieuDoTuongTac({
   }, [nguon, ma, khung]);
 
   const batGiaTri = nguon === "ck" && chiBao.some((c) => c.ma === "fl-gia-tri");
-  const canDinhGia = nguon === "ck" && chiBao.some((c) => c.can === "dinh-gia");
+  const canDinhGia = nguon === "ck";
   const canNoiBo = nguon === "ck" && chiBao.some((c) => c.can === "noi-bo");
   useEffect(() => {
     if (!canDinhGia || dinhGia?.ma === ma) return;
@@ -190,7 +261,7 @@ export function BieuDoTuongTac({
       },
       grid: { vertLines: { color: vien }, horzLines: { color: vien } },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: vien },
+      rightPriceScale: { borderColor: vien, mode: thangLog ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal },
       timeScale: { borderColor: vien, timeVisible: nguon === "ts", rightOffset: 6 },
       localization: { locale: "vi-VN" },
     });
@@ -211,15 +282,30 @@ export function BieuDoTuongTac({
       minMove: nguon === "ck" ? 10 : 1 / 10 ** le,
     };
 
-    const nen = chart.addSeries(CandlestickSeries, {
-      upColor: tang,
-      downColor: giam,
-      borderVisible: false,
-      wickUpColor: tang,
-      wickDownColor: giam,
-      priceFormat: dinhDangGia,
-    });
+    // Series giá chính theo kiểu biểu đồ đang chọn
+    const laOHLC = kieu === "nen" || kieu === "nen-rong" || kieu === "ha" || kieu === "thanh";
+    const nen: ISeriesApi<SeriesType> =
+      kieu === "thanh"
+        ? chart.addSeries(BarSeries, { upColor: tang, downColor: giam, thinBars: false, priceFormat: dinhDangGia })
+        : kieu === "duong"
+          ? chart.addSeries(LineSeries, { color: nhan, lineWidth: 2, priceFormat: dinhDangGia })
+          : kieu === "vung"
+            ? chart.addSeries(AreaSeries, { lineColor: nhan, topColor: nhan + "55", bottomColor: nhan + "05", lineWidth: 2, priceFormat: dinhDangGia })
+            : chart.addSeries(CandlestickSeries, {
+                upColor: kieu === "nen-rong" ? "transparent" : tang,
+                downColor: giam,
+                borderVisible: kieu === "nen-rong",
+                borderUpColor: tang,
+                borderDownColor: giam,
+                wickUpColor: tang,
+                wickDownColor: giam,
+                priceFormat: dinhDangGia,
+              });
     nenSeries.current = nen;
+    const diemNen = (x: NenCB) =>
+      laOHLC
+        ? { time: x.time as UTCTimestamp, open: x.open, high: x.high, low: x.low, close: x.close }
+        : { time: x.time as UTCTimestamp, value: x.close };
     const dauMoc = createSeriesMarkers(nen, []);
 
     const nc: NguCanh = {
@@ -334,8 +420,13 @@ export function BieuDoTuongTac({
       pt: (x) => `${x.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`,
     };
 
-    const ve = (ds: NenCB[]) => {
-      nen.setData(ds.map((x) => ({ time: x.time as UTCTimestamp, open: x.open, high: x.high, low: x.low, close: x.close })));
+    let dsCuoi: NenCB[] = [];
+    const ve = (dsGoc: NenCB[]) => {
+      const ds = gopNen(dsGoc, chuKy);
+      dsCuoi = ds;
+      nen.setData((kieu === "ha" ? heikinAshi(ds) : ds).map(diemNen) as never);
+      // Lớp vẽ hình cần biểu đồ và dữ liệu đang hiển thị (đặt ngoài nhịp vẽ của React)
+      requestAnimationFrame(() => setThanhVe({ chart, series: nen, ds }));
       theoThoiGian.clear();
       ds.forEach((x, i) => theoThoiGian.set(x.time, i));
       ketQua = [];
@@ -379,10 +470,21 @@ export function BieuDoTuongTac({
     };
     ve(nenHienTai.current);
     veLai.current = ve;
+    capNhatNhanh.current =
+      chuKy === "D" && kieu !== "ha"
+        ? (moi) => {
+            nen.update(diemNen(moi) as never);
+            klSeries.current?.update({
+              time: moi.time as UTCTimestamp,
+              value: moi.volume,
+              color: (moi.close >= moi.open ? tang : giam) + "55",
+            });
+          }
+        : null;
 
     // Giữ nguyên vùng đang xem khi bật/tắt chỉ báo; lần đầu xem khoảng 150 nến gần nhất
-    const tong = nenHienTai.current.length;
-    const daXem = khoangXem.current?.duLieu === nenGoc ? khoangXem.current.vung : null;
+    const tong = dsCuoi.length;
+    const daXem = khoangXem.current?.duLieu === nenGoc && khoangXem.current.khoa === chuKy ? khoangXem.current.vung : null;
     chart.timeScale().setVisibleLogicalRange(daXem ?? { from: Math.max(0, tong - 150), to: tong + 5 });
 
     chart.subscribeCrosshairMove((p) => {
@@ -392,21 +494,25 @@ export function BieuDoTuongTac({
       }
       const i = theoThoiGian.get(p.time as number);
       if (i == null) return;
-      const ds = nenHienTai.current;
+      const ds = dsCuoi;
       setChuThich({
         nen: ds[i],
         phanTram: i > 0 ? (ds[i].close / ds[i - 1].close - 1) * 100 : null,
         gt: ketQua.flatMap((k) => (k.gt[i] == null ? [] : [{ ten: k.ten, giaTri: k.dinhDang(k.gt[i]!), mau: k.mau }])),
+        x: p.point?.x,
+        y: p.point?.y,
       });
     });
 
     return () => {
-      khoangXem.current = { duLieu: nenGoc, vung: chart.timeScale().getVisibleLogicalRange() };
+      khoangXem.current = { duLieu: nenGoc, khoa: chuKy, vung: chart.timeScale().getVisibleLogicalRange() };
       chart.remove();
       bieuDo.current = nenSeries.current = klSeries.current = null;
       veLai.current = null;
+      capNhatNhanh.current = null;
+      setThanhVe(null);
     };
-  }, [nenGoc, chiBao, bangTs, giaoDien, nguon, giaTriCuaMa, noiBoCuaMa]);
+  }, [nenGoc, chiBao, bangTs, giaoDien, nguon, giaTriCuaMa, noiBoCuaMa, kieu, chuKy, thangLog]);
 
   // ---- Tiền số: nến realtime ----
   const nhanTin = useCallback((_: string, duLieu: unknown) => {
@@ -416,12 +522,7 @@ export function BieuDoTuongTac({
     if (ds.length && ds[ds.length - 1].time === moi.time) ds[ds.length - 1] = moi;
     else if (!ds.length || moi.time > ds[ds.length - 1].time) ds.push(moi);
     // Nến cập nhật ngay; chỉ báo tính lại theo nhịp bên dưới
-    nenSeries.current?.update({ time: moi.time as UTCTimestamp, open: moi.open, high: moi.high, low: moi.low, close: moi.close });
-    klSeries.current?.update({
-      time: moi.time as UTCTimestamp,
-      value: moi.volume,
-      color: (moi.close >= moi.open ? mauCss("--tang") : mauCss("--giam")) + "55",
-    });
+    capNhatNhanh.current?.(moi);
     coMoi.current = true;
   }, []);
   const trangThai = useLuongBinance(nguon === "ts" && nenGoc ? [`${capGiaoDich(ma).toLowerCase()}@kline_${khung}`] : [], nhanTin);
@@ -456,12 +557,7 @@ export function BieuDoTuongTac({
       };
       ds.push(moi);
     } else return;
-    nenSeries.current?.update({ time: moi.time as UTCTimestamp, open: moi.open, high: moi.high, low: moi.low, close: moi.close });
-    klSeries.current?.update({
-      time: moi.time as UTCTimestamp,
-      value: moi.volume,
-      color: (moi.close >= moi.open ? mauCss("--tang") : mauCss("--giam")) + "55",
-    });
+    capNhatNhanh.current?.(moi);
     coMoi.current = true;
   }, [nguon, phienCK, nenGoc]);
 
@@ -514,13 +610,64 @@ export function BieuDoTuongTac({
   }, [tomTatGiaTri, nenGoc, giaTriCuaMa]);
   const cuoi = nenGoc?.[nenGoc.length - 1];
   const hien = chuThich ?? (cuoi ? { nen: cuoi, phanTram: null, gt: [] } : null);
+
+  const boiSo = useMemo(() => {
+    if (nguon !== "ck" || !nenGoc || !giaTriCuaMa?.moc.length) return null;
+    const moc = [...giaTriCuaMa.moc].sort((a, b) => a.tu - b.tu);
+    const neoTai = (t: number) => {
+      let j = -1;
+      while (j + 1 < moc.length && moc[j + 1].tu <= t) j++;
+      return j >= 0 ? moc[j] : null;
+    };
+    const cuoiMoc = moc[moc.length - 1];
+    const theoPB = ["ngan_hang", "chung_khoan", "bao_hiem"].includes(giaTriCuaMa.loai) || !(cuoiMoc.eps && cuoiMoc.eps > 0);
+    const lichSu: number[] = [];
+    let j = -1;
+    for (const x of nenGoc) {
+      while (j + 1 < moc.length && moc[j + 1].tu <= x.time) j++;
+      const neo = j >= 0 ? (theoPB ? moc[j].bvps : moc[j].eps) : null;
+      if (neo && neo > 0) lichSu.push(x.close / neo);
+    }
+    lichSu.sort((a, b) => a - b);
+    return { theoPB, neoTai, lichSu };
+  }, [nguon, nenGoc, giaTriCuaMa]);
+
+  // Khung thông tin tại cây nến đang rê: P/E, P/B, ROE, nắm giữ tới nay, rẻ/đắt so với lịch sử
+  const theNen = (() => {
+    if (!chuThich || chuThich.x == null || !cuoi) return null;
+    const n = chuThich.nen;
+    const nam = (cuoi.time - n.time) / (365.25 * 86400);
+    const giu = nam >= 1 ? ((cuoi.close / n.close) ** (1 / nam) - 1) * 100 : (cuoi.close / n.close - 1) * 100;
+    const neo = boiSo?.neoTai(n.time) ?? null;
+    const pe = neo?.eps && neo.eps > 0 ? n.close / neo.eps : null;
+    const pb = neo?.bvps && neo.bvps > 0 ? n.close / neo.bvps : null;
+    const roe = neo?.eps != null && neo.bvps ? (neo.eps / neo.bvps) * 100 : null;
+    const boi = boiSo ? (boiSo.theoPB ? pb : pe) : null;
+    const viTri =
+      boi != null && boiSo && boiSo.lichSu.length > 20 ? (boiSo.lichSu.filter((v) => v < boi).length / boiSo.lichSu.length) * 100 : null;
+    return { n, nam, giu, pe, pb, roe, viTri, thuoc: boiSo?.theoPB ? "P/B" : "P/E", soPhien: boiSo?.lichSu.length ?? 0 };
+  })();
+
+  const chupAnh = () => {
+    const anh = bieuDo.current?.takeScreenshot();
+    if (!anh) return;
+    const a = document.createElement("a");
+    a.download = `finlo-${ma}-${new Date(cuoi?.time ? cuoi.time * 1000 : 0).toISOString().slice(0, 10)}.png`;
+    a.href = anh.toDataURL("image/png");
+    a.click();
+  };
+  const toanManHinh = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else tramRef.current?.requestFullscreen?.();
+  };
+  const nutCC = "flex h-8 w-8 items-center justify-center rounded-full text-chu-phu hover:bg-nen-noi hover:text-chu";
   const giaHien = (x: number) =>
     nguon === "ck"
       ? (x / 1000).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       : x.toLocaleString("vi-VN", { maximumFractionDigits: soLe(x) });
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
+    <div ref={tramRef} className="flex h-full min-h-0 flex-1 flex-col bg-nen">
       <div className="flex flex-wrap items-center gap-2 border-b border-vien px-2 py-2">
         <div className="flex gap-1 rounded-full bg-nen-noi p-1">
           {nguon === "ts"
@@ -539,8 +686,53 @@ export function BieuDoTuongTac({
                 </button>
               ))}
         </div>
+        {nguon === "ck" && (
+          <div className="flex gap-1 rounded-full bg-nen-noi p-1">
+            {CHU_KY.map((k) => (
+              <button
+                key={k.ma}
+                onClick={() => setChuKy(k.ma)}
+                className={`h-7 rounded-full px-2.5 font-medium ${chuKy === k.ma ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
+              >
+                {k.ten}
+              </button>
+            ))}
+          </div>
+        )}
+        <select
+          value={kieu}
+          onChange={(e) => setKieu(e.target.value as KieuBieuDo)}
+          aria-label="Kiểu biểu đồ"
+          className="h-9 rounded-full border border-vien bg-nen px-3 text-[13px] font-medium outline-none focus:border-nhan"
+        >
+          {KIEU.map((k) => (
+            <option key={k.ma} value={k.ma}>
+              {k.ten}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => setThangLog((x) => !x)}
+          title="Thang logarit: hợp để xem biến động % trong thời gian dài"
+          className={`h-8 rounded-full px-3 text-[12px] font-semibold ${thangLog ? "bg-chu text-nen" : "text-chu-phu hover:bg-nen-noi hover:text-chu"}`}
+        >
+          Log
+        </button>
         {nguon === "ts" && <TrangThaiKetNoi trangThai={trangThai} />}
-        {nguon === "ck" && <span className="text-[12px] text-chu-phu">Nến ngày, giá nghìn đồng</span>}
+        <div className="ml-auto flex items-center gap-1">
+          {nguon === "ck" && <span className="mr-2 hidden text-[12px] text-chu-phu xl:inline">Giá nghìn đồng</span>}
+          <button onClick={chupAnh} title="Chụp ảnh biểu đồ" aria-label="Chụp ảnh biểu đồ" className={nutCC}>
+            <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+              <path d="M3 6.5h3l1.5-2h5L14 6.5h3v9H3z" />
+              <circle cx="10" cy="11" r="2.8" />
+            </svg>
+          </button>
+          <button onClick={toanManHinh} title="Toàn màn hình" aria-label="Toàn màn hình" className={nutCC}>
+            <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden>
+              <path d="M3 7.5V3h4.5M12.5 3H17v4.5M17 12.5V17h-4.5M7.5 17H3v-4.5" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <ThanhChiBao coPhieu={nguon === "ck"} />
@@ -548,7 +740,7 @@ export function BieuDoTuongTac({
       {/* Biểu đồ giãn hết chiều cao còn lại; màn hình nhỏ (không giới hạn chiều cao) dùng chiều cao tối thiểu */}
       <div className="relative min-h-0 flex-1" style={{ minHeight: 440 + soKhungPhu * 120 }}>
         {hien && (
-          <div className="pointer-events-none absolute top-1 left-2 z-10 flex max-w-[calc(100%-80px)] flex-wrap gap-x-3 gap-y-0.5 text-[12px] tabular-nums">
+          <div className="pointer-events-none absolute top-1 left-12 z-10 flex max-w-[calc(100%-120px)] flex-wrap gap-x-3 gap-y-0.5 text-[12px] tabular-nums">
             <span className="text-chu-phu">
               {new Date(hien.nen.time * 1000).toLocaleString("vi-VN", {
                 timeZone: "Asia/Ho_Chi_Minh",
@@ -640,6 +832,83 @@ export function BieuDoTuongTac({
           <>
             {!nenGoc && <div className="absolute inset-0 animate-pulse bg-nen-phu" />}
             <div ref={khungRef} className="absolute inset-0" />
+            {thanhVe && (
+              <VeHinh
+                chart={thanhVe.chart}
+                series={thanhVe.series}
+                nen={thanhVe.ds}
+                khoa={`finlo-ve:${nguon}:${ma}:${nguon === "ck" ? chuKy : khung}`}
+                dinhDang={giaHien}
+              />
+            )}
+            {theNen && (
+              <div
+                className="pointer-events-none absolute z-20 w-60 rounded-2xl border border-vien bg-nen-phu/95 p-3 text-[12px] shadow-2xl backdrop-blur-md"
+                style={{
+                  left: Math.max(48, (theNen && chuThich?.x != null ? chuThich.x : 0) + (chuThich!.x! > 520 ? -256 : 20)),
+                  top: Math.max(8, Math.min((chuThich!.y ?? 0) + 16, 9999)),
+                }}
+              >
+                <p className="flex justify-between">
+                  <span className="text-chu-phu">
+                    {new Date(theNen.n.time * 1000).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
+                  </span>
+                  <b className="tabular-nums">{giaHien(theNen.n.close)}</b>
+                </p>
+                {nguon === "ck" && (
+                  <dl className="mt-2 space-y-1 border-t border-vien pt-2 tabular-nums">
+                    {(
+                      [
+                        ["P/E", theNen.pe],
+                        ["P/B", theNen.pb],
+                        ["ROE", theNen.roe],
+                      ] as const
+                    ).map(([ten, v]) => (
+                      <div key={ten} className="flex justify-between">
+                        <dt className="text-chu-phu">{ten}</dt>
+                        <dd className="font-semibold">
+                          {v == null ? "—" : `${v.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}${ten === "ROE" ? "%" : ""}`}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {theNen.nam > 0.02 && (
+                  <div className="mt-2 flex justify-between border-t border-vien pt-2">
+                    <span className="text-chu-phu">Giữ tới nay</span>
+                    <span className="text-right">
+                      <b className={theNen.giu >= 0 ? "text-tang" : "text-giam"}>
+                        {theNen.giu >= 0 ? "+" : ""}
+                        {theNen.giu.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%{theNen.nam >= 1 ? "/năm" : ""}
+                      </b>
+                      <span className="block text-[11px] text-chu-phu">
+                        {theNen.nam >= 1
+                          ? `${theNen.nam.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} năm`
+                          : `${Math.round(theNen.nam * 365)} ngày`}
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {theNen.viTri != null && (
+                  <div className="mt-2 border-t border-vien pt-2">
+                    <p className="flex justify-between">
+                      <span className="text-chu-phu">{theNen.thuoc} {theNen.viTri < 50 ? "rẻ hơn" : "đắt hơn"}</span>
+                      <b className={theNen.viTri < 50 ? "text-tang" : "text-giam"}>
+                        {Math.round(theNen.viTri < 50 ? 100 - theNen.viTri : theNen.viTri)}% số phiên
+                      </b>
+                    </p>
+                    <div className="relative mt-2 h-1.5 rounded-full bg-gradient-to-r from-tang/60 via-vien to-giam/60">
+                      <span className="absolute -top-1 h-3.5 w-1 -translate-x-1/2 rounded-full bg-chu" style={{ left: `${theNen.viTri}%` }} />
+                    </div>
+                    <p className="mt-1 flex justify-between text-[11px] text-chu-phu">
+                      <span>rẻ</span>
+                      <span>{theNen.soPhien.toLocaleString("vi-VN")} phiên</span>
+                      <span>đắt</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

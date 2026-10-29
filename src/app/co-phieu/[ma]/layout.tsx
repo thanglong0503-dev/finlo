@@ -7,7 +7,8 @@ import { NutTheoDoi } from "@/components/NutTheoDoi";
 import { TabMa, TabMaCho } from "@/components/TabMa";
 import { TimMa } from "@/components/TimMa";
 import { giaNghin, mauGia, phanTram, thayDoi } from "@/lib/dinh-dang";
-import { layBangGia, layNganh } from "@/lib/mofi";
+import { layBangGia, layLogo, layNganh } from "@/lib/mofi";
+import { LogoMa } from "@/components/LogoMa";
 
 // Khung chung cho mọi tab của một mã: tên, giá, nút theo dõi và thanh tab.
 // Đổi tab chỉ tải lại phần nội dung bên dưới, phần đầu giữ nguyên.
@@ -43,7 +44,7 @@ function DauTrangCho() {
 
 async function DauTrang({ params }: { params: Promise<{ ma: string }> }) {
   const ma = (await params).ma.toUpperCase();
-  const [bangGia, nganh] = await Promise.all([layBangGia(), layNganh().catch(() => null)]);
+  const [bangGia, nganh, logo] = await Promise.all([layBangGia(), layNganh().catch(() => null), layLogo().catch(() => ({}) as Record<string, string>)]);
   const cp = bangGia.coPhieu.find((c) => c.ma === ma);
   if (!cp) notFound();
   // Ngành theo phân loại của Mofi (đầy đủ hơn nhãn ngành của Sở)
@@ -79,7 +80,10 @@ async function DauTrang({ params }: { params: Promise<{ ma: string }> }) {
               (tenNganh ?? "Cổ phiếu")
             )}
           </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-[-0.03em]">{cp.ma}</h1>
+          <h1 className="mt-1 flex items-center gap-3 text-3xl font-bold tracking-[-0.03em]">
+            <LogoMa ma={cp.ma} url={logo[cp.ma]} co={40} />
+            {cp.ma}
+          </h1>
           <p className="mt-1 text-[15px] text-chu-phu">{cp.ten}</p>
         </div>
         <div className="flex items-end gap-5">

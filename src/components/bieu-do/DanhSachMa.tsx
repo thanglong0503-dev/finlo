@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Nguon } from "@/components/bieu-do/BieuDoTuongTac";
 import { GiaChop } from "@/components/GiaChop";
+import { LogoMa } from "@/components/LogoMa";
 import { NutTheoDoi } from "@/components/NutTheoDoi";
 import { dinhDangGia, useLuongBinance } from "@/lib/binance";
 import { giaNghin, mauTangGiam, phanTram } from "@/lib/dinh-dang";
@@ -28,12 +29,14 @@ export function DanhSachMa({
   coPhieu,
   tienSo,
   khiChon,
+  logo,
 }: {
   nguon: Nguon;
   ma: string;
   coPhieu: CoPhieu[] | null;
   tienSo: TienSoTop[] | null;
   khiChon: (nguon: Nguon, ma: string) => void;
+  logo: Record<string, string>;
 }) {
   const [tab, setTab] = useState<Nguon>(nguon);
   const [tuKhoa, setTuKhoa] = useState("");
@@ -122,9 +125,10 @@ export function DanhSachMa({
           Theo dõi
         </button>
       </div>
-      <div className="grid grid-cols-[24px_1fr_auto_64px] gap-x-1 px-2 py-1.5 text-[12px] font-medium text-chu-phu">
+      <div className="grid grid-cols-[24px_22px_1fr_auto_64px] gap-x-1 px-2 py-1.5 text-[12px] font-medium text-chu-phu">
         <span />
-        <span>Mã</span>
+        <span />
+        <span className="pl-1">Mã</span>
         <span className="text-right">Giá</span>
         <span className="text-right">%</span>
       </div>
@@ -141,7 +145,7 @@ export function DanhSachMa({
             return (
               <div
                 key={d.ma}
-                className={`grid cursor-pointer grid-cols-[24px_1fr_auto_64px] items-center gap-x-1 border-b border-vien px-2 py-1.5 ${
+                className={`grid cursor-pointer grid-cols-[24px_22px_1fr_auto_64px] items-center gap-x-1 border-b border-vien px-2 py-1.5 ${
                   dangChon ? "bg-nhan-nhat shadow-[inset_2px_0_0_0_var(--nhan)]" : "hover:bg-nen-phu"
                 }`}
                 onClick={() => khiChon(tab, d.ma)}
@@ -149,7 +153,8 @@ export function DanhSachMa({
                 <span onClick={(e) => e.stopPropagation()}>
                   <NutTheoDoi ma={d.ma} gon />
                 </span>
-                <span className="min-w-0">
+                {tab === "ck" ? <LogoMa ma={d.ma} url={logo[d.ma]} co={20} /> : <span />}
+                <span className="min-w-0 pl-1">
                   <span className="block font-semibold">{d.ma}</span>
                   <span className="block truncate text-[11px] text-chu-phu">{d.ten}</span>
                 </span>

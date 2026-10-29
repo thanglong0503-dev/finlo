@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { BangGiaClient } from "@/components/BangGiaClient";
 import { BangMo } from "@/components/KhungCho";
-import { layBangGia } from "@/lib/mofi";
+import { layBangGia, layLogo } from "@/lib/mofi";
 
 export const metadata: Metadata = { title: "Bảng giá cổ phiếu" };
 
@@ -22,5 +22,6 @@ export default function TrangBangGia() {
 async function DuLieuBangGia() {
   // Tải lúc có người truy cập (đã cache ~1 phút), không tải lúc build
   await connection();
-  return <BangGiaClient duLieuDau={await layBangGia()} />;
+  const [bangGia, logo] = await Promise.all([layBangGia(), layLogo().catch(() => ({}))]);
+  return <BangGiaClient duLieuDau={bangGia} logo={logo} />;
 }

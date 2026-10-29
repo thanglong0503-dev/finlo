@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LogoMa } from "@/components/LogoMa";
 import { useLamMoi } from "@/lib/lam-moi";
 import { useMemo, useState } from "react";
 import { GiaChop } from "@/components/GiaChop";
@@ -33,7 +34,7 @@ const COT: Cot[] = [
   { khoa: "vonHoa", nhan: "Vốn hoá", lay: (cp) => cp.vonHoa, an: "hidden xl:table-cell" },
 ];
 
-export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
+export function BangGiaClient({ duLieuDau, logo = {} }: { duLieuDau: BangGia; logo?: Record<string, string> }) {
   const [duLieu, setDuLieu] = useState(duLieuDau);
   const [tuKhoa, setTuKhoa] = useState("");
   const [san, setSan] = useState<(typeof SAN)[number]>("Tất cả");
@@ -154,7 +155,9 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
                     <NutTheoDoi ma={cp.ma} gon />
                   </td>
                   <td className="max-w-[12rem] px-3 py-2 sm:max-w-xs">
-                    <Link prefetch={false} href={`/co-phieu/${cp.ma}`} className="block">
+                    <Link prefetch={false} href={`/co-phieu/${cp.ma}`} className="flex items-center gap-2.5">
+                      <LogoMa ma={cp.ma} url={logo[cp.ma]} co={28} />
+                      <span className="min-w-0">
                       <span className={`font-semibold ${mau}`}>{cp.ma}</span>
                       <span className="ml-2 text-[11px] text-chu-phu">{cp.san}</span>
                       <div className="truncate text-[11px] text-chu-phu">
@@ -168,6 +171,7 @@ export function BangGiaClient({ duLieuDau }: { duLieuDau: BangGia }) {
                           cp.ten
                         )}
                       </div>
+                      </span>
                     </Link>
                   </td>
                   <td className={`px-3 py-2 text-right font-semibold tabular-nums ${mau}`}>

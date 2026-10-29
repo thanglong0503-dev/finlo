@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { Nguon } from "@/components/bieu-do/BieuDoTuongTac";
 import { TramGiaoDich } from "@/components/bieu-do/TramGiaoDich";
+import { layLogo } from "@/lib/mofi";
 import { KhoiMo } from "@/components/KhungCho";
 
 export const metadata: Metadata = {
@@ -30,5 +31,6 @@ async function NoiDung({ searchParams }: { searchParams: PageProps<"/bieu-do">["
   const sp = await searchParams;
   const loai = sp.loai === "ts" ? "ts" : "ck";
   const ma = typeof sp.ma === "string" && /^[A-Za-z0-9]{1,12}$/.test(sp.ma) ? sp.ma.toUpperCase() : loai === "ts" ? "BTC" : "VNM";
-  return <TramGiaoDich nguonDau={loai as Nguon} maDau={ma} />;
+  const logo = await layLogo().catch(() => ({}) as Record<string, string>);
+  return <TramGiaoDich nguonDau={loai as Nguon} maDau={ma} logo={logo} />;
 }

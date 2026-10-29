@@ -3,10 +3,32 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BieuDoNen } from "@/components/BieuDoNen";
+import { DongTin } from "@/components/BaoChiClient";
 import { KhoiMo, LuoiMo } from "@/components/KhungCho";
+import { layBaoChi } from "@/lib/bao-chi";
 import { TomTat } from "@/components/TomTatMa";
 import { giaNghin, khoiLuong, trieuDong, tyDong, vonHoa } from "@/lib/dinh-dang";
 import { layBangGia, layNen, layNganh, layTin } from "@/lib/mofi";
+
+// Tin báo chí có nhắc tới mã (tiêu đề hoặc tóm tắt)
+async function TinBaoMa({ ma, dsMa }: { ma: string; dsMa: string[] }) {
+  const tin = (await layBaoChi(dsMa).catch(() => [])).filter((b) => b.ma.includes(ma)).slice(0, 6);
+  if (tin.length === 0) return null;
+  return (
+    <section className="mt-8">
+      <p className="nhan-muc">Báo chí</p>
+      <h2 className="mt-2 text-xl font-bold tracking-[-0.03em]">Tin tức về {ma}</h2>
+      <ul className="mt-4 rounded-2xl border border-vien">
+        {tin.map((b) => (
+          <DongTin key={b.link} b={b} />
+        ))}
+      </ul>
+      <Link href="/bao-chi" prefetch={false} className="mt-2 inline-block font-medium text-nhan hover:underline">
+        Tất cả tin báo chí →
+      </Link>
+    </section>
+  );
+}
 
 export async function generateMetadata({ params }: PageProps<"/co-phieu/[ma]">): Promise<Metadata> {
   const { ma } = await params;
@@ -125,6 +147,10 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
           </Link>
         </section>
       )}
+
+      <Suspense fallback={null}>
+        <TinBaoMa ma={cp.ma} dsMa={bangGia.coPhieu.map((c) => c.ma)} />
+      </Suspense>
 
       <p className="mt-6 text-[11px] text-chu-phu">Giá theo nghìn đồng, đã điều chỉnh chia tách và cổ tức.</p>
     </div>
