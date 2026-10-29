@@ -16,61 +16,28 @@ import {
   type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CHI_BAO, ThanhChiBao, useChiBaoDangBat } from "@/components/bieu-do/ChiBaoChon";
 import { capGiaoDich, kiemTraCap, REST, soLe, TrangThaiKetNoi, useLuongBinance } from "@/lib/binance";
 import {
   bollinger,
   ema,
   flDongTien,
   flVungGia,
+  flGiaTri,
   flXuHuong,
   macd,
+  obv,
   rsi,
   sma,
+  stochastic,
+  type MocGiaTri,
   type Chuoi,
   type NenCB,
 } from "@/lib/chi-bao";
 import { useGiaoDien } from "@/lib/giao-dien";
 
 export type Nguon = "ck" | "ts";
-
-type ChiBao = {
-  ma: string;
-  ten: string;
-  moTa: string;
-  finlo?: boolean;
-  khungRieng?: boolean; // vẽ ở khung riêng bên dưới biểu đồ giá
-};
-
-export const CHI_BAO: ChiBao[] = [
-  { ma: "kl", ten: "KL", moTa: "Khối lượng giao dịch" },
-  { ma: "ma20", ten: "MA20", moTa: "Trung bình động 20 phiên" },
-  { ma: "ma50", ten: "MA50", moTa: "Trung bình động 50 phiên" },
-  { ma: "ema20", ten: "EMA20", moTa: "Trung bình động hàm mũ 20 phiên" },
-  { ma: "bb", ten: "BB", moTa: "Bollinger Bands (20, 2)" },
-  { ma: "rsi", ten: "RSI", moTa: "Chỉ số sức mạnh tương đối 14 phiên; trên 70 quá mua, dưới 30 quá bán", khungRieng: true },
-  { ma: "macd", ten: "MACD", moTa: "MACD (12, 26, 9)", khungRieng: true },
-  {
-    ma: "fl-xu-huong",
-    ten: "FL Xu hướng",
-    moTa: "Chỉ báo Finlo: điểm -100..+100 gộp vị trí giá so với EMA20, EMA20 so với EMA50, MACD và RSI. Cắt lên 0 là tín hiệu mua, cắt xuống là bán.",
-    finlo: true,
-    khungRieng: true,
-  },
-  {
-    ma: "fl-dong-tien",
-    ten: "FL Dòng tiền",
-    moTa: "Chỉ báo Finlo: tiền vào/ra 20 phiên theo vị trí giá đóng cửa trong phiên, có trọng số khối lượng. Dương là tiền vào.",
-    finlo: true,
-    khungRieng: true,
-  },
-  {
-    ma: "fl-vung-gia",
-    ten: "FL Vùng giá",
-    moTa: "Chỉ báo Finlo: dải EMA20 ± 2 ATR co giãn theo biến động; đánh dấu khi giá phá vỡ lên/thủng xuống.",
-    finlo: true,
-  },
-];
 
 // Màu cố định cho các đường chỉ báo (đọc rõ trên cả nền sáng và tối)
 const MAU_DUONG: Record<string, string> = {
@@ -80,6 +47,9 @@ const MAU_DUONG: Record<string, string> = {
   rsi: "#a855f7",
   macd: "#3b82f6",
   tin: "#e3a008",
+  obv: "#3b82f6",
+  stochK: "#3b82f6",
+  stochD: "#e3a008",
 };
 
 const KHUNG_TS = [
@@ -97,43 +67,6 @@ const KHOANG_CK = [
   { nhan: "3N", ngay: 365 * 3 },
   { nhan: "Tất cả", ngay: 0 },
 ];
-
-// ---- Lưu lựa chọn chỉ báo trong trình duyệt ----
-const KHOA_CB = "finlo-chi-bao";
-const MAC_DINH = ["kl", "ma20", "fl-xu-huong"];
-let cbTruoc: string | null = null;
-let cbMang: string[] = MAC_DINH;
-const docChiBao = () => {
-  let s: string | null = null;
-  try {
-    s = localStorage.getItem(KHOA_CB);
-  } catch {
-    return MAC_DINH;
-  }
-  if (s !== cbTruoc) {
-    cbTruoc = s;
-    try {
-      cbMang = s ? (JSON.parse(s) as string[]) : MAC_DINH;
-    } catch {
-      cbMang = MAC_DINH;
-    }
-  }
-  return cbMang;
-};
-const dangKyCB = (goi: () => void) => {
-  window.addEventListener("finlo-chi-bao", goi);
-  return () => window.removeEventListener("finlo-chi-bao", goi);
-};
-function batTatChiBao(ma: string) {
-  const ds = docChiBao();
-  const moi = ds.includes(ma) ? ds.filter((x) => x !== ma) : [...ds, ma];
-  try {
-    localStorage.setItem(KHOA_CB, JSON.stringify(moi));
-  } catch {
-    // không lưu được thì thôi, lựa chọn chỉ mất khi tải lại trang
-  }
-  window.dispatchEvent(new Event("finlo-chi-bao"));
-}
 
 const mauCss = (ten: string) => getComputedStyle(document.documentElement).getPropertyValue(ten).trim();
 const duong = (nen: NenCB[], gt: Chuoi) =>
@@ -158,11 +91,13 @@ export function BieuDoTuongTac({
     khiCoNenRef.current = khiCoNen;
   });
   const giaoDien = useGiaoDien();
-  const chiBao = useSyncExternalStore(dangKyCB, docChiBao, () => MAC_DINH);
+  const chiBao = useChiBaoDangBat();
   const [khung, setKhung] = useState(nguon === "ts" ? "1h" : "D");
   const [nenGoc, setNenGoc] = useState<NenCB[] | null>(null);
   const [loi, setLoi] = useState<string | null>(null);
   const [chuThich, setChuThich] = useState<ChuThich | null>(null);
+  // Mốc định giá theo quý cho FL Giá trị (chỉ cổ phiếu, chỉ tải khi bật chỉ báo)
+  const [dinhGia, setDinhGia] = useState<{ ma: string; loai: string; moc: MocGiaTri[]; peNganh: number | null } | null>(null);
 
   const khungRef = useRef<HTMLDivElement>(null);
   const bieuDo = useRef<IChartApi | null>(null);
@@ -221,6 +156,22 @@ export function BieuDoTuongTac({
       huy = true;
     };
   }, [nguon, ma, khung]);
+
+  const batGiaTri = nguon === "ck" && chiBao.includes("fl-gia-tri");
+  useEffect(() => {
+    if (!batGiaTri || dinhGia?.ma === ma) return;
+    let huy = false;
+    fetch(`/api/dinh-gia/${ma}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { loai: string; moc: MocGiaTri[]; peNganh: number | null } | null) => {
+        if (!huy && d) setDinhGia({ ma, ...d });
+      })
+      .catch(() => {});
+    return () => {
+      huy = true;
+    };
+  }, [batGiaTri, ma, dinhGia?.ma]);
+  const giaTriCuaMa = dinhGia?.ma === ma ? dinhGia : null;
 
   // ---- Dựng biểu đồ (khi có dữ liệu mới, đổi chỉ báo hoặc đổi sáng/tối) ----
   useEffect(() => {
@@ -296,6 +247,11 @@ export function BieuDoTuongTac({
       ? [lop(mauCss("--chu-phu"), 1, LineStyle.Dashed), lop(mauCss("--chu-phu"), 1), lop(mauCss("--chu-phu"), 1, LineStyle.Dashed)]
       : null;
     const vg = coCB("fl-vung-gia") ? [lop(nhan, 1, LineStyle.Dashed), lop(nhan, 1, LineStyle.Dotted), lop(nhan, 1, LineStyle.Dashed)] : null;
+    // FL Giá trị: vùng đắt (đỏ), giá trị hợp lý FL (xanh đậm), vùng rẻ (xanh)
+    const gtFL =
+      nguon === "ck" && coCB("fl-gia-tri") && giaTriCuaMa
+        ? { dat: lop(giam, 1, LineStyle.Dashed), hopLy: lop(nhan, 2), re: lop(tang, 1, LineStyle.Dashed) }
+        : null;
 
     // Chỉ báo khung riêng, đánh số khung theo thứ tự bật
     let soKhung = 0;
@@ -315,6 +271,21 @@ export function BieuDoTuongTac({
         duong: lop(MAU_DUONG.macd, 2, LineStyle.Solid, k),
         tin: lop(MAU_DUONG.tin, 2, LineStyle.Solid, k),
       };
+    }
+    let stochS: { k: ISeriesApi<"Line">; d: ISeriesApi<"Line"> } | null = null;
+    if (coCB("stoch")) {
+      const k = khungMoi();
+      stochS = { k: lop(MAU_DUONG.stochK, 2, LineStyle.Solid, k), d: lop(MAU_DUONG.stochD, 1, LineStyle.Solid, k) };
+      stochS.k.createPriceLine({ price: 80, color: giam, lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: false });
+      stochS.k.createPriceLine({ price: 20, color: tang, lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: false });
+    }
+    let obvS: ISeriesApi<"Line"> | null = null;
+    if (coCB("obv")) {
+      obvS = chart.addSeries(
+        LineSeries,
+        { color: MAU_DUONG.obv, lineWidth: 2, priceLineVisible: false, lastValueVisible: false, priceFormat: { type: "volume" } },
+        khungMoi(),
+      );
     }
     let xhS: ISeriesApi<"Histogram"> | null = null;
     if (coCB("fl-xu-huong")) {
@@ -369,6 +340,19 @@ export function BieuDoTuongTac({
         bb[2].setData(duong(ds, b.duoi));
         ketQua.push({ ten: "BB trên", gt: b.tren, dinhDang: giaStr }, { ten: "BB dưới", gt: b.duoi, dinhDang: giaStr });
       }
+      if (gtFL && giaTriCuaMa) {
+        const g = flGiaTri(ds, giaTriCuaMa.moc, giaTriCuaMa.loai, giaTriCuaMa.peNganh);
+        if (g) {
+          gtFL.dat.setData(duong(ds, g.dat));
+          gtFL.hopLy.setData(duong(ds, g.hopLy));
+          gtFL.re.setData(duong(ds, g.re));
+          ketQua.push(
+            { ten: "FL Lịch sử đắt", gt: g.dat, mau: giam, dinhDang: giaStr },
+            { ten: "FL Hợp lý", gt: g.hopLy, mau: nhan, dinhDang: giaStr },
+            { ten: "FL Lịch sử rẻ", gt: g.re, mau: tang, dinhDang: giaStr },
+          );
+        }
+      }
       if (vg) {
         const v = flVungGia(ds);
         vg[0].setData(duong(ds, v.tren));
@@ -389,6 +373,17 @@ export function BieuDoTuongTac({
         const g = rsi(dong);
         rsiS.setData(duong(ds, g));
         ketQua.push({ ten: "RSI", gt: g, mau: MAU_DUONG.rsi, dinhDang: so2 });
+      }
+      if (stochS) {
+        const st = stochastic(ds);
+        stochS.k.setData(duong(ds, st.k));
+        stochS.d.setData(duong(ds, st.d));
+        ketQua.push({ ten: "%K", gt: st.k, mau: MAU_DUONG.stochK, dinhDang: so2 }, { ten: "%D", gt: st.d, mau: MAU_DUONG.stochD, dinhDang: so2 });
+      }
+      if (obvS) {
+        const g = obv(ds);
+        obvS.setData(duong(ds, g));
+        ketQua.push({ ten: "OBV", gt: g, mau: MAU_DUONG.obv, dinhDang: (v) => v.toLocaleString("vi-VN", { notation: "compact" }) });
       }
       if (macdS) {
         const m = macd(dong);
@@ -459,7 +454,7 @@ export function BieuDoTuongTac({
       bieuDo.current = nenSeries.current = klSeries.current = null;
       veLai.current = null;
     };
-  }, [nenGoc, chiBao, giaoDien, nguon]);
+  }, [nenGoc, chiBao, giaoDien, nguon, giaTriCuaMa]);
 
   // ---- Tiền số: nến realtime ----
   const nhanTin = useCallback((_: string, duLieu: unknown) => {
@@ -537,7 +532,12 @@ export function BieuDoTuongTac({
     chart.timeScale().setVisibleRange({ from: (cuoi - ngay * 86400) as UTCTimestamp, to: cuoi as UTCTimestamp });
   };
 
-  const soKhungPhu = CHI_BAO.filter((c) => c.khungRieng && chiBao.includes(c.ma)).length;
+  const soKhungPhu = CHI_BAO.filter((c) => c.khungRieng && chiBao.includes(c.ma) && (nguon === "ck" || !c.chiCoPhieu)).length;
+  // Tóm tắt FL Giá trị cho nhãn góc phải biểu đồ
+  const tomTatGiaTri = useMemo(
+    () => (batGiaTri && nenGoc && giaTriCuaMa ? flGiaTri(nenGoc, giaTriCuaMa.moc, giaTriCuaMa.loai, giaTriCuaMa.peNganh) : null),
+    [batGiaTri, nenGoc, giaTriCuaMa],
+  );
   const cuoi = nenGoc?.[nenGoc.length - 1];
   const hien = chuThich ?? (cuoi ? { nen: cuoi, phanTram: null, gt: [] } : null);
   const giaHien = (x: number) =>
@@ -569,31 +569,30 @@ export function BieuDoTuongTac({
         {nguon === "ck" && <span className="text-[12px] text-chu-phu">Nến ngày, giá nghìn đồng</span>}
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-vien px-2 py-1.5">
-        {CHI_BAO.map((c) => {
-          const bat = chiBao.includes(c.ma);
-          return (
-            <button
-              key={c.ma}
-              onClick={() => batTatChiBao(c.ma)}
-              title={c.moTa}
-              className={`h-7 border px-2 text-[12px] font-medium ${
-                bat
-                  ? c.finlo
-                    ? "border-nhan bg-nhan text-white"
-                    : "border-chu bg-chu text-nen"
-                  : c.finlo
-                    ? "border-nhan/50 text-nhan hover:bg-nhan-nhat"
-                    : "border-vien text-chu-phu hover:text-chu"
-              }`}
-            >
-              {c.ten}
-            </button>
-          );
-        })}
-      </div>
+      <ThanhChiBao coPhieu={nguon === "ck"} />
 
       <div className="relative flex-1">
+        {tomTatGiaTri && tomTatGiaTri.diem != null && (
+          <div className="pointer-events-none absolute top-1 right-16 z-10 border border-nhan bg-nen/90 px-2 py-1 text-[11px] tabular-nums">
+            <p className="font-semibold text-nhan">FL Giá trị · {tomTatGiaTri.thuoc}</p>
+            <p>
+              {tomTatGiaTri.thuoc} hiện tại <b>{tomTatGiaTri.boiNay?.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}</b>
+              {" · "}trung vị {tomTatGiaTri.p50.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}
+              {tomTatGiaTri.peNganh != null && <> · ngành {tomTatGiaTri.peNganh.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}</>}
+            </p>
+            <p>
+              Đắt hơn <b>{Math.round(tomTatGiaTri.diem)}%</b> lịch sử
+              {tomTatGiaTri.chenh != null && (
+                <>
+                  {" · "}
+                  <b className={tomTatGiaTri.chenh < 0 ? "text-tang" : "text-giam"}>
+                    {tomTatGiaTri.chenh < 0 ? "thấp" : "cao"} hơn hợp lý {Math.abs(tomTatGiaTri.chenh).toFixed(0)}%
+                  </b>
+                </>
+              )}
+            </p>
+          </div>
+        )}
         {hien && (
           <div className="pointer-events-none absolute top-1 left-2 z-10 flex max-w-[calc(100%-80px)] flex-wrap gap-x-3 gap-y-0.5 text-[12px] tabular-nums">
             <span className="text-chu-phu">

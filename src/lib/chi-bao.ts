@@ -214,3 +214,87 @@ export function khoiLuongTheoGia(nen: NenCB[], soPhien = 60, soO = 16) {
   }
   return o.reverse(); // giá cao ở trên
 }
+
+// OBV: cộng khối lượng phiên tăng, trừ khối lượng phiên giảm
+export function obv(nen: NenCB[]): Chuoi {
+  let s = 0;
+  return nen.map((x, i) => {
+    if (i > 0) s += x.close > nen[i - 1].close ? x.volume : x.close < nen[i - 1].close ? -x.volume : 0;
+    return s;
+  });
+}
+
+// Stochastic (14, 3): vị trí giá đóng cửa trong biên độ 14 phiên; %D là trung bình 3 phiên của %K
+export function stochastic(nen: NenCB[], n = 14, d = 3) {
+  const k: Chuoi = nen.map((x, i) => {
+    if (i < n - 1) return null;
+    let cao = -Infinity;
+    let thap = Infinity;
+    for (let j = i - n + 1; j <= i; j++) {
+      cao = Math.max(cao, nen[j].high);
+      thap = Math.min(thap, nen[j].low);
+    }
+    return cao > thap ? ((x.close - thap) / (cao - thap)) * 100 : 50;
+  });
+  const dong: Chuoi = k.map((_, i) => {
+    if (i < d - 1 || k.slice(i - d + 1, i + 1).some((v) => v == null)) return null;
+    return (k.slice(i - d + 1, i + 1) as number[]).reduce((s, v) => s + v, 0) / d;
+  });
+  return { k, d: dong };
+}
+
+// ===================== FL Giá trị =====================
+// Vùng định giá của chính mã theo lịch sử bội số, trộn thêm góc nhìn ngành.
+//  - Thước đo: P/B cho ngân hàng, chứng khoán, bảo hiểm và khi đang lỗ; còn lại P/E.
+//  - Mỗi phiên dùng EPS/BVPS của báo cáo ĐÃ CÔNG BỐ tại phiên đó (không lấy số tương lai).
+//  - Vùng rẻ / đắt: bội số ở bách phân vị 20 / 80 của chính mã nhân với EPS/BVPS hiện hành.
+//  - Giá trị hợp lý FL: nửa trung vị bội số của chính mã, nửa P/E trung vị ngành (nếu dùng P/E).
+//  - Điểm định giá: bội số hôm nay cao hơn bao nhiêu % số phiên trong lịch sử (0 rẻ nhất, 100 đắt nhất).
+
+export type MocGiaTri = { tu: number; eps: number | null; bvps: number | null };
+
+const phanVi = (ds: number[], p: number) => {
+  const i = (ds.length - 1) * p;
+  const a = Math.floor(i);
+  return ds[a] + (ds[Math.min(a + 1, ds.length - 1)] - ds[a]) * (i - a);
+};
+
+export function flGiaTri(nen: NenCB[], moc: MocGiaTri[], loai: string, peNganh: number | null) {
+  const ds = [...moc].sort((a, b) => a.tu - b.tu);
+  const cuoi = ds[ds.length - 1];
+  const theoPB = ["ngan_hang", "chung_khoan", "bao_hiem"].includes(loai) || !(cuoi?.eps && cuoi.eps > 0);
+  const thuoc = theoPB ? "P/B" : "P/E";
+
+  // Neo (EPS hoặc BVPS) hiện hành tại từng phiên
+  const neo: Chuoi = [];
+  let j = -1;
+  for (const x of nen) {
+    while (j + 1 < ds.length && ds[j + 1].tu <= x.time) j++;
+    const m = j >= 0 ? ds[j] : null;
+    const v = m ? (theoPB ? m.bvps : m.eps) : null;
+    neo.push(v != null && v > 0 ? v : null);
+  }
+  const boi: Chuoi = nen.map((x, i) => (neo[i] ? x.close / neo[i]! : null));
+  // Bỏ 2% hai đầu để vài phiên bất thường không kéo lệch vùng
+  const sapXep = (boi.filter((v) => v != null) as number[]).sort((a, b) => a - b);
+  const catBo = Math.floor(sapXep.length * 0.02);
+  const mau = sapXep.slice(catBo, sapXep.length - catBo);
+  if (mau.length < 60) return null; // dưới ~3 tháng dữ liệu thì chưa đủ để nói rẻ/đắt
+
+  const p20 = phanVi(mau, 0.2);
+  const p50 = phanVi(mau, 0.5);
+  const p80 = phanVi(mau, 0.8);
+  const boiHopLy = !theoPB && peNganh ? (p50 + peNganh) / 2 : p50;
+
+  const theo = (k: number): Chuoi => neo.map((n) => (n ? n * k : null));
+  const re = theo(p20);
+  const hopLy = theo(boiHopLy);
+  const dat = theo(p80);
+
+  const iCuoi = nen.length - 1;
+  const boiNay = boi[iCuoi];
+  const diem = boiNay != null ? (sapXep.filter((v) => v < boiNay).length / sapXep.length) * 100 : null;
+  const chenh = hopLy[iCuoi] ? (nen[iCuoi].close / hopLy[iCuoi]! - 1) * 100 : null;
+
+  return { thuoc, re, hopLy, dat, boiNay, p20, p50, p80, boiHopLy, peNganh: theoPB ? null : peNganh, diem, chenh };
+}

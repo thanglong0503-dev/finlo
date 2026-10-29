@@ -1,14 +1,35 @@
-// Danh sách trang trên menu, dùng chung cho header (client) và footer (server).
-// Trang phân tích từng mã mở qua ô tra cứu hoặc bấm vào mã trong các bảng.
-export const MENU = [
-  { href: "/", nhan: "Thị trường" },
-  { href: "/bang-gia", nhan: "Chứng khoán" },
-  { href: "/bieu-do", nhan: "Biểu đồ" },
-  { href: "/bo-loc", nhan: "Bộ lọc" },
-  { href: "/chi-so", nhan: "Chỉ số" },
-  { href: "/nganh", nhan: "Ngành" },
-  { href: "/tai-san-so", nhan: "Tài sản số" },
-  { href: "/kim-loai-quy", nhan: "Kim loại quý" },
-  { href: "/vi-mo", nhan: "Vĩ mô" },
-  { href: "/tin-tuc", nhan: "Tin tức" },
+// Cấu trúc menu: nhóm -> trang. Dùng chung cho header (client), footer (server) và ô tra cứu.
+// Thêm trang mới chỉ cần thêm vào một nhóm, header không dài thêm.
+
+export type TrangMenu = { href: string; nhan: string; moTa: string; tuKhoa?: string };
+export type NhomMenu = { ten: string; trang: TrangMenu[] };
+
+export const NHOM_MENU: NhomMenu[] = [
+  {
+    ten: "Thị trường",
+    trang: [
+      { href: "/", nhan: "Tổng quan", moTa: "Chỉ số, độ rộng, mã nổi bật hôm nay", tuKhoa: "trang chu tong quan hom nay" },
+      { href: "/chi-so", nhan: "Chỉ số", moTa: "VN-INDEX, VN30, HNX… và P/E toàn thị trường", tuKhoa: "vnindex vn30 hnx upcom pe thi truong" },
+      { href: "/nganh", nhan: "Ngành", moTa: "Bản đồ nhiệt 34 ngành, P/E ngành", tuKhoa: "nganh heatmap ban do nhiet" },
+      { href: "/vi-mo", nhan: "Lãi suất & Vĩ mô", moTa: "Lãi suất tiết kiệm, liên ngân hàng, GDP, CPI", tuKhoa: "lai suat tiet kiem gdp cpi lam phat ty gia vi mo" },
+      { href: "/tin-tuc", nhan: "Tin doanh nghiệp", moTa: "Cổ tức, giao dịch cổ đông lớn, nhân sự", tuKhoa: "tin tuc cong bo co tuc" },
+    ],
+  },
+  {
+    ten: "Chứng khoán",
+    trang: [
+      { href: "/bang-gia", nhan: "Bảng giá", moTa: "1.525 mã, trần/sàn, khối ngoại, cập nhật mỗi phút", tuKhoa: "bang gia co phieu hose hnx" },
+      { href: "/bieu-do", nhan: "Biểu đồ kỹ thuật", moTa: "Chỉ báo kỹ thuật và chỉ báo riêng FL của Finlo", tuKhoa: "bieu do chart chi bao ky thuat" },
+      { href: "/bo-loc", nhan: "Bộ lọc cổ phiếu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức", tuKhoa: "bo loc loc co phieu screener pe roe" },
+    ],
+  },
+  {
+    ten: "Tài sản khác",
+    trang: [
+      { href: "/tai-san-so", nhan: "Tài sản số", moTa: "Bitcoin, Ethereum, sổ lệnh realtime", tuKhoa: "tien so crypto bitcoin btc eth" },
+      { href: "/kim-loai-quy", nhan: "Kim loại quý", moTa: "Giá vàng SJC, nhẫn trơn theo thương hiệu", tuKhoa: "vang sjc kim loai quy pnj" },
+    ],
+  },
 ];
+
+export const MENU: TrangMenu[] = NHOM_MENU.flatMap((n) => n.trang);

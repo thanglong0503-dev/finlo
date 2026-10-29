@@ -92,3 +92,28 @@ export function doanhThuLoiNhuan(bc: BaoCao, soQuy = 8) {
     loiNhuan: ln?.q[batDau + i] ?? null,
   }));
 }
+
+// ---- Mốc định giá theo quý cho chỉ báo FL Giá trị ----
+
+export type MocDinhGia = {
+  tu: number; // thời điểm bắt đầu dùng mốc này (0h ngày công bố, giây UTC)
+  eps: number | null; // lợi nhuận công ty mẹ 4 quý / cổ phiếu, đồng
+  bvps: number | null; // vốn chủ sở hữu / cổ phiếu, đồng
+};
+
+// Mỗi quý một mốc, có hiệu lực từ ngày công bố báo cáo quý đó
+export function mocDinhGia(bc: BaoCao, soCoPhieu: number): MocDinhGia[] {
+  const lnMe = tim(bc, "kqkd", "lợi nhuận sau thuế của công ty mẹ", "lợi nhuận sau thuế thu nhập doanh nghiệp");
+  const vcsh = tim(bc, "can_doi", "vốn chủ sở hữu");
+  return bc.quy.map((_, i) => {
+    const bon = lnMe?.q.slice(Math.max(0, i - 3), i + 1) ?? [];
+    const eps = bon.length === 4 && bon.every((v) => v != null) ? ((bon as number[]).reduce((s, v) => s + v, 0) * 1e6) / soCoPhieu : null;
+    const von = vcsh?.q[i];
+    const [y, m, d] = bc.quyCongBo[i].split("-").map(Number);
+    return {
+      tu: Date.UTC(y, m - 1, d) / 1000 - 7 * 3600, // 0h giờ Việt Nam
+      eps,
+      bvps: von != null ? (von * 1e6) / soCoPhieu : null,
+    };
+  });
+}

@@ -525,13 +525,14 @@ export type MucBaoCao = {
 export type BaoCao = {
   loai: string; // "thuong" | "ngan_hang" | "chung_khoan" | ...
   quy: string[]; // nhãn kỳ, ví dụ "Q2/2026"
+  quyCongBo: string[]; // ngày công bố báo cáo từng quý (YYYY-MM-DD), dùng để không vẽ số tương lai vào quá khứ
   nam: string[]; // ví dụ "2025"
   muc: MucBaoCao[];
 };
 
 type BaoCaoTho = {
   loai: string;
-  quy: { nam: number; q: number }[];
+  quy: { nam: number; q: number; ky: string; congBo?: string | null }[];
   nam: { nam: number }[];
   muc: { ten: string; nhom: NhomBaoCao; cap: number; q?: (number | null)[]; n?: (number | null)[] }[];
 };
@@ -553,6 +554,13 @@ export async function layBaoCao(ma: string): Promise<BaoCao | null> {
   return {
     loai: tho.loai,
     quy: tho.quy.map((k) => `Q${k.q}/${k.nam}`),
+    // Thiếu ngày công bố thì coi như công bố 45 ngày sau khi hết quý (hạn nộp báo cáo quý)
+    quyCongBo: tho.quy.map((k) => {
+      if (k.congBo) return k.congBo;
+      const d = new Date(`${k.ky}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + 45);
+      return d.toISOString().slice(0, 10);
+    }),
     nam: tho.nam.map((k) => String(k.nam)),
     muc: tho.muc.map((m) => ({
       ten: m.ten.replace(/\s+/g, " ").trim(),
