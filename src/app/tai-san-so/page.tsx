@@ -17,7 +17,12 @@ export default function TrangTaiSanSo() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="nhan-muc">Tài sản số</p>
       <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-[-0.035em] sm:text-[40px]">Giá tài sản số</h1>
-      <p className="mt-1 text-chu-phu">Giá tham khảo theo USD, quy đổi VND theo tỷ giá bán của Vietcombank.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <p className="mt-1 text-chu-phu">Giá tham khảo theo USD, quy đổi VND theo tỷ giá bán của Vietcombank.</p>
+        <Link href="/tai-san-so/phai-sinh" className="h-9 rounded-full bg-nen-phu px-4 leading-9 font-semibold hover:bg-nen-noi">
+          Phái sinh: funding, thanh lý →
+        </Link>
+      </div>
       <Suspense fallback={<LuoiMo so={4} />}>
         <TongQuan />
       </Suspense>

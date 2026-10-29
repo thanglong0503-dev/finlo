@@ -59,6 +59,7 @@ const NHOM: { ten: string; moTa: string; congCu: CongCu[] }[] = [
       { ten: "Tin báo chí", ma: "tin_bao_chi", moTa: "Tin mới từ CafeF, Vietstock, VnEconomy, gắn mã được nhắc tới.", viDu: "Báo chí nói gì về FPT hôm nay?" },
       { ten: "Lịch sự kiện", ma: "lich_su_kien", moTa: "Nghỉ lễ, đáo hạn phái sinh, hạn báo cáo tài chính, cổ tức, đại hội.", viDu: "Tháng tới có sự kiện gì đáng chú ý?" },
       { ten: "Thị trường tiền số", ma: "thi_truong_tien_so", moTa: "Vốn hoá, tỷ trọng BTC, chỉ số Sợ hãi & Tham lam, đồng tăng giảm mạnh.", viDu: "Tuần này coin nào tăng mạnh nhất?" },
+      { ten: "Phái sinh tiền số", ma: "phai_sinh_tien_so", moTa: "Funding, Open Interest, tỷ lệ Long/Short, funding cao nhất toàn thị trường.", viDu: "Funding BTC đang dương hay âm?" },
     ],
   },
 ];
