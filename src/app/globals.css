@@ -136,3 +136,24 @@ body {
 .so {
   font-variant-numeric: tabular-nums;
 }
+
+/* Chữ chỉ có viền (không tô): điểm nhấn trang trí như chữ Finlo dọc ở chân trang */
+.chu-vien {
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--chu-toi) 22%, transparent);
+  transition: -webkit-text-stroke-color 0.4s;
+}
+.chu-vien-nen {
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--chu) 12%, transparent);
+}
+/* Chữ dọc đọc từ dưới lên */
+.chu-doc {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.chu-vien-ro {
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--chu) 30%, transparent);
+  transition: -webkit-text-stroke-color 0.3s;
+}

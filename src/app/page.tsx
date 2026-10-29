@@ -248,8 +248,10 @@ function LopTaiSan() {
             href={x.href}
             className="group flex flex-col rounded-3xl border border-vien bg-nen-phu p-7 transition-colors hover:border-nhan/50"
           >
-            <span className="so text-[13px] text-nhan">0{i + 1}</span>
-            <h3 className="mt-6 text-[22px] font-bold tracking-[-0.02em]">{x.ten}</h3>
+            <span className="chu-vien-ro text-[64px] leading-none font-bold tracking-[-0.04em] transition-colors group-hover:[-webkit-text-stroke-color:var(--nhan)]">
+              0{i + 1}
+            </span>
+            <h3 className="mt-4 text-[22px] font-bold tracking-[-0.02em]">{x.ten}</h3>
             <p className="mt-2 flex-1 leading-relaxed text-chu-phu">{x.moTa}</p>
             <span className="mt-8 inline-flex h-10 w-fit items-center rounded-full bg-nen-noi px-5 font-semibold group-hover:bg-chu group-hover:text-nen">
               {x.nut}
@@ -362,11 +364,18 @@ function HoiDap() {
 
 function KetThuc() {
   return (
-    <section className="px-4 pt-10 pb-24 text-center">
-      <h2 className="mx-auto max-w-3xl text-[36px] leading-tight font-bold tracking-[-0.035em] sm:text-[52px]">
+    <section className="relative overflow-hidden px-4 pt-16 pb-28 text-center">
+      {/* Chữ Finlo viền nét cỡ lớn làm nền */}
+      <span
+        className="chu-vien-nen pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-[28vw] leading-none font-bold tracking-[-0.05em] select-none lg:text-[300px]"
+        aria-hidden
+      >
+        Finlo
+      </span>
+      <h2 className="relative mx-auto max-w-3xl text-[36px] leading-tight font-bold tracking-[-0.035em] sm:text-[52px]">
         Bắt đầu theo dõi thị trường ngay hôm nay
       </h2>
-      <div className="mt-9 flex flex-wrap justify-center gap-3">
+      <div className="relative mt-9 flex flex-wrap justify-center gap-3">
         <Link
           href="/bang-gia"
           className="inline-flex h-12 items-center rounded-full bg-chu px-8 text-[15px] font-semibold text-nen hover:bg-nhan hover:text-white"

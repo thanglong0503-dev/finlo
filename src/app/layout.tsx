@@ -62,8 +62,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="flex-1">{children}</main>
         <GoiYCaiIos />
 
-        <footer className="border-t border-vien-toi bg-toi text-chu-toi">
-          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5">
+        <footer className="group/chan border-t border-vien-toi bg-toi text-chu-toi">
+          <div className="mx-auto flex max-w-7xl">
+          {/* Chữ Finlo viền nét xoay dọc bên trái, chỉ hiện trên màn hình rộng */}
+          <div className="hidden shrink-0 items-center border-r border-vien-toi px-6 py-10 lg:flex" aria-hidden>
+            <span className="chu-vien chu-doc text-[150px] leading-none font-bold tracking-[-0.04em] select-none group-hover/chan:[-webkit-text-stroke-color:var(--nhan-sang)]">
+              Finlo
+            </span>
+          </div>
+          <div className="grid flex-1 gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5 lg:px-10">
             <div className="lg:col-span-2">
               <Logo nenDen={false} />
               <p className="mt-3 max-w-xs text-chu-toi-phu">
@@ -89,8 +96,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </div>
             ))}
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-vien-toi py-4 text-chu-toi-phu">
-            <span>© 2026 Finlo · finlo.id.vn</span>
+          </div>
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-5 gap-y-2 border-t border-vien-toi px-4 py-4 text-chu-toi-phu">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link href="/gioi-thieu" className="hover:text-chu-toi">
               Giới thiệu
             </Link>
@@ -100,6 +108,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/lien-he" className="hover:text-chu-toi">
               Liên hệ
             </Link>
+            </div>
+            <span>
+              © 2026 Finlo ·{" "}
+              <a href="mailto:finlo.admin@gmail.com" className="hover:text-chu-toi">
+                finlo.admin@gmail.com
+              </a>
+            </span>
           </div>
         </footer>
       </body>

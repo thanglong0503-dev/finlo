@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 // Kênh liên hệ công khai trên trang. Để null thì trang chỉ hiện hướng dẫn, chưa hiện địa chỉ.
-const EMAIL_LIEN_HE: string | null = null;
+const EMAIL_LIEN_HE: string | null = "finlo.admin@gmail.com";
 
 export default function TrangLienHe() {
   return (
