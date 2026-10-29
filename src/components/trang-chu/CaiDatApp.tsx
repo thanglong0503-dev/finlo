@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import { BangHuongDanIos, laIos } from "@/components/HuongDanIos";
 
 // Sự kiện trình duyệt bắn ra khi trang đủ điều kiện cài như ứng dụng (Chrome, Edge, Android)
 type SuKienCai = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
@@ -27,7 +28,7 @@ type TrangThai = "cho" | "dang-dung-app" | "co-the-cai" | "iphone" | "thu-cong";
 function trangThai(): TrangThai {
   if (daCai || matchMedia("(display-mode: standalone)").matches) return "dang-dung-app";
   if (suKien) return "co-the-cai";
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) return "iphone";
+  if (laIos()) return "iphone";
   return "thu-cong";
 }
 
@@ -36,7 +37,6 @@ const dangKy = (goi: () => void) => {
   return () => nguoiNghe.delete(goi);
 };
 
-const BUOC_IPHONE = ["Mở finlo.id.vn bằng Safari", "Bấm nút Chia sẻ ở thanh dưới", "Chọn \"Thêm vào MH chính\" rồi bấm Thêm"];
 const BUOC_THU_CONG = [
   "Máy tính: bấm biểu tượng cài đặt ở cuối thanh địa chỉ Chrome hoặc Edge",
   "Android: mở menu ⋮ của Chrome, chọn \"Cài đặt ứng dụng\"",
@@ -47,6 +47,7 @@ const BUOC_THU_CONG = [
 export function CaiDatApp() {
   const tt = useSyncExternalStore(dangKy, trangThai, () => "cho" as TrangThai);
   const [moHuongDan, setMoHuongDan] = useState(false);
+  const [moIos, setMoIos] = useState(false);
 
   if (tt === "dang-dung-app")
     return (
@@ -56,7 +57,7 @@ export function CaiDatApp() {
       </p>
     );
 
-  const buoc = tt === "iphone" ? BUOC_IPHONE : BUOC_THU_CONG;
+  const buoc = BUOC_THU_CONG;
 
   return (
     <div>
@@ -68,16 +69,18 @@ export function CaiDatApp() {
               await suKien.userChoice;
               suKien = null;
               bao();
-            } else setMoHuongDan((x) => !x);
+            } else if (tt === "iphone") setMoIos(true);
+            else setMoHuongDan((x) => !x);
           }}
           className="inline-flex h-12 items-center gap-2 rounded-full bg-chu px-7 text-[15px] font-semibold text-nen hover:bg-nhan hover:text-white"
         >
           <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
             <path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {tt === "co-the-cai" ? "Cài Finlo vào máy" : tt === "iphone" ? "Cách cài trên iPhone" : "Hướng dẫn cài đặt"}
+          {tt === "co-the-cai" ? "Cài Finlo vào máy" : tt === "iphone" ? "Cài lên iPhone" : "Hướng dẫn cài đặt"}
         </button>
       </div>
+      {moIos && <BangHuongDanIos dong={() => setMoIos(false)} />}
       {moHuongDan && (
         <ol className="mt-5 space-y-2.5">
           {buoc.map((b, i) => (

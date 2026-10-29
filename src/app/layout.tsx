@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
+import { GoiYCaiIos } from "@/components/HuongDanIos";
 import { Logo } from "@/components/Logo";
 import { Suspense } from "react";
 import { MenuDiDong, MenuNhom } from "@/components/Menu";
@@ -21,7 +22,6 @@ export const metadata: Metadata = {
   description: "Theo dõi chứng khoán, hàng hoá, kim loại quý và tài sản số trong một nơi.",
   // Mở từ màn hình chính iPhone như một ứng dụng riêng
   appleWebApp: { capable: true, title: "Finlo", statusBarStyle: "black-translucent" },
-  icons: { apple: "/app/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = { themeColor: "#000000" };
@@ -60,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </header>
 
         <main className="flex-1">{children}</main>
+        <GoiYCaiIos />
 
         <footer className="border-t border-vien-toi bg-toi text-chu-toi">
           <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5">
