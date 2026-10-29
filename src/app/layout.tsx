@@ -70,7 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               Finlo
             </span>
           </div>
-          <div className="grid flex-1 gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5 lg:px-10">
+          <div className="grid flex-1 gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-6 lg:px-10">
             <div className="lg:col-span-2">
               <Logo nenDen={false} />
               <p className="mt-3 max-w-xs text-chu-toi-phu">

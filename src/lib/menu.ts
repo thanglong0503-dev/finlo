@@ -35,6 +35,18 @@ export const NHOM_MENU: NhomMenu[] = [
       { href: "/kim-loai-quy", nhan: "Kim loại quý", moTa: "Giá vàng SJC, nhẫn trơn theo thương hiệu", tuKhoa: "vang sjc kim loai quy pnj" },
     ],
   },
+  {
+    ten: "Finlo",
+    trang: [
+      { href: "/gioi-thieu", nhan: "Giới thiệu", moTa: "Finlo là gì, dữ liệu lấy từ đâu", tuKhoa: "gioi thieu ve finlo" },
+      { href: "/mcp", nhan: "Finlo MCP", moTa: "Hỏi Claude bằng dữ liệu Finlo: 20 công cụ", tuKhoa: "mcp claude ai tro ly cong cu" },
+      { href: "/doi-tac", nhan: "Đối tác", moTa: "Hợp tác dữ liệu, nội dung, quảng bá", tuKhoa: "doi tac hop tac partner quang cao" },
+      { href: "/lien-he", nhan: "Liên hệ", moTa: "Góp ý, báo lỗi dữ liệu", tuKhoa: "lien he email gop y bao loi" },
+    ],
+  },
 ];
+
+// Hộp thư chung của Finlo, dùng cho trang Liên hệ, Đối tác và chân trang
+export const EMAIL_LIEN_HE = "finlo.admin@gmail.com";
 
 export const MENU: TrangMenu[] = NHOM_MENU.flatMap((n) => n.trang);

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-// Khung chung cho các trang văn bản (Giới thiệu, Điều khoản, Liên hệ): tiêu đề lớn, mục lục nhỏ, nội dung dễ đọc
+// Khung chung cho các trang văn bản (Giới thiệu, MCP, Đối tác, Điều khoản, Liên hệ): tiêu đề lớn, mục lục nhỏ, nội dung dễ đọc
 const TRANG = [
   { href: "/gioi-thieu", nhan: "Giới thiệu" },
+  { href: "/mcp", nhan: "Finlo MCP" },
+  { href: "/doi-tac", nhan: "Đối tác" },
   { href: "/dieu-khoan", nhan: "Điều khoản sử dụng" },
   { href: "/lien-he", nhan: "Liên hệ" },
 ];
@@ -11,12 +13,12 @@ const TRANG = [
 export function TrangVanBan({ duongDan, tieuDe, moTa, children }: { duongDan: string; tieuDe: string; moTa: string; children: ReactNode }) {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
-      <nav className="flex flex-wrap gap-1 rounded-full bg-nen-phu p-1 w-fit">
+      <nav className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-full bg-nen-phu p-1 [scrollbar-width:none]">
         {TRANG.map((t) => (
           <Link
             key={t.href}
             href={t.href}
-            className={`h-8 rounded-full px-4 leading-8 font-medium ${t.href === duongDan ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
+            className={`h-8 shrink-0 rounded-full px-4 leading-8 font-medium whitespace-nowrap ${t.href === duongDan ? "bg-chu text-nen" : "text-chu-phu hover:text-chu"}`}
           >
             {t.nhan}
           </Link>
