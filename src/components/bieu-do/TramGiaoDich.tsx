@@ -80,8 +80,10 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
   const ptTs = t ? Number(t.P) : 0;
 
   return (
-    <div className="grid border-b border-vien lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_300px_300px]">
-      <section className="min-w-0 lg:border-r lg:border-vien">
+    // Máy tính: trạm vừa khít một màn hình (trừ header 60px), mỗi cột tự cuộn bên trong
+    // nên danh sách mã dài không kéo cả trang dài ra. Màn hình vừa: danh sách xuống hàng dưới.
+    <div className="grid border-b border-vien lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[calc(100dvh-60px)_640px] xl:grid-cols-[minmax(0,1fr)_300px_300px] xl:grid-rows-[calc(100dvh-60px)]">
+      <section className="flex min-h-0 min-w-0 flex-col lg:overflow-y-auto lg:border-r lg:border-vien">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-vien px-3 py-2.5">
           <h1 className="text-lg font-bold">
             {nguon === "ts" ? `${ma}/USDT` : ma}{" "}
@@ -113,7 +115,7 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
         <BieuDoTuongTac key={`${nguon}:${ma}`} nguon={nguon} ma={ma} khiCoNen={khiCoNen} phienCK={phienCK} />
       </section>
 
-      <aside className="border-t border-vien lg:border-t-0 xl:border-r xl:border-vien">
+      <aside className="min-h-0 border-t border-vien lg:overflow-y-auto lg:border-t-0 xl:border-r xl:border-vien">
         {nguon === "ts" ? (
           coCap === false ? (
             <p className="p-4 text-chu-phu">{ma} không có cặp đang giao dịch trên Binance.</p>
@@ -130,7 +132,7 @@ export function TramGiaoDich({ nguonDau, maDau }: { nguonDau: Nguon; maDau: stri
         )}
       </aside>
 
-      <aside className="h-[640px] border-t border-vien lg:col-span-2 xl:col-span-1 xl:h-auto xl:border-t-0">
+      <aside className="h-[560px] min-h-0 border-t border-vien lg:col-span-2 lg:h-auto xl:col-span-1 xl:border-t-0">
         <DanhSachMa nguon={nguon} ma={ma} coPhieu={bangGia?.coPhieu ?? null} tienSo={tienSo} khiChon={khiChon} />
       </aside>
     </div>

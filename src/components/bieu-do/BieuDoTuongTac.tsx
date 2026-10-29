@@ -546,7 +546,7 @@ export function BieuDoTuongTac({
       : x.toLocaleString("vi-VN", { maximumFractionDigits: soLe(x) });
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-vien px-2 py-2">
         <div className="flex border border-vien">
           {nguon === "ts"
@@ -571,9 +571,10 @@ export function BieuDoTuongTac({
 
       <ThanhChiBao coPhieu={nguon === "ck"} />
 
-      <div className="relative flex-1">
+      {/* Biểu đồ giãn hết chiều cao còn lại; màn hình nhỏ (không giới hạn chiều cao) dùng chiều cao tối thiểu */}
+      <div className="relative min-h-0 flex-1" style={{ minHeight: 440 + soKhungPhu * 120 }}>
         {tomTatGiaTri && tomTatGiaTri.diem != null && (
-          <div className="pointer-events-none absolute top-1 right-16 z-10 border border-nhan bg-nen/90 px-2 py-1 text-[11px] tabular-nums">
+          <div className="pointer-events-none absolute top-1 right-16 z-10 hidden border border-nhan bg-nen/90 px-2 py-1 text-[11px] tabular-nums sm:block">
             <p className="font-semibold text-nhan">FL Giá trị · {tomTatGiaTri.thuoc}</p>
             <p>
               {tomTatGiaTri.thuoc} hiện tại <b>{tomTatGiaTri.boiNay?.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}</b>
@@ -638,11 +639,11 @@ export function BieuDoTuongTac({
           </div>
         )}
         {loi ? (
-          <div className="flex h-[480px] items-center justify-center px-6 text-center text-chu-phu">{loi}</div>
+          <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-chu-phu">{loi}</div>
         ) : (
           <>
             {!nenGoc && <div className="absolute inset-0 animate-pulse bg-nen-phu" />}
-            <div ref={khungRef} style={{ height: 480 + soKhungPhu * 130 }} className="w-full" />
+            <div ref={khungRef} className="absolute inset-0" />
           </>
         )}
       </div>
