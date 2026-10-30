@@ -44,7 +44,11 @@ export default function TrangDieuKhoan() {
 
       <Muc tieuDe="4. Sử dụng hợp lý">
         <ul>
-          <li>Không dùng công cụ tự động tải dữ liệu hàng loạt gây quá tải hệ thống.</li>
+          <li>
+            Không dùng bot, script hay công cụ tự động để thu thập, sao chép hoặc phân phối lại dữ liệu từ Finlo (kể cả qua các đường dẫn
+            /api), và không dùng dữ liệu của Finlo để huấn luyện mô hình AI. Finlo có thể chặn truy cập vi phạm mà không cần báo trước.
+          </li>
+          <li>Muốn dùng dữ liệu cho sản phẩm hoặc tổ chức của bạn, vui lòng liên hệ qua trang Đối tác.</li>
           <li>Không sao chép giao diện, thương hiệu Finlo (tên, logo FL) để giả mạo hoặc dùng cho mục đích thương mại khi chưa được đồng ý.</li>
           <li>Dữ liệu gốc thuộc quyền của các nhà cung cấp tương ứng.</li>
         </ul>
