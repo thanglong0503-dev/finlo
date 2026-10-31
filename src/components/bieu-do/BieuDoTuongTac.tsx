@@ -289,11 +289,11 @@ export function BieuDoTuongTac({
       },
       grid: { vertLines: { color: vien }, horzLines: { color: vien } },
       crosshair: { mode: CrosshairMode.Normal },
-      // Thao tác giống các trang lớn: lăn chuột để phóng to/thu nhỏ, kéo ngang để xem quá khứ.
-      // Vuốt dọc trên điện thoại để cuộn trang (không bị biểu đồ giữ lại); không kéo trục giá
-      // để biểu đồ không trôi lên xuống, thang giá luôn tự khớp với phần đang xem.
+      // Thao tác giống các trang lớn: lăn chuột để phóng to/thu nhỏ, kéo ngang để xem quá khứ,
+      // kéo dọc trên trục giá để giãn/nén giá (nút "Tự căn" hoặc bấm đúp trục giá để về tự khớp).
+      // Vuốt dọc trên điện thoại để cuộn trang (không bị biểu đồ giữ lại).
       handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
-      handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: false }, axisDoubleClickReset: true },
+      handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: true }, axisDoubleClickReset: true },
       rightPriceScale: { borderColor: vien, mode: thangLog ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal },
       // minBarSpacing nhỏ để "Tất cả" thu vừa toàn bộ lịch sử (hàng nghìn phiên) vào khung
       timeScale: { borderColor: vien, timeVisible: nguon === "ts", rightOffset: 6, minBarSpacing: 0.05 },
@@ -805,6 +805,13 @@ export function BieuDoTuongTac({
           Log
         </button>
         <button
+          onClick={() => bieuDo.current?.priceScale("right").applyOptions({ autoScale: true })}
+          title="Kéo dọc trên trục giá để giãn hoặc nén giá; bấm đây (hoặc bấm đúp trục giá) để thang giá tự khớp trở lại"
+          className="h-8 rounded-full px-3 text-[12px] font-semibold text-chu-phu hover:bg-nen-noi hover:text-chu"
+        >
+          Tự căn
+        </button>
+        <button
           onClick={() => setHienSuKien((x) => !x)}
           title="Vùng xám: khủng hoảng, thiên nga đen; mốc nhỏ: tin tài chính quan trọng. Rê chuột vào nến để xem chi tiết."
           className={`h-8 rounded-full px-3 text-[12px] font-semibold ${hienSuKien ? "bg-chu text-nen" : "text-chu-phu hover:bg-nen-noi hover:text-chu"}`}
@@ -843,7 +850,7 @@ export function BieuDoTuongTac({
         style={{ ["--cao-bd" as string]: `${gon ? 0 : 440 + soKhungPhu * 120}px` }}
       >
         {hien && (
-          <div className="pointer-events-none absolute top-1 left-12 z-10 flex max-w-[calc(100%-120px)] flex-wrap gap-x-3 gap-y-0.5 text-[12px] tabular-nums">
+          <div className="pointer-events-none absolute top-1 left-2 z-10 flex max-w-[calc(100%-70px)] flex-wrap gap-x-2 gap-y-0.5 text-[11px] tabular-nums sm:left-12 sm:max-w-[calc(100%-120px)] sm:gap-x-3 sm:text-[12px]">
             <span className="text-chu-phu">
               {new Date(hien.nen.time * 1000).toLocaleString("vi-VN", {
                 timeZone: "Asia/Ho_Chi_Minh",
@@ -877,7 +884,7 @@ export function BieuDoTuongTac({
               </span>
             )}
             {hien.gt.map((g) => (
-              <span key={g.ten}>
+              <span key={g.ten} className="hidden sm:inline">
                 <span style={{ color: g.mau }} className={g.mau ? "" : "text-chu-phu"}>
                   {g.ten}{" "}
                 </span>
@@ -885,12 +892,13 @@ export function BieuDoTuongTac({
               </span>
             ))}
             {camNhanGiaTri && (
-              <span className="mt-1 flex basis-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-vien bg-nen/85 px-3 py-1.5 text-[12px] backdrop-blur-sm">
-                <span className="font-semibold">
+              <span className="mt-1 flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-vien bg-nen/85 px-2 py-1 text-[11px] backdrop-blur-sm sm:basis-full sm:rounded-xl sm:px-3 sm:py-1.5 sm:text-[12px]">
+                <span className="hidden font-semibold sm:inline">
                   FL Giá trị · {camNhanGiaTri.thuoc} <span className="font-normal text-chu-phu">{camNhanGiaTri.soVoi}</span>
                 </span>
                 <span>
-                  Giá hôm nay{" "}
+                  <span className="sm:hidden">FL Giá trị: </span>
+                  <span className="hidden sm:inline">Giá hôm nay </span>
                   {camNhanGiaTri.phanTram >= 99 ? (
                     <>
                       <b className={camNhanGiaTri.re ? "text-tang" : "text-giam"}>{camNhanGiaTri.re ? "rẻ nhất" : "đắt nhất"}</b> trong{" "}
@@ -906,7 +914,7 @@ export function BieuDoTuongTac({
                   )}
                 </span>
                 {camNhanGiaTri.thuongLe != null && camNhanGiaTri.chenh != null && (
-                  <span className="text-chu-phu">
+                  <span className="hidden text-chu-phu sm:inline">
                     Thường lệ <b className="text-chu">{giaHien(camNhanGiaTri.thuongLe)}</b> (
                     <span className={camNhanGiaTri.chenh < 0 ? "text-tang" : "text-giam"}>
                       {camNhanGiaTri.chenh > 0 ? "+" : ""}
@@ -917,7 +925,7 @@ export function BieuDoTuongTac({
                     {camNhanGiaTri.peNganh != null && <>, ngành {camNhanGiaTri.peNganh.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}</>}
                   </span>
                 )}
-                <span className="flex items-center gap-3 text-chu-phu">
+                <span className="hidden items-center gap-3 text-chu-phu sm:flex">
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-sm bg-tang/40" /> rẻ so với chính {ma}
                   </span>
@@ -945,10 +953,10 @@ export function BieuDoTuongTac({
               />
             )}
             {theNen && (
+              // Khung gọn ghim ở góc trên, phía ngược với con trỏ; điện thoại không hiện (đã có dòng giá phía trên)
               <div
-                className="pointer-events-none absolute z-20 w-60 rounded-2xl border border-vien bg-nen-phu/95 p-3 text-[12px] shadow-2xl backdrop-blur-md"
+                className="pointer-events-none absolute z-20 hidden w-44 rounded-xl border border-vien bg-nen-phu/95 px-2.5 py-2 text-[11px] leading-snug shadow-xl backdrop-blur-md sm:block"
                 style={{
-                  // Ghim ở góc trên, phía ngược với con trỏ: không che nến đang xem và không nhảy theo chuột
                   ...((chuThich!.x ?? 0) > (chuThich!.rong ?? 0) / 2 ? { left: 56 } : { right: 72 }),
                   top: 48,
                 }}
@@ -960,7 +968,7 @@ export function BieuDoTuongTac({
                   <b className="tabular-nums">{giaHien(theNen.n.close)}</b>
                 </p>
                 {nguon === "ck" && (
-                  <dl className="mt-2 space-y-1 border-t border-vien pt-2 tabular-nums">
+                  <dl className="mt-1.5 grid grid-cols-3 gap-1 border-t border-vien pt-1.5 text-center tabular-nums">
                     {(
                       [
                         ["P/E", theNen.pe],
@@ -968,59 +976,48 @@ export function BieuDoTuongTac({
                         ["ROE", theNen.roe],
                       ] as const
                     ).map(([ten, v]) => (
-                      <div key={ten} className="flex justify-between">
-                        <dt className="text-chu-phu">{ten}</dt>
+                      <div key={ten}>
+                        <dt className="text-[10px] text-chu-phu">{ten}</dt>
                         <dd className="font-semibold">
-                          {v == null ? "—" : `${v.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}${ten === "ROE" ? "%" : ""}`}
+                          {v == null ? "—" : `${v.toLocaleString("vi-VN", { maximumFractionDigits: ten === "ROE" ? 1 : 2 })}${ten === "ROE" ? "%" : ""}`}
                         </dd>
                       </div>
                     ))}
                   </dl>
                 )}
                 {theNen.nam > 0.02 && (
-                  <div className="mt-2 flex justify-between border-t border-vien pt-2">
-                    <span className="text-chu-phu">Giữ tới nay</span>
-                    <span className="text-right">
-                      <b className={theNen.giu >= 0 ? "text-tang" : "text-giam"}>
-                        {theNen.giu >= 0 ? "+" : ""}
-                        {theNen.giu.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%{theNen.nam >= 1 ? "/năm" : ""}
-                      </b>
-                      <span className="block text-[11px] text-chu-phu">
-                        {theNen.nam >= 1
-                          ? `${theNen.nam.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} năm`
-                          : `${Math.round(theNen.nam * 365)} ngày`}
-                      </span>
+                  <p className="mt-1.5 flex justify-between border-t border-vien pt-1.5">
+                    <span className="text-chu-phu">
+                      Giữ tới nay{" "}
+                      {theNen.nam >= 1
+                        ? `${theNen.nam.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} năm`
+                        : `${Math.round(theNen.nam * 365)} ngày`}
                     </span>
-                  </div>
+                    <b className={theNen.giu >= 0 ? "text-tang" : "text-giam"}>
+                      {theNen.giu >= 0 ? "+" : ""}
+                      {theNen.giu.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%{theNen.nam >= 1 ? "/n" : ""}
+                    </b>
+                  </p>
                 )}
-                {chuThich?.suKien?.map((sk) => (
-                  <div key={sk.ten} className="mt-2 border-t border-vien pt-2">
-                    <p className="font-semibold">{sk.ten}</p>
-                    <p className="text-[11px] text-chu-phu">
-                      {sk.tu.split("-").reverse().join("/")}
-                      {sk.den ? ` – ${sk.den.split("-").reverse().join("/")}` : ""}
-                    </p>
-                    <p className="mt-1 leading-snug text-chu-phu">{sk.moTa}</p>
-                  </div>
-                ))}
                 {theNen.viTri != null && (
-                  <div className="mt-2 border-t border-vien pt-2">
+                  <div className="mt-1.5 border-t border-vien pt-1.5">
                     <p className="flex justify-between">
                       <span className="text-chu-phu">{theNen.thuoc} {theNen.viTri < 50 ? "rẻ hơn" : "đắt hơn"}</span>
                       <b className={theNen.viTri < 50 ? "text-tang" : "text-giam"}>
-                        {Math.round(theNen.viTri < 50 ? 100 - theNen.viTri : theNen.viTri)}% số phiên
+                        {Math.round(theNen.viTri < 50 ? 100 - theNen.viTri : theNen.viTri)}% phiên
                       </b>
                     </p>
-                    <div className="relative mt-2 h-1.5 rounded-full bg-gradient-to-r from-tang/60 via-vien to-giam/60">
-                      <span className="absolute -top-1 h-3.5 w-1 -translate-x-1/2 rounded-full bg-chu" style={{ left: `${theNen.viTri}%` }} />
+                    <div className="relative mt-1 h-1 rounded-full bg-gradient-to-r from-tang/60 via-vien to-giam/60">
+                      <span className="absolute -top-0.5 h-2 w-0.5 -translate-x-1/2 rounded-full bg-chu" style={{ left: `${theNen.viTri}%` }} />
                     </div>
-                    <p className="mt-1 flex justify-between text-[11px] text-chu-phu">
-                      <span>rẻ</span>
-                      <span>{theNen.soPhien.toLocaleString("vi-VN")} phiên</span>
-                      <span>đắt</span>
-                    </p>
                   </div>
                 )}
+                {chuThich?.suKien?.map((sk) => (
+                  <div key={sk.ten} className="mt-1.5 border-t border-vien pt-1.5">
+                    <p className="font-semibold">{sk.ten}</p>
+                    <p className="line-clamp-3 text-chu-phu">{sk.moTa}</p>
+                  </div>
+                ))}
               </div>
             )}
           </>

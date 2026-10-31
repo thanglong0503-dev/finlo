@@ -63,6 +63,7 @@ export function VeHinh({
   const [congCu, setCongCu] = useState<CongCu>("tro");
   const [namCham, setNamCham] = useState(true);
   const [an, setAn] = useState(false);
+  const [moThanh, setMoThanh] = useState(false); // điện thoại: thanh công cụ thu gọn thành một nút
   const [hinh, setHinh] = useState<Hinh[]>([]);
   const [dangVe, setDangVe] = useState<{ loai: CongCu; a: Diem } | null>(null);
   const [con, setCon] = useState<Diem | null>(null); // vị trí con trỏ khi đang vẽ
@@ -318,8 +319,20 @@ export function VeHinh({
         {nhanCucTri(day, false)}
       </svg>
 
-      {/* Thanh công cụ dọc bên trái */}
-      <div className="absolute top-2 left-1 z-20 flex flex-col gap-0.5 rounded-xl border border-vien bg-nen/90 p-0.5 backdrop-blur-sm">
+      {/* Thanh công cụ dọc bên trái. Điện thoại: thu thành một nút ở góc dưới để không che dòng giá phía trên */}
+      <div className="absolute bottom-8 left-1 z-20 flex flex-col gap-0.5 rounded-xl border border-vien bg-nen/90 p-0.5 backdrop-blur-sm sm:top-2 sm:bottom-auto">
+        <button
+          title={moThanh ? "Thu gọn công cụ vẽ" : "Công cụ vẽ"}
+          aria-label={moThanh ? "Thu gọn công cụ vẽ" : "Công cụ vẽ"}
+          aria-expanded={moThanh}
+          onClick={() => setMoThanh((x) => !x)}
+          className={`flex h-8 w-8 items-center justify-center rounded-lg sm:hidden ${moThanh || congCu !== "tro" ? "text-nhan" : "text-chu-phu"}`}
+        >
+          <Icon>
+            {moThanh ? <path d="M5 5l10 10M15 5 5 15" /> : <path d="M4 16l2-6 8-8 4 4-8 8-6 2zM12 4l4 4" />}
+          </Icon>
+        </button>
+        <div className={`${moThanh ? "flex" : "hidden"} flex-col gap-0.5 sm:flex`}>
         {CONG_CU.map((c) => (
           <button
             key={c.ma}
@@ -371,6 +384,7 @@ export function VeHinh({
             <path d="M4 6h12M8 6V4h4v2M6 6l1 11h6l1-11" />
           </Icon>
         </button>
+        </div>
       </div>
 
       {congCu !== "tro" && (

@@ -14,6 +14,10 @@ import type { BangGia, TienSoTop } from "@/lib/mofi";
 
 // Trạm biểu đồ: biểu đồ tương tác | khung thông tin (sổ lệnh hoặc thông số cổ phiếu) | danh sách mã.
 // Đổi mã ngay trên trang (không tải lại), đường dẫn cập nhật để chia sẻ được.
+// Mã chứng khoán không có trong bảng giá cổ phiếu: hợp đồng tương lai, chứng quyền hoặc quỹ ETF
+const loaiKhac = (ma: string) =>
+  /^(VN30|V100)F[12][MQ]$/.test(ma) ? "Hợp đồng tương lai" : /^C[A-Z0-9]{3}\d{4}$/.test(ma) ? "Chứng quyền" : "Quỹ ETF";
+
 export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; maDau: string; logo?: Record<string, string> }) {
   const [nguon, setNguon] = useState<Nguon>(nguonDau);
   const [ma, setMa] = useState(maDau);
@@ -89,7 +93,7 @@ export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; 
           <h1 className="text-lg font-bold">
             {nguon === "ts" ? `${ma}/USDT` : ma}{" "}
             <span className="text-[12px] font-normal text-chu-phu">
-              {nguon === "ts" ? (ts?.ten ?? "Tài sản số") : (cp?.ten ?? "Cổ phiếu")}
+              {nguon === "ts" ? (ts?.ten ?? "Tài sản số") : (cp?.ten ?? (bangGia ? loaiKhac(ma) : "Cổ phiếu"))}
             </span>
           </h1>
           {nguon === "ts" && giaTs != null && (
@@ -113,12 +117,14 @@ export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; 
           >
             Nhiều biểu đồ
           </Link>
-          <Link
-            href={nguon === "ts" ? `/tai-san-so/${ma}` : `/co-phieu/${ma}`}
-            className="text-[12px] font-semibold text-nhan hover:underline"
-          >
-            {nguon === "ts" ? "Trang chi tiết" : "Phân tích, tài chính"} →
-          </Link>
+          {(nguon === "ts" || !bangGia || cp) && (
+            <Link
+              href={nguon === "ts" ? `/tai-san-so/${ma}` : `/co-phieu/${ma}`}
+              className="text-[12px] font-semibold text-nhan hover:underline"
+            >
+              {nguon === "ts" ? "Trang chi tiết" : "Phân tích, tài chính"} →
+            </Link>
+          )}
         </div>
         <BieuDoTuongTac key={`${nguon}:${ma}`} nguon={nguon} ma={ma} khiCoNen={khiCoNen} phienCK={phienCK} />
       </section>

@@ -5,7 +5,7 @@ import type { BaoCao, MucBaoCao } from "@/lib/mofi";
 const chuanTen = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 
 // Tìm khoản mục theo tên, thử lần lượt các tên (mẫu ngân hàng/chứng khoán đặt tên khác doanh nghiệp thường)
-function tim(bc: BaoCao, nhom: MucBaoCao["nhom"], ...ten: string[]) {
+export function tim(bc: BaoCao, nhom: MucBaoCao["nhom"], ...ten: string[]) {
   for (const t of ten) {
     const m = bc.muc.find((x) => x.nhom === nhom && chuanTen(x.ten) === t);
     if (m) return m;

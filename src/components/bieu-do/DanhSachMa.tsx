@@ -8,9 +8,19 @@ import { NutTheoDoi } from "@/components/NutTheoDoi";
 import { dinhDangGia, useLuongBinance } from "@/lib/binance";
 import { giaNghin, mauTangGiam, phanTram } from "@/lib/dinh-dang";
 import type { CoPhieu, TienSoTop } from "@/lib/mofi";
+import type { DanhSachKhac } from "@/lib/ro-ma";
 import { useTheoDoi } from "@/lib/theo-doi";
 
 const SO_DONG = 80;
+
+// Bộ lọc chứng khoán kiểu Mofi: sàn hoặc rổ chỉ số, ngành, và các nhóm ETF / phái sinh / chứng quyền
+const SAN_RO = ["HOSE", "HNX", "UPCOM", "VN30", "VN100", "HNX30", "VNDIAMOND", "VNFINLEAD", "VNFINSELECT"];
+type Nhom = "cp" | "etf" | "phaiSinh" | "chungQuyen";
+const NHOM: { ma: Exclude<Nhom, "cp">; nhan: string }[] = [
+  { ma: "etf", nhan: "ETF" },
+  { ma: "phaiSinh", nhan: "Phái sinh" },
+  { ma: "chungQuyen", nhan: "Chứng quyền" },
+];
 
 const boDau = (s: string) =>
   s
@@ -42,6 +52,36 @@ export function DanhSachMa({
   const [tuKhoa, setTuKhoa] = useState("");
   const [chiTheoDoi, setChiTheoDoi] = useState(false);
   const theoDoi = useTheoDoi();
+  const [sanRo, setSanRo] = useState("");
+  const [nganh, setNganh] = useState("");
+  const [nhom, setNhom] = useState<Nhom>("cp");
+  const [khac, setKhac] = useState<DanhSachKhac | null>(null);
+  const daTai = useRef(false);
+  // Danh sách rổ, ngành, ETF… chỉ tải khi mở tab chứng khoán; giá ETF, chứng quyền làm mới mỗi phút
+  useEffect(() => {
+    if (tab !== "ck") return;
+    let huy = false;
+    const tai = () =>
+      fetch("/api/danh-sach-khac")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: DanhSachKhac | null) => {
+          if (!huy && d) setKhac(d);
+        })
+        .catch(() => {});
+    if (!daTai.current) {
+      daTai.current = true;
+      tai();
+    }
+    const id = setInterval(tai, 60_000);
+    return () => {
+      huy = true;
+      clearInterval(id);
+    };
+  }, [tab]);
+  const dsNganh = useMemo(
+    () => (khac ? Object.entries(khac.nganh.ten).sort((a, b) => a[1].localeCompare(b[1], "vi")) : []),
+    [khac],
+  );
 
   // Giá tiền số realtime chỉ khi đang xem tab tài sản số (đỡ tốn dữ liệu)
   const song = useRef<Record<string, { gia: number; phanTram: number }>>({});
@@ -77,10 +117,20 @@ export function DanhSachMa({
           (!tk || boDau(x.ma).includes(tk) || boDau(x.ten).includes(tk)),
       );
     if (tab === "ck") {
+      if (nhom !== "cp") {
+        if (!khac) return null;
+        return loc(khac[nhom]).map((x) => ({ ...x, dinhDang: giaNghin }));
+      }
       if (!coPhieu) return null;
-      // Mặc định sắp theo giá trị giao dịch (mã sôi động lên đầu)
-      return loc(coPhieu)
-        .slice(0, SO_DONG)
+      const ro = sanRo && khac?.ro[sanRo] ? new Set(khac.ro[sanRo]) : null;
+      const theoBo = coPhieu.filter(
+        (c) =>
+          (!sanRo || (ro ? ro.has(c.ma) : c.san === sanRo)) &&
+          (!nganh || khac?.nganh.maNganh[c.ma] === nganh),
+      );
+      // Mặc định sắp theo giá trị giao dịch (mã sôi động lên đầu); đang lọc thì hiện đủ
+      return loc(theoBo)
+        .slice(0, sanRo || nganh || tk ? undefined : SO_DONG)
         .map((c) => ({ ma: c.ma, ten: c.ten, gia: c.gia, phanTram: c.phanTram, dinhDang: giaNghin }));
     }
     if (!tienSo) return null;
@@ -88,7 +138,7 @@ export function DanhSachMa({
       const s = giaSong[x.ma];
       return { ma: x.ma, ten: x.ten, gia: s?.gia ?? x.gia, phanTram: s?.phanTram ?? null, dinhDang: (g: number) => dinhDangGia(g) };
     });
-  }, [tab, coPhieu, tienSo, tuKhoa, chiTheoDoi, theoDoi, giaSong]);
+  }, [tab, coPhieu, tienSo, tuKhoa, chiTheoDoi, theoDoi, giaSong, nhom, khac, sanRo, nganh]);
 
   return (
     <div className="flex h-full flex-col">
@@ -125,6 +175,53 @@ export function DanhSachMa({
           Theo dõi
         </button>
       </div>
+      {tab === "ck" && (
+        <div className="flex flex-wrap items-center gap-1 border-b border-vien p-2 text-[12px]">
+          <select
+            value={sanRo}
+            onChange={(e) => {
+              setSanRo(e.target.value);
+              setNhom("cp");
+            }}
+            aria-label="Sàn hoặc rổ chỉ số"
+            className={`h-7 max-w-[7.5rem] rounded-full border bg-nen px-2 outline-none ${sanRo && nhom === "cp" ? "border-nhan text-nhan" : "border-vien"}`}
+          >
+            <option value="">Sàn / Rổ</option>
+            {SAN_RO.filter((x) => x === "HOSE" || x === "HNX" || x === "UPCOM" || khac?.ro[x]).map((x) => (
+              <option key={x} value={x}>
+                {x}
+              </option>
+            ))}
+          </select>
+          <select
+            value={nganh}
+            onChange={(e) => {
+              setNganh(e.target.value);
+              setNhom("cp");
+            }}
+            aria-label="Ngành"
+            className={`h-7 max-w-[7.5rem] rounded-full border bg-nen px-2 outline-none ${nganh && nhom === "cp" ? "border-nhan text-nhan" : "border-vien"}`}
+          >
+            <option value="">Ngành</option>
+            {dsNganh.map(([k, ten]) => (
+              <option key={k} value={k}>
+                {ten}
+              </option>
+            ))}
+          </select>
+          {NHOM.map((n) => (
+            <button
+              key={n.ma}
+              onClick={() => setNhom((x) => (x === n.ma ? "cp" : n.ma))}
+              className={`h-7 rounded-full border px-2.5 font-medium ${
+                nhom === n.ma ? "border-nhan bg-nhan text-white" : "border-vien text-chu-phu hover:text-chu"
+              }`}
+            >
+              {n.nhan}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-[24px_22px_1fr_auto_64px] gap-x-1 px-2 py-1.5 text-[12px] font-medium text-chu-phu">
         <span />
         <span />
@@ -153,7 +250,7 @@ export function DanhSachMa({
                 <span onClick={(e) => e.stopPropagation()}>
                   <NutTheoDoi ma={d.ma} gon />
                 </span>
-                {tab === "ck" ? <LogoMa ma={d.ma} url={logo[d.ma]} co={20} /> : <span />}
+                {tab === "ck" && nhom === "cp" ? <LogoMa ma={d.ma} url={logo[d.ma]} co={20} /> : <span />}
                 <span className="min-w-0 pl-1">
                   <span className="block font-semibold">{d.ma}</span>
                   <span className="block truncate text-[11px] text-chu-phu">{d.ten}</span>
