@@ -23,10 +23,12 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ThanhChiBao, thamSoCua, useChiBaoDangBat, useThamSoChiBao } from "@/components/bieu-do/ChiBaoChon";
 import { VeHinh } from "@/components/bieu-do/VeHinh";
-import { TIM_CHI_BAO, type ChiBao, type DinhDang, type NguCanh } from "@/lib/bo-chi-bao";
+import { dungDuoc, TIM_CHI_BAO, type ChiBao, type DinhDang, type NguCanh } from "@/lib/bo-chi-bao";
 import { capGiaoDich, kiemTraCap, REST, soLe, TrangThaiKetNoi, useLuongBinance } from "@/lib/binance";
 import { flGiaTri, type MocGiaTri, type Chuoi, type NenCB } from "@/lib/chi-bao";
 import { useGiaoDien } from "@/lib/giao-dien";
+import { taiPhaiSinh, type DuLieuPhaiSinh } from "@/lib/phai-sinh-bieu-do";
+import { lucNgayVN, suKienCuaNguon, type SuKienBieuDo } from "@/lib/su-kien-bieu-do";
 
 export type Nguon = "ck" | "ts";
 
@@ -84,6 +86,7 @@ function gopNen(ds: NenCB[], ck: ChuKy): NenCB[] {
       cuoi.low = Math.min(cuoi.low, x.low);
       cuoi.close = x.close;
       cuoi.volume += x.volume;
+      if (x.muaCD != null) cuoi.muaCD = (cuoi.muaCD ?? 0) + x.muaCD;
     }
   }
   return kq;
@@ -110,6 +113,7 @@ type ChuThich = {
   gt: { ten: string; giaTri: string; mau?: string }[];
   x?: number; // vị trí con trỏ để đặt khung thông tin
   y?: number;
+  suKien?: SuKienBieuDo[]; // sự kiện lớn rơi vào cây nến này
 };
 
 export function BieuDoTuongTac({
@@ -133,7 +137,7 @@ export function BieuDoTuongTac({
   const bangTs = useThamSoChiBao();
   // Chỉ báo đang bật dùng được với nguồn hiện tại (chỉ báo cơ bản chỉ có ở cổ phiếu)
   const chiBao = useMemo(
-    () => chiBaoDangBat.map((m) => TIM_CHI_BAO.get(m)).filter((c): c is ChiBao => !!c && (nguon === "ck" || !c.chiCoPhieu)),
+    () => chiBaoDangBat.map((m) => TIM_CHI_BAO.get(m)).filter((c): c is ChiBao => !!c && dungDuoc(c, nguon)),
     [chiBaoDangBat, nguon],
   );
   const [khung, setKhung] = useState(nguon === "ts" ? "1h" : "D");
@@ -144,6 +148,10 @@ export function BieuDoTuongTac({
   const [dinhGia, setDinhGia] = useState<{ ma: string; loai: string; moc: MocGiaTri[]; peNganh: number | null } | null>(null);
   // Giao dịch nội bộ đã thực hiện (chỉ tải khi bật chỉ báo Giao dịch nội bộ)
   const [noiBo, setNoiBo] = useState<{ ma: string; ds: NonNullable<NguCanh["noiBo"]> } | null>(null);
+  // Dữ liệu phái sinh Binance Futures (chỉ tiền số, chỉ tải khi bật chỉ báo Long/Short)
+  const [phaiSinh, setPhaiSinh] = useState<{ khoa: string; d: DuLieuPhaiSinh | null } | null>(null);
+  // Vùng xám và mốc sự kiện lớn trên biểu đồ
+  const [hienSuKien, setHienSuKien] = useState(true);
 
   const khungRef = useRef<HTMLDivElement>(null);
   const bieuDo = useRef<IChartApi | null>(null);
@@ -188,13 +196,14 @@ export function BieuDoTuongTac({
         const nen: NenCB[] =
           nguon === "ck"
             ? (data as NenCB[])
-            : (data as [number, string, string, string, string, string][]).map((r) => ({
+            : (data as [number, string, string, string, string, string, number, string, number, string][]).map((r) => ({
                 time: r[0] / 1000,
                 open: +r[1],
                 high: +r[2],
                 low: +r[3],
                 close: +r[4],
                 volume: +r[5],
+                muaCD: +r[9],
               }));
         if (nen.length === 0) return Promise.reject("rong");
         nenHienTai.current = nen;
@@ -242,6 +251,21 @@ export function BieuDoTuongTac({
     };
   }, [canNoiBo, ma, noiBo?.ma]);
   const noiBoCuaMa = noiBo?.ma === ma ? noiBo.ds : null;
+
+  const khoaPhaiSinh = `${ma}:${khung}`;
+  const canPhaiSinh = nguon === "ts" && chiBao.some((c) => c.can === "phai-sinh");
+  useEffect(() => {
+    if (!canPhaiSinh || phaiSinh?.khoa === khoaPhaiSinh) return;
+    let huy = false;
+    taiPhaiSinh(ma, khung).then((d) => {
+      if (!huy) setPhaiSinh({ khoa: khoaPhaiSinh, d });
+    });
+    return () => {
+      huy = true;
+    };
+  }, [canPhaiSinh, ma, khung, khoaPhaiSinh, phaiSinh?.khoa]);
+  const phaiSinhCuaMa = nguon === "ts" && phaiSinh?.khoa === khoaPhaiSinh ? phaiSinh.d : null;
+  const khongCoPhaiSinh = canPhaiSinh && phaiSinh?.khoa === khoaPhaiSinh && !phaiSinh.d;
 
   // ---- Dựng biểu đồ (khi có dữ liệu mới, đổi chỉ báo hoặc đổi sáng/tối) ----
   useEffect(() => {
@@ -313,6 +337,7 @@ export function BieuDoTuongTac({
       mau: { tang, giam, nhan, phu: mauCss("--chu-phu"), chu: mauCss("--chu") },
       dinhGia: giaTriCuaMa,
       noiBo: noiBoCuaMa,
+      phaiSinh: phaiSinhCuaMa,
     };
     const NET = { lien: LineStyle.Solid, dut: LineStyle.Dashed, cham: LineStyle.Dotted } as const;
     // Trục các khung chỉ báo cũng ghi số kiểu Việt Nam
@@ -323,9 +348,25 @@ export function BieuDoTuongTac({
           ? (x: number) => x.toLocaleString("vi-VN", { notation: "compact", maximumFractionDigits: 1 })
           : d === "pt"
             ? (x: number) => `${soViet(x)}%`
-            : (x: number) => soViet(x);
-      return { type: "custom" as const, formatter: f, tickmarksFormatter: (ds: number[]) => ds.map(f), minMove: 0.01 };
+            : d === "pt4"
+              ? (x: number) => `${soViet(x, 4)}%`
+              : (x: number) => soViet(x);
+      return { type: "custom" as const, formatter: f, tickmarksFormatter: (ds: number[]) => ds.map(f), minMove: d === "pt4" ? 0.0001 : 0.01 };
     };
+
+    // Vùng xám sự kiện: cột cao kín khung giá trên thang riêng 0..1, không ảnh hưởng thang giá
+    const dsSuKien = hienSuKien ? suKienCuaNguon(nguon) : [];
+    const vungSuKien = dsSuKien.some((x) => x.den)
+      ? chart.addSeries(HistogramSeries, {
+          priceScaleId: "su-kien",
+          priceLineVisible: false,
+          lastValueVisible: false,
+          base: 0,
+          autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 1 } }),
+        })
+      : null;
+    if (vungSuKien) chart.priceScale("su-kien").applyOptions({ scaleMargins: { top: 0, bottom: 0 }, visible: false });
+    const mauVung = giaoDien === "toi" ? "rgba(148,163,184,0.13)" : "rgba(100,116,139,0.12)";
 
     // Tạo series cho từng chỉ báo theo kết quả tính lần đầu; chỉ báo khung riêng mỗi cái một khung
     type MotSeries = ISeriesApi<"Line"> | ISeriesApi<"Histogram"> | ISeriesApi<"Area">;
@@ -418,9 +459,11 @@ export function BieuDoTuongTac({
       so: (x) => x.toLocaleString("vi-VN", { maximumFractionDigits: 2 }),
       kl: (x) => x.toLocaleString("vi-VN", { notation: "compact", maximumFractionDigits: 2 }),
       pt: (x) => `${x.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`,
+      pt4: (x) => `${x.toLocaleString("vi-VN", { maximumFractionDigits: 4 })}%`,
     };
 
     let dsCuoi: NenCB[] = [];
+    const suKienTai = new Map<number, SuKienBieuDo[]>();
     const ve = (dsGoc: NenCB[]) => {
       const ds = gopNen(dsGoc, chuKy);
       dsCuoi = ds;
@@ -431,6 +474,35 @@ export function BieuDoTuongTac({
       ds.forEach((x, i) => theoThoiGian.set(x.time, i));
       ketQua = [];
       const moc: SeriesMarker<Time>[] = [];
+      // Sự kiện: vùng xám cho khoảng thời gian, mốc chữ ở cây nến đầu tiên của sự kiện
+      suKienTai.clear();
+      if (dsSuKien.length && ds.length) {
+        const buoc = ds.length > 1 ? ds[1].time - ds[0].time : 86400;
+        const vung = new Array<boolean>(ds.length).fill(false);
+        for (const sk of dsSuKien) {
+          const tu = lucNgayVN(sk.tu);
+          const den = sk.den ? lucNgayVN(sk.den) + 86400 : tu + 86400;
+          if (den <= ds[0].time || tu > ds[ds.length - 1].time + buoc) continue;
+          let dau = -1;
+          ds.forEach((x, i) => {
+            if (x.time + buoc > tu && x.time < den) {
+              if (dau < 0) dau = i;
+              if (sk.den) vung[i] = true;
+              suKienTai.set(i, [...(suKienTai.get(i) ?? []), sk]);
+            }
+          });
+          // Nến ngày nghỉ (cuối tuần, lễ): gắn vào phiên kế tiếp
+          if (dau < 0) {
+            dau = ds.findIndex((x) => x.time >= tu);
+            if (dau < 0 || ds[dau].time - tu > 7 * 86400) continue;
+            suKienTai.set(dau, [...(suKienTai.get(dau) ?? []), sk]);
+          }
+          moc.push({ time: ds[dau].time as UTCTimestamp, position: "aboveBar", shape: "square", size: 0.6, color: nc.mau.phu, text: sk.chu });
+        }
+        vungSuKien?.setData(
+          ds.map((x, i) => (vung[i] ? { time: x.time as UTCTimestamp, value: 1, color: mauVung } : { time: x.time as UTCTimestamp })),
+        );
+      }
       for (const l of duongNgang) nen.removePriceLine(l);
       duongNgang = [];
 
@@ -501,6 +573,7 @@ export function BieuDoTuongTac({
         gt: ketQua.flatMap((k) => (k.gt[i] == null ? [] : [{ ten: k.ten, giaTri: k.dinhDang(k.gt[i]!), mau: k.mau }])),
         x: p.point?.x,
         y: p.point?.y,
+        suKien: suKienTai.get(i),
       });
     });
 
@@ -512,12 +585,12 @@ export function BieuDoTuongTac({
       capNhatNhanh.current = null;
       setThanhVe(null);
     };
-  }, [nenGoc, chiBao, bangTs, giaoDien, nguon, giaTriCuaMa, noiBoCuaMa, kieu, chuKy, thangLog]);
+  }, [nenGoc, chiBao, bangTs, giaoDien, nguon, giaTriCuaMa, noiBoCuaMa, phaiSinhCuaMa, kieu, chuKy, thangLog, hienSuKien]);
 
   // ---- Tiền số: nến realtime ----
   const nhanTin = useCallback((_: string, duLieu: unknown) => {
-    const { k } = duLieu as { k: { t: number; o: string; h: string; l: string; c: string; v: string } };
-    const moi: NenCB = { time: k.t / 1000, open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v };
+    const { k } = duLieu as { k: { t: number; o: string; h: string; l: string; c: string; v: string; V: string } };
+    const moi: NenCB = { time: k.t / 1000, open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v, muaCD: +k.V };
     const ds = nenHienTai.current;
     if (ds.length && ds[ds.length - 1].time === moi.time) ds[ds.length - 1] = moi;
     else if (!ds.length || moi.time > ds[ds.length - 1].time) ds.push(moi);
@@ -718,6 +791,13 @@ export function BieuDoTuongTac({
         >
           Log
         </button>
+        <button
+          onClick={() => setHienSuKien((x) => !x)}
+          title="Vùng xám: khủng hoảng, thiên nga đen; mốc nhỏ: tin tài chính quan trọng. Rê chuột vào nến để xem chi tiết."
+          className={`h-8 rounded-full px-3 text-[12px] font-semibold ${hienSuKien ? "bg-chu text-nen" : "text-chu-phu hover:bg-nen-noi hover:text-chu"}`}
+        >
+          Sự kiện
+        </button>
         {nguon === "ts" && <TrangThaiKetNoi trangThai={trangThai} />}
         <div className="ml-auto flex items-center gap-1">
           {nguon === "ck" && <span className="mr-2 hidden text-[12px] text-chu-phu xl:inline">Giá nghìn đồng</span>}
@@ -736,6 +816,11 @@ export function BieuDoTuongTac({
       </div>
 
       <ThanhChiBao coPhieu={nguon === "ck"} />
+      {khongCoPhaiSinh && (
+        <p className="border-b border-vien px-3 py-1.5 text-[12px] text-chu-phu">
+          {ma} chưa có hợp đồng vĩnh cửu trên Binance Futures nên các chỉ báo Long/Short, Open Interest, funding không có dữ liệu.
+        </p>
+      )}
 
       {/* Biểu đồ giãn hết chiều cao còn lại; màn hình nhỏ (không giới hạn chiều cao) dùng chiều cao tối thiểu */}
       <div className="relative min-h-0 flex-1" style={{ minHeight: 440 + soKhungPhu * 120 }}>
@@ -889,6 +974,16 @@ export function BieuDoTuongTac({
                     </span>
                   </div>
                 )}
+                {chuThich?.suKien?.map((sk) => (
+                  <div key={sk.ten} className="mt-2 border-t border-vien pt-2">
+                    <p className="font-semibold">{sk.ten}</p>
+                    <p className="text-[11px] text-chu-phu">
+                      {sk.tu.split("-").reverse().join("/")}
+                      {sk.den ? ` – ${sk.den.split("-").reverse().join("/")}` : ""}
+                    </p>
+                    <p className="mt-1 leading-snug text-chu-phu">{sk.moTa}</p>
+                  </div>
+                ))}
                 {theNen.viTri != null && (
                   <div className="mt-2 border-t border-vien pt-2">
                     <p className="flex justify-between">

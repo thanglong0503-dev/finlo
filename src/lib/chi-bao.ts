@@ -1,7 +1,8 @@
 // Chỉ báo kỹ thuật tính trên mảng nến. Kết quả cùng độ dài với mảng đầu vào,
 // các phiên chưa đủ dữ liệu là null.
 
-export type NenCB = { time: number; open: number; high: number; low: number; close: number; volume: number };
+// muaCD: khối lượng mua chủ động (chỉ có ở nến tiền số từ Binance)
+export type NenCB = { time: number; open: number; high: number; low: number; close: number; volume: number; muaCD?: number };
 export type Chuoi = (number | null)[];
 
 export function sma(gt: number[], n: number): Chuoi {

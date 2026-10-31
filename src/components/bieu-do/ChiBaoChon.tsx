@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { BO_MAU, CHI_BAO, NHOM, TIM_CHI_BAO, thamSoMacDinh, type ChiBao, type NhomChiBao } from "@/lib/bo-chi-bao";
+import { apDung, BO_MAU, CHI_BAO, dungDuoc, NHOM, TIM_CHI_BAO, thamSoMacDinh, type ChiBao, type NhomChiBao } from "@/lib/bo-chi-bao";
 
 // ---- Lưu lựa chọn chỉ báo và tham số trong trình duyệt ----
 const KHOA = "finlo-chi-bao";
@@ -126,6 +126,16 @@ function useDongKhiBamNgoai(mo: boolean, dong: () => void) {
 }
 
 const NhanFinlo = () => <span className="rounded border border-nhan px-1 text-[10px] font-semibold text-nhan">Finlo</span>;
+// Chỉ báo chỉ dùng được cho một loại tài sản thì gắn nhãn; chỉ báo chung không gắn
+const NhanApDung = ({ c }: { c: ChiBao }) => {
+  const a = apDung(c);
+  if (a === "ca-hai") return null;
+  return (
+    <span className="rounded bg-nen-noi px-1 text-[10px] font-semibold whitespace-nowrap text-chu-phu">
+      {a === "ck" ? "Chỉ cổ phiếu" : "Chỉ tiền số"}
+    </span>
+  );
+};
 
 // Bảng chỉnh tham số của một chỉ báo
 function BangThamSoCB({ c, giaTri, dong }: { c: ChiBao; giaTri: Record<string, number>; dong: () => void }) {
@@ -183,13 +193,15 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
   const [loc, setLoc] = useState<Loc>("tat-ca");
   const khung = useDongKhiBamNgoai(mo, () => setMo(false));
 
-  const dung = CHI_BAO.filter((c) => coPhieu || !c.chiCoPhieu);
+  const nguon = coPhieu ? "ck" : "ts";
+  const dung = CHI_BAO.filter((c) => dungDuoc(c, nguon));
+  const soAn = CHI_BAO.length - dung.length;
   const bat = dangBat.map((m) => dung.find((c) => c.ma === m)).filter((c): c is ChiBao => !!c);
   const tk = boDau(tim.trim());
   const hienThi = dung.filter(
     (c) => (loc === "tat-ca" || (loc === "finlo" ? c.finlo : c.nhom === loc)) && (!tk || boDau(`${c.ten} ${c.moTa}`).includes(tk)),
   );
-  const boMau = BO_MAU.filter((b) => coPhieu || b.ds.every((m) => !TIM_CHI_BAO.get(m)?.chiCoPhieu));
+  const boMau = BO_MAU.filter((b) => b.ds.every((m) => { const c = TIM_CHI_BAO.get(m); return !c || dungDuoc(c, nguon); }));
   const loai: [Loc, string][] = [["tat-ca", "Tất cả"], ...NHOM.map((n): [Loc, string] => [n.ma, n.ten]), ["finlo", "Của Finlo"]];
 
   return (
@@ -238,10 +250,9 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
 
             <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
               <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-vien p-2 sm:w-40 sm:flex-col sm:border-r sm:border-b-0">
-                {loai
-                  .filter(([m]) => coPhieu || m !== "dinh-gia")
-                  .map(([m, ten]) => {
+                {loai.map(([m, ten]) => {
                     const so = dung.filter((c) => (m === "tat-ca" ? true : m === "finlo" ? c.finlo : c.nhom === m)).length;
+                    if (so === 0) return null;
                     return (
                       <button
                         key={m}
@@ -281,6 +292,7 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
                           <span className="flex items-center gap-2 font-semibold">
                             {c.ten}
                             {c.finlo && <NhanFinlo />}
+                            <NhanApDung c={c} />
                           </span>
                           <span className="mt-0.5 block text-[12px] leading-snug text-chu-phu">{c.moTa}</span>
                         </span>
@@ -291,6 +303,11 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
                 {hienThi.length === 0 && <li className="px-3 py-6 text-chu-phu">Không có chỉ báo phù hợp.</li>}
               </ul>
             </div>
+            <p className="border-t border-vien px-4 py-2 text-[12px] leading-snug text-chu-phu">
+              {coPhieu
+                ? `Chỉ báo không gắn nhãn dùng chung cho cổ phiếu và tiền số. Đang ẩn ${soAn} chỉ báo chỉ dành cho tiền số (Long/Short, Open Interest, funding, CVD) — mở biểu đồ tiền số để dùng.`
+                : `Chỉ báo không gắn nhãn dùng chung cho cổ phiếu và tiền số. Đang ẩn ${soAn} chỉ báo chỉ dành cho cổ phiếu (định giá P/E, giao dịch nội bộ).`}
+            </p>
           </div>
         )}
       </div>

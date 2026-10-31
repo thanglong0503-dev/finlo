@@ -39,19 +39,21 @@ import {
   williamsR,
   wma,
 } from "@/lib/chi-bao-them";
+import type { Diem, DuLieuPhaiSinh } from "@/lib/phai-sinh-bieu-do";
 
-export type NhomChiBao = "xu-huong" | "dao-dong" | "khoi-luong" | "dinh-gia";
+export type NhomChiBao = "xu-huong" | "dao-dong" | "khoi-luong" | "dinh-gia" | "phai-sinh";
 
 export const NHOM: { ma: NhomChiBao; ten: string }[] = [
   { ma: "xu-huong", ten: "Xu hướng" },
   { ma: "dao-dong", ten: "Dao động" },
   { ma: "khoi-luong", ten: "Khối lượng" },
   { ma: "dinh-gia", ten: "Định giá" },
+  { ma: "phai-sinh", ten: "Long/Short" },
 ];
 
 export type ThamSo = { khoa: string; nhan: string; macDinh: number; min: number; max: number; buoc?: number };
 
-export type DinhDang = "gia" | "so" | "kl" | "pt";
+export type DinhDang = "gia" | "so" | "kl" | "pt" | "pt4";
 
 export type Ve =
   | {
@@ -85,6 +87,7 @@ export type NguCanh = {
   mau: MauChiBao;
   dinhGia: { loai: string; moc: MocGiaTri[]; peNganh: number | null } | null;
   noiBo: { ngay: string; mua: boolean; soCp: number; toChuc: boolean }[] | null;
+  phaiSinh: DuLieuPhaiSinh | null;
 };
 
 export type ChiBao = {
@@ -95,8 +98,9 @@ export type ChiBao = {
   moTa: string;
   finlo?: boolean;
   khung: "gia" | "rieng" | "kl"; // vẽ đè giá, khung riêng bên dưới, hay cột khối lượng đáy biểu đồ
-  chiCoPhieu?: boolean;
-  can?: "dinh-gia" | "noi-bo"; // cần tải thêm dữ liệu
+  chiCoPhieu?: boolean; // cần báo cáo tài chính, giao dịch nội bộ: chỉ có ở cổ phiếu
+  chiTienSo?: boolean; // cần dữ liệu phái sinh hoặc lệnh chủ động của sàn tiền số
+  can?: "dinh-gia" | "noi-bo" | "phai-sinh"; // cần tải thêm dữ liệu
   thamSo: ThamSo[];
   tinh: (nen: NenCB[], ts: Record<string, number>, nc: NguCanh) => KetQuaChiBao | null;
 };
@@ -115,6 +119,39 @@ const M = {
 const dongCua = (nen: NenCB[]) => nen.map((x) => x.close);
 const ky = (ten: string, khoa = "n") => (ts: Record<string, number>) => `${ten} ${ts[khoa]}`;
 const tsN = (macDinh: number, nhan = "Chu kỳ", max = 400): ThamSo => ({ khoa: "n", nhan, macDinh, min: 2, max });
+
+export type ApDung = "ck" | "ts" | "ca-hai";
+export const apDung = (c: ChiBao): ApDung => (c.chiCoPhieu ? "ck" : c.chiTienSo ? "ts" : "ca-hai");
+export const dungDuoc = (c: ChiBao, nguon: "ck" | "ts") => apDung(c) === "ca-hai" || apDung(c) === nguon;
+
+// Gắn dữ liệu theo thời gian (OI, tỷ lệ Long/Short, funding…) vào từng nến: giá trị mới nhất tính đến lúc nến đóng.
+// Nến nằm trước khoảng có dữ liệu (Binance chỉ giữ ~30 ngày OI và Long/Short) thì để trống.
+function theoNen(nen: NenCB[], diem: Diem[]): Chuoi {
+  if (!diem.length || !nen.length) return nen.map(() => null);
+  const buoc = nen.length > 1 ? nen[nen.length - 1].time - nen[nen.length - 2].time : 3600;
+  const hanCu = Math.max(buoc, 9 * 3600) * 2;
+  const kq: Chuoi = [];
+  let j = -1;
+  for (const x of nen) {
+    const het = x.time + buoc;
+    while (j + 1 < diem.length && diem[j + 1].t < het) j++;
+    kq.push(j >= 0 && het - diem[j].t <= hanCu ? diem[j].v : null);
+  }
+  return kq;
+}
+
+// Điểm chuẩn hoá (z-score) của giá trị i so với n giá trị gần nhất
+function diemZ(gt: Chuoi, i: number, n: number): number | null {
+  const x = gt[i];
+  if (x == null) return null;
+  const cua = gt.slice(Math.max(0, i - n + 1), i + 1).filter((v): v is number => v != null);
+  if (cua.length < Math.min(n, 12)) return null;
+  const tb = cua.reduce((t, v) => t + v, 0) / cua.length;
+  const lech = Math.sqrt(cua.reduce((t, v) => t + (v - tb) ** 2, 0) / cua.length);
+  return lech > 0 ? (x - tb) / lech : 0;
+}
+
+const PS_MO_TA = " Dữ liệu Binance Futures; Open Interest và tỷ lệ Long/Short chỉ có khoảng 30 ngày gần nhất.";
 
 // Ba đường trung bình cùng loại, chu kỳ 0 là tắt
 function baDuong(ten: string, ham: (g: number[], n: number) => Chuoi, macDinh: [number, number, number]): Pick<ChiBao, "thamSo" | "tinh" | "tenNgan"> {
@@ -782,6 +819,263 @@ export const CHI_BAO: ChiBao[] = [
       return { ve: [], moc };
     },
   },
+
+  // ---------------- Long/Short: chỉ tiền số (dữ liệu sàn phái sinh) ----------------
+  {
+    ma: "ls-tai-khoan",
+    ten: "Long/Short tài khoản",
+    nhom: "phai-sinh",
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "Số tài khoản đang Long chia cho số đang Short. Trên 1: đám đông nghiêng về Long; lệch quá mạnh một phía thường là tín hiệu ngược." + PS_MO_TA,
+    thamSo: [],
+    tinh: (nen, _ts, nc) =>
+      nc.phaiSinh
+        ? {
+            ve: [{ loai: "duong", ten: "Long/Short tài khoản", gt: theoNen(nen, nc.phaiSinh.lsTaiKhoan), mau: M.lam, dinhDang: "so" }],
+            muc: [{ gia: 1, mau: nc.mau.phu }],
+          }
+        : null,
+  },
+  {
+    ma: "ls-top",
+    ten: "Long/Short top trader",
+    nhom: "phai-sinh",
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "Tỷ lệ Long/Short của 20% tài khoản ký quỹ lớn nhất: theo khối lượng vị thế (đường liền) và theo số tài khoản (đường đứt)." + PS_MO_TA,
+    thamSo: [],
+    tinh: (nen, _ts, nc) =>
+      nc.phaiSinh
+        ? {
+            ve: [
+              { loai: "duong", ten: "Top trader vị thế", gt: theoNen(nen, nc.phaiSinh.lsTopViThe), mau: M.cam, dinhDang: "so" },
+              { loai: "duong", ten: "Top trader tài khoản", gt: theoNen(nen, nc.phaiSinh.lsTopTaiKhoan), mau: M.tim, net: "dut", rong: 1, dinhDang: "so" },
+            ],
+            muc: [{ gia: 1, mau: nc.mau.phu }],
+          }
+        : null,
+  },
+  {
+    ma: "fl-ca-map-dam-dong",
+    ten: "FL Cá mập vs Đám đông",
+    nhom: "phai-sinh",
+    finlo: true,
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "So vị thế top trader với số đông tài khoản (thang log). Cột xanh: cá mập nghiêng Long mạnh hơn đám đông; cột đỏ: cá mập thận trọng hơn đám đông." + PS_MO_TA,
+    thamSo: [],
+    tinh: (nen, _ts, nc) => {
+      if (!nc.phaiSinh) return null;
+      const top = theoNen(nen, nc.phaiSinh.lsTopViThe);
+      const dong = theoNen(nen, nc.phaiSinh.lsTaiKhoan);
+      const gt = top.map((v, i) => {
+        const d = dong[i];
+        return v != null && d != null && v > 0 && d > 0 ? Math.log(v / d) * 100 : null;
+      });
+      return {
+        ve: [{ loai: "cot", ten: "Cá mập − đám đông", gt, mau: (v) => (v >= 0 ? nc.mau.tang : nc.mau.giam), dinhDang: "so" }],
+        muc: [{ gia: 0, mau: nc.mau.phu }],
+      };
+    },
+  },
+  {
+    ma: "oi",
+    ten: "Open Interest",
+    tenNgan: (ts) => (ts.n > 0 ? `OI · MA ${ts.n}` : "OI"),
+    nhom: "phai-sinh",
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "Tổng giá trị hợp đồng đang mở (USD). OI tăng cùng giá: tiền mới vào mở vị thế; OI giảm: vị thế đang được đóng." + PS_MO_TA,
+    thamSo: [{ khoa: "n", nhan: "Đường trung bình (0 = tắt)", macDinh: 20, min: 0, max: 200 }],
+    tinh: (nen, ts, nc) => {
+      if (!nc.phaiSinh) return null;
+      const oi = theoNen(nen, nc.phaiSinh.oi);
+      const ve: Ve[] = [{ loai: "duong", ten: "Open Interest", gt: oi, mau: nc.mau.nhan, dinhDang: "kl" }];
+      if (ts.n > 0) ve.push({ loai: "duong", ten: `MA${ts.n} OI`, gt: smaChuoi(oi, ts.n), mau: M.xam, net: "dut", rong: 1, dinhDang: "kl" });
+      return { ve };
+    },
+  },
+  {
+    ma: "oi-delta",
+    ten: "OI thay đổi theo giá",
+    tenNgan: ky("ΔOI", "k"),
+    nhom: "phai-sinh",
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "% thay đổi Open Interest, tô màu theo giá: xanh = OI và giá cùng tăng (Long mới vào), đỏ = OI tăng khi giá giảm (Short mới vào), xám = OI giảm (đóng vị thế)." + PS_MO_TA,
+    thamSo: [{ khoa: "k", nhan: "So với bao nhiêu nến trước", macDinh: 1, min: 1, max: 50 }],
+    tinh: (nen, ts, nc) => {
+      if (!nc.phaiSinh) return null;
+      const oi = theoNen(nen, nc.phaiSinh.oi);
+      const k = ts.k;
+      const gt = oi.map((v, i) => {
+        const truoc = i >= k ? oi[i - k] : null;
+        return v != null && truoc ? (v / truoc - 1) * 100 : null;
+      });
+      return {
+        ve: [
+          {
+            loai: "cot",
+            ten: "OI thay đổi",
+            gt,
+            mau: (v, i) => (v < 0 ? nc.mau.phu : nen[i].close >= nen[Math.max(0, i - k)].close ? nc.mau.tang : nc.mau.giam),
+            dinhDang: "pt",
+          },
+        ],
+        muc: [{ gia: 0, mau: nc.mau.phu }],
+      };
+    },
+  },
+  {
+    ma: "funding",
+    ten: "Funding rate",
+    nhom: "phai-sinh",
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "Phí Long trả Short mỗi kỳ (thường 8 giờ), theo %. Dương cao kéo dài: Long quá đông, dễ bị quét; âm sâu: Short quá đông, dễ bật mạnh. Có lịch sử dài hơn OI.",
+    thamSo: [],
+    tinh: (nen, _ts, nc) =>
+      nc.phaiSinh
+        ? {
+            ve: [
+              {
+                loai: "cot",
+                ten: "Funding",
+                gt: theoNen(nen, nc.phaiSinh.funding),
+                mau: (v) => (v >= 0 ? nc.mau.tang : nc.mau.giam),
+                dinhDang: "pt4",
+              },
+            ],
+            muc: [{ gia: 0, mau: nc.mau.phu }],
+          }
+        : null,
+  },
+  {
+    ma: "premium",
+    ten: "Premium hợp đồng",
+    nhom: "phai-sinh",
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "Giá hợp đồng vĩnh cửu cao hơn (dương) hay thấp hơn (âm) giá giao ngay, theo %. Premium dương lớn: phe Long đang trả giá cao để vào lệnh.",
+    thamSo: [],
+    tinh: (nen, _ts, nc) =>
+      nc.phaiSinh
+        ? {
+            ve: [{ loai: "duong", ten: "Premium", gt: theoNen(nen, nc.phaiSinh.premium), mau: M.lo, dinhDang: "pt4" }],
+            muc: [{ gia: 0, mau: nc.mau.phu }],
+          }
+        : null,
+  },
+  {
+    ma: "taker-ls",
+    ten: "Mua/bán chủ động (hợp đồng)",
+    nhom: "phai-sinh",
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "Khối lượng lệnh thị trường mua chia cho bán trên sàn phái sinh, trừ đi 1. Cột xanh: bên mua lấn át; chuỗi xanh dài thường đi cùng nhịp tăng." + PS_MO_TA,
+    thamSo: [],
+    tinh: (nen, _ts, nc) =>
+      nc.phaiSinh
+        ? {
+            ve: [
+              {
+                loai: "cot",
+                ten: "Mua/bán chủ động − 1",
+                gt: theoNen(nen, nc.phaiSinh.taker).map((v) => (v == null ? null : v - 1)),
+                mau: (v) => (v >= 0 ? nc.mau.tang : nc.mau.giam),
+                dinhDang: "so",
+              },
+            ],
+            muc: [{ gia: 0, mau: nc.mau.phu }],
+          }
+        : null,
+  },
+  {
+    ma: "fl-don-bay",
+    ten: "FL Nhiệt đòn bẩy",
+    tenNgan: ky("FL Nhiệt đòn bẩy"),
+    nhom: "phai-sinh",
+    finlo: true,
+    khung: "rieng",
+    chiTienSo: true,
+    can: "phai-sinh",
+    moTa: "Gộp funding, tốc độ tăng Open Interest và vị thế top trader thành thang 0–100. Trên 80: đòn bẩy Long quá nóng, dễ có cú quét Long; dưới 20: Short quá đông, dễ bật mạnh." + PS_MO_TA,
+    thamSo: [tsN(50, "Cửa sổ so sánh (nến)", 300)],
+    tinh: (nen, ts, nc) => {
+      if (!nc.phaiSinh) return null;
+      const n = ts.n;
+      const f = theoNen(nen, nc.phaiSinh.funding);
+      const oi = theoNen(nen, nc.phaiSinh.oi);
+      const k = Math.max(1, Math.round(n / 5));
+      const oiPt = oi.map((v, i) => {
+        const truoc = i >= k ? oi[i - k] : null;
+        return v != null && truoc ? v / truoc - 1 : null;
+      });
+      const top = theoNen(nen, nc.phaiSinh.lsTopViThe).map((v) => (v != null && v > 0 ? Math.log(v) : null));
+      const gt = nen.map((_, i) => {
+        const z = [diemZ(f, i, n), diemZ(oiPt, i, n), diemZ(top, i, n)].filter((x): x is number => x != null);
+        return z.length < 2 ? null : Math.max(0, Math.min(100, 50 + (20 * z.reduce((t, x) => t + x, 0)) / z.length));
+      });
+      return {
+        ve: [{ loai: "duong", ten: "Nhiệt đòn bẩy", gt, mau: nc.mau.nhan, dinhDang: "so" }],
+        muc: [
+          { gia: 80, mau: nc.mau.giam },
+          { gia: 50, mau: nc.mau.phu },
+          { gia: 20, mau: nc.mau.tang },
+        ],
+      };
+    },
+  },
+
+  // ---------------- Lệnh chủ động trên sàn giao ngay: chỉ tiền số ----------------
+  {
+    ma: "cvd",
+    ten: "CVD (delta tích luỹ)",
+    nhom: "khoi-luong",
+    khung: "rieng",
+    chiTienSo: true,
+    moTa: "Cộng dồn khối lượng mua chủ động trừ bán chủ động trên sàn giao ngay. Giá tăng mà CVD đi xuống: lực mua yếu, dễ đảo chiều (phân kỳ).",
+    thamSo: [],
+    tinh: (nen) => {
+      if (!nen.some((x) => x.muaCD != null)) return null;
+      let cong = 0;
+      const gt = nen.map((x) => (x.muaCD == null ? null : (cong += 2 * x.muaCD - x.volume)));
+      return { ve: [{ loai: "duong", ten: "CVD", gt, mau: M.lam, dinhDang: "kl" }] };
+    },
+  },
+  {
+    ma: "delta-kl",
+    ten: "Delta khối lượng",
+    nhom: "khoi-luong",
+    khung: "rieng",
+    chiTienSo: true,
+    moTa: "Khối lượng mua chủ động trừ bán chủ động trong từng nến trên sàn giao ngay: cột xanh bên mua chủ động thắng thế, cột đỏ bên bán.",
+    thamSo: [],
+    tinh: (nen, _ts, nc) => {
+      if (!nen.some((x) => x.muaCD != null)) return null;
+      return {
+        ve: [
+          {
+            loai: "cot",
+            ten: "Delta",
+            gt: nen.map((x) => (x.muaCD == null ? null : 2 * x.muaCD - x.volume)),
+            mau: (v) => (v >= 0 ? nc.mau.tang : nc.mau.giam),
+            dinhDang: "kl",
+          },
+        ],
+        muc: [{ gia: 0, mau: nc.mau.phu }],
+      };
+    },
+  },
 ];
 
 export const TIM_CHI_BAO = new Map(CHI_BAO.map((c) => [c.ma, c]));
@@ -797,4 +1091,6 @@ export const BO_MAU: { ten: string; moTa: string; ds: string[] }[] = [
   { ten: "Theo sóng", moTa: "SuperTrend, Ichimoku, ADX", ds: ["supertrend", "ichimoku", "adx", "kl"] },
   { ten: "Bộ Finlo", moTa: "Các chỉ báo riêng của Finlo", ds: ["fl-vung-gia", "fl-ht-kc", "fl-xu-huong", "fl-dong-tien", "kl"] },
   { ten: "Định giá", moTa: "FL Giá trị, Giá vs Lợi nhuận, P/E lịch sử, nội bộ", ds: ["fl-gia-tri", "gia-vs-ln", "pe", "noi-bo", "kl"] },
+  { ten: "Long/Short", moTa: "Top trader, Open Interest, funding, FL Nhiệt đòn bẩy", ds: ["ls-top", "oi-delta", "funding", "fl-don-bay"] },
+  { ten: "Lực mua bán", moTa: "CVD, delta khối lượng, mua/bán chủ động trên hợp đồng", ds: ["cvd", "delta-kl", "taker-ls", "kl"] },
 ];
