@@ -21,6 +21,8 @@
   --tang: #25c26e;
   --giam: #f0506e;
   --dung: #e3b341;
+  /* Xám trung tính cho phần "không thắng không thua" trên biểu đồ (giữa xanh và đỏ) */
+  --xam-bd: #5b625e;
   /* Màu bảng điện Việt Nam: chạm trần tím, chạm sàn xanh lam */
   --tran: #c084fc;
   --san-gia: #22d3ee;
@@ -40,6 +42,7 @@
   --tang: #12a150;
   --giam: #d6204f;
   --dung: #b7791f;
+  --xam-bd: #a4aba7;
   --tran: #9333ea;
   --san-gia: #0891b2;
   color-scheme: light;

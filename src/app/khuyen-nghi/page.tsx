@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { BangBaoCao, MAU_NHOM, mau, ptDau, so } from "@/components/BangKhuyenNghi";
+import { BangDiemCtck, BaoCaoTheoThang, DoChinhXac, type DiemCtck, type ThangKN } from "@/components/BieuDoKhuyenNghi";
 import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { giaNghin } from "@/lib/dinh-dang";
 import {
@@ -77,6 +78,27 @@ async function NoiDung({ searchParams }: { searchParams: Promise<Record<string, 
   const bangGia = await layBangGia().catch(() => null);
   const giaNay = new Map(bangGia?.coPhieu.map((c) => [c.ma, c.gia]) ?? []);
   const noiBat = maNoiBat();
+  const diemBD: DiemCtck[] = coDiem.map((x) => ({
+    ctck: x.ctck,
+    diem: x.diem!,
+    daKet: x.daKet,
+    dat: x.dat,
+    catLo: x.catLo,
+    hetHan: x.hetHan,
+    tyLeDat: x.tyLeDat ?? 0,
+    vuot: x.vuotChiSoTB ?? 0,
+  }));
+  // Số khuyến nghị theo tháng (bỏ báo cáo chỉ cập nhật, không có khuyến nghị)
+  const theoThang = new Map<string, ThangKN>();
+  for (const b of BAO_CAO) {
+    const n = nhomCua(b);
+    if (!n) continue;
+    const k = b.ngay.slice(0, 7);
+    const t = theoThang.get(k) ?? { thang: `${k.slice(5)}/${k.slice(2, 4)}`, mua: 0, giu: 0, ban: 0 };
+    t[n]++;
+    theoThang.set(k, t);
+  }
+  const thangBD = [...theoThang.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, t]) => t);
 
   const loc_ = BAO_CAO.filter(
     (b) =>
@@ -109,6 +131,15 @@ async function NoiDung({ searchParams }: { searchParams: Promise<Record<string, 
         <p className="mt-1 text-[13px] text-chu-phu">
           Điểm = 60% tỷ lệ đạt mục tiêu + 40% mức vượt VN-Index; chỉ xếp hạng CTCK có từ 10 khuyến nghị mua/bán đã kết thúc.
         </p>
+        {diemBD.length > 1 && (
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <BangDiemCtck ds={diemBD} />
+            <div className="grid content-start gap-3">
+              <DoChinhXac ds={diemBD} />
+              {thangBD.length > 2 && <BaoCaoTheoThang ds={thangBD} />}
+            </div>
+          </div>
+        )}
         <div className="mt-3 overflow-x-auto rounded-2xl border border-vien">
           <table className="w-full min-w-[760px] text-[13px] tabular-nums">
             <thead className="text-chu-phu">

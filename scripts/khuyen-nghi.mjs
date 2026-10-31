@@ -254,8 +254,12 @@ function cham(b, nen, chiSo) {
 async function chamTatCa() {
   const cs = await layJson(`${MOFI}/tong-hop/chi-so.json`);
   const chiSo = cs?.indices?.VNINDEX ?? null;
-  const coCham = (b) => b.nhom || b.gia;
+  // Khuyến nghị đã kết thúc (đạt, cắt lỗ, hết kỳ hạn) không đổi kết quả nữa: chỉ chấm báo cáo mới và đang theo dõi.
+  // --cham-lai để chấm lại toàn bộ (khi đổi cách tính).
+  const chamLai = thamSo.includes("--cham-lai");
+  const coCham = (b) => (b.nhom || b.gia) && (chamLai || !b.kq || b.kq.trangThai === "dang");
   const ma = [...new Set([...theoId.values()].filter(coCham).map((b) => b.ma))];
+  console.log(`Chấm ${ma.length} mã có khuyến nghị đang theo dõi`);
   let xong = 0;
   // Giá thật lúc phát hành cho các báo cáo có giá mục tiêu (chỉ tra những báo cáo chưa có)
   const canTra = [...theoId.values()].filter((b) => b.gia && b.giaPH === undefined);
@@ -281,7 +285,9 @@ async function chamTatCa() {
 function ghi() {
   const bao = [...theoId.values()].sort((a, b) => b.id - a.id);
   mkdirSync(dirname(fileURLToPath(TEP)), { recursive: true });
-  writeFileSync(TEP, JSON.stringify({ capNhat: new Date().toISOString(), kyHan: KY_HAN, catLo: CAT_LO * 100, bao }) + "\n");
+  // Mỗi báo cáo một dòng: bản lưu hằng ngày chỉ khác ở vài dòng nên kho GitHub tăng rất ít
+  const dau = JSON.stringify({ capNhat: new Date().toISOString(), kyHan: KY_HAN, catLo: CAT_LO * 100 }).slice(0, -1);
+  writeFileSync(TEP, `${dau},"bao":[\n${bao.map((b) => JSON.stringify(b)).join(",\n")}\n]}\n`);
 }
 
 if (!thamSo.includes("--chi-cham")) {
