@@ -527,13 +527,14 @@ export type BaoCao = {
   quy: string[]; // nhãn kỳ, ví dụ "Q2/2026"
   quyCongBo: string[]; // ngày công bố báo cáo từng quý (YYYY-MM-DD), dùng để không vẽ số tương lai vào quá khứ
   nam: string[]; // ví dụ "2025"
+  namCongBo: string[]; // ngày coi như đã công bố báo cáo năm (YYYY-MM-DD)
   muc: MucBaoCao[];
 };
 
 type BaoCaoTho = {
   loai: string;
   quy: { nam: number; q: number; ky: string; congBo?: string | null }[];
-  nam: { nam: number }[];
+  nam: { nam: number; ky: string; congBo?: string | null; cbThat?: number }[];
   muc: { ten: string; nhom: NhomBaoCao; cap: number; q?: (number | null)[]; n?: (number | null)[] }[];
 };
 
@@ -562,6 +563,13 @@ export async function layBaoCao(ma: string): Promise<BaoCao | null> {
       return d.toISOString().slice(0, 10);
     }),
     nam: tho.nam.map((k) => String(k.nam)),
+    // Năm cũ chỉ có ngày nhập liệu (không phải ngày công bố thật): coi như công bố 90 ngày sau khi hết năm (hạn nộp báo cáo kiểm toán)
+    namCongBo: tho.nam.map((k) => {
+      if (k.congBo && k.cbThat) return k.congBo;
+      const d = new Date(`${k.ky}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + 90);
+      return d.toISOString().slice(0, 10);
+    }),
     muc: tho.muc.map((m) => ({
       ten: m.ten.replace(/\s+/g, " ").trim(),
       nhom: m.nhom,

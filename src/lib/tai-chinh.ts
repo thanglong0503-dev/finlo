@@ -105,15 +105,33 @@ export type MocDinhGia = {
 export function mocDinhGia(bc: BaoCao, soCoPhieu: number): MocDinhGia[] {
   const lnMe = tim(bc, "kqkd", "lợi nhuận sau thuế của công ty mẹ", "lợi nhuận sau thuế thu nhập doanh nghiệp");
   const vcsh = tim(bc, "can_doi", "vốn chủ sở hữu");
-  return bc.quy.map((_, i) => {
+  const lucVN = (ngay: string) => {
+    const [y, m, d] = ngay.split("-").map(Number);
+    return Date.UTC(y, m - 1, d) / 1000 - 7 * 3600; // 0h giờ Việt Nam
+  };
+  const theoQuy: MocDinhGia[] = bc.quy.map((_, i) => {
     const bon = lnMe?.q.slice(Math.max(0, i - 3), i + 1) ?? [];
     const eps = bon.length === 4 && bon.every((v) => v != null) ? ((bon as number[]).reduce((s, v) => s + v, 0) * 1e6) / soCoPhieu : null;
     const von = vcsh?.q[i];
-    const [y, m, d] = bc.quyCongBo[i].split("-").map(Number);
+    return { tu: lucVN(bc.quyCongBo[i]), eps, bvps: von != null ? (von * 1e6) / soCoPhieu : null };
+  });
+  // Báo cáo quý chỉ có ~5 năm gần nhất; báo cáo năm có từ khi niêm yết (Mofi lưu từ 2004)
+  // nên dùng số năm cho giai đoạn trước để mức thường lệ chạy suốt lịch sử giá.
+  const theoNam: MocDinhGia[] = bc.nam.map((_, i) => {
+    const ln = lnMe?.n[i];
+    const von = vcsh?.n[i];
     return {
-      tu: Date.UTC(y, m - 1, d) / 1000 - 7 * 3600, // 0h giờ Việt Nam
-      eps,
+      tu: lucVN(bc.namCongBo[i]),
+      eps: ln != null ? (ln * 1e6) / soCoPhieu : null,
       bvps: von != null ? (von * 1e6) / soCoPhieu : null,
     };
   });
+  const dauQuy = theoQuy.length ? theoQuy[0].tu : Infinity;
+  const ds = [...theoNam.filter((m) => m.tu < dauQuy), ...theoQuy];
+  // Quý đầu chưa đủ 4 quý để ra EPS: dùng tạm EPS năm gần nhất trước đó
+  for (let i = 1; i < ds.length; i++) {
+    if (ds[i].eps == null) ds[i].eps = ds[i - 1].eps;
+    if (ds[i].bvps == null) ds[i].bvps = ds[i - 1].bvps;
+  }
+  return ds;
 }

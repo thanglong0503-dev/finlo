@@ -113,6 +113,7 @@ type ChuThich = {
   gt: { ten: string; giaTri: string; mau?: string }[];
   x?: number; // vị trí con trỏ để đặt khung thông tin
   y?: number;
+  rong?: number; // bề ngang biểu đồ lúc rê
   suKien?: SuKienBieuDo[]; // sự kiện lớn rơi vào cây nến này
 };
 
@@ -288,8 +289,14 @@ export function BieuDoTuongTac({
       },
       grid: { vertLines: { color: vien }, horzLines: { color: vien } },
       crosshair: { mode: CrosshairMode.Normal },
+      // Thao tác giống các trang lớn: lăn chuột để phóng to/thu nhỏ, kéo ngang để xem quá khứ.
+      // Vuốt dọc trên điện thoại để cuộn trang (không bị biểu đồ giữ lại); không kéo trục giá
+      // để biểu đồ không trôi lên xuống, thang giá luôn tự khớp với phần đang xem.
+      handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+      handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: false }, axisDoubleClickReset: true },
       rightPriceScale: { borderColor: vien, mode: thangLog ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal },
-      timeScale: { borderColor: vien, timeVisible: nguon === "ts", rightOffset: 6 },
+      // minBarSpacing nhỏ để "Tất cả" thu vừa toàn bộ lịch sử (hàng nghìn phiên) vào khung
+      timeScale: { borderColor: vien, timeVisible: nguon === "ts", rightOffset: 6, minBarSpacing: 0.05 },
       localization: { locale: "vi-VN" },
     });
     bieuDo.current = chart;
@@ -394,8 +401,9 @@ export function BieuDoTuongTac({
               {
                 lineVisible: false,
                 lineColor: "transparent",
-                topColor: mau + (tren ? "08" : "38"),
-                bottomColor: mau + (tren ? "38" : "08"),
+                // Tô phẳng, nhạt như MFV: đọc rõ nến phía trên
+                topColor: mau + "1c",
+                bottomColor: mau + "1c",
                 invertFilledArea: tren,
                 priceLineVisible: false,
                 lastValueVisible: false,
@@ -426,6 +434,7 @@ export function BieuDoTuongTac({
             pointMarkersRadius: 1.5,
             priceLineVisible: false,
             lastValueVisible: c.khung === "rieng" || !!v.nhan,
+            autoscaleInfoProvider: v.khongThang ? khongDoiThang : undefined,
             title: v.nhan ?? "",
             crosshairMarkerVisible: false,
             priceFormat: dd,
@@ -576,6 +585,7 @@ export function BieuDoTuongTac({
         gt: ketQua.flatMap((k) => (k.gt[i] == null ? [] : [{ ten: k.ten, giaTri: k.dinhDang(k.gt[i]!), mau: k.mau }])),
         x: p.point?.x,
         y: p.point?.y,
+        rong: chart.paneSize().width,
         suKien: suKienTai.get(i),
       });
     });
@@ -826,7 +836,12 @@ export function BieuDoTuongTac({
       )}
 
       {/* Biểu đồ giãn hết chiều cao còn lại; màn hình nhỏ (không giới hạn chiều cao) dùng chiều cao tối thiểu */}
-      <div className="relative min-h-0 flex-1" style={{ minHeight: gon ? 0 : 440 + soKhungPhu * 120 }}>
+      {/* Máy tính lớn: biểu đồ vừa khít khung, các khung chỉ báo chia nhau chiều cao (không làm cột cuộn lên xuống).
+          Màn hình nhỏ: cao thêm theo số khung chỉ báo. */}
+      <div
+        className="relative min-h-[var(--cao-bd)] flex-1 lg:min-h-[min(var(--cao-bd),520px)]"
+        style={{ ["--cao-bd" as string]: `${gon ? 0 : 440 + soKhungPhu * 120}px` }}
+      >
         {hien && (
           <div className="pointer-events-none absolute top-1 left-12 z-10 flex max-w-[calc(100%-120px)] flex-wrap gap-x-3 gap-y-0.5 text-[12px] tabular-nums">
             <span className="text-chu-phu">
@@ -933,8 +948,9 @@ export function BieuDoTuongTac({
               <div
                 className="pointer-events-none absolute z-20 w-60 rounded-2xl border border-vien bg-nen-phu/95 p-3 text-[12px] shadow-2xl backdrop-blur-md"
                 style={{
-                  left: Math.max(48, (theNen && chuThich?.x != null ? chuThich.x : 0) + (chuThich!.x! > 520 ? -256 : 20)),
-                  top: Math.max(8, Math.min((chuThich!.y ?? 0) + 16, 9999)),
+                  // Ghim ở góc trên, phía ngược với con trỏ: không che nến đang xem và không nhảy theo chuột
+                  ...((chuThich!.x ?? 0) > (chuThich!.rong ?? 0) / 2 ? { left: 56 } : { right: 72 }),
+                  top: 48,
                 }}
               >
                 <p className="flex justify-between">

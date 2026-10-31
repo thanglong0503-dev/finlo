@@ -65,6 +65,7 @@ export type Ve =
       net?: "lien" | "dut" | "cham";
       chiCham?: boolean; // vẽ thành chấm rời (Parabolic SAR)
       nhan?: string; // hiện nhãn tên + giá trị cuối trên trục giá
+      khongThang?: boolean; // không kéo giãn thang giá (đường tham khảo nằm xa giá)
       dinhDang: DinhDang;
     }
   | { loai: "cot"; ten: string; gt: Chuoi; mau: (v: number, i: number) => string; dinhDang: DinhDang }
@@ -723,9 +724,10 @@ export const CHI_BAO: ChiBao[] = [
       return {
         ve: [
           { loai: "vung", ten: "Vùng định giá", gt: thuongLe, mauTren: nc.mau.giam, mauDuoi: nc.mau.tang },
-          { loai: "duong", ten: "Đắt (P80)", gt: g.dat, mau: nc.mau.giam, rong: 1, net: "cham", nhan: "Đắt", dinhDang: "gia" },
+          // Mép đắt/rẻ chỉ để tham khảo khi rê chuột: nét chấm mờ, không giãn thang giá để nến không bị ép dẹt
+          { loai: "duong", ten: "Đắt (P80)", gt: g.dat, mau: nc.mau.giam + "88", rong: 1, net: "cham", khongThang: true, dinhDang: "gia" },
           { loai: "duong", ten: "Thường lệ", gt: thuongLe, mau: nc.mau.chu, rong: 2, nhan: "Thường lệ", dinhDang: "gia" },
-          { loai: "duong", ten: "Rẻ (P20)", gt: g.re, mau: nc.mau.tang, rong: 1, net: "cham", nhan: "Rẻ", dinhDang: "gia" },
+          { loai: "duong", ten: "Rẻ (P20)", gt: g.re, mau: nc.mau.tang + "88", rong: 1, net: "cham", khongThang: true, dinhDang: "gia" },
         ],
       };
     },
