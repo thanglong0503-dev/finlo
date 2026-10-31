@@ -1,0 +1,38 @@
+# Cập nhật báo cáo khuyến nghị của CTCK và chấm lại kết quả theo giá mới, mỗi ngày làm việc lúc 19h giờ Việt Nam.
+# Có thay đổi thì commit vào main, Vercel tự triển khai lại. Chạy tay: tab Actions > Khuyến nghị CTCK > Run workflow.
+name: Khuyến nghị CTCK
+
+on:
+  schedule:
+    - cron: "0 12 * * 1-5"
+  workflow_dispatch:
+  # Chạy luôn khi bộ thu thập thay đổi (lần commit tự động chỉ đổi file dữ liệu nên không lặp)
+  push:
+    branches: [main]
+    paths:
+      - scripts/khuyen-nghi.mjs
+      - .github/workflows/khuyen-nghi.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: khuyen-nghi
+  cancel-in-progress: false
+
+jobs:
+  cap-nhat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/khuyen-nghi.mjs
+      - name: Commit nếu có thay đổi
+        run: |
+          git config user.name "finlo-bot"
+          git config user.email "finlo-bot@users.noreply.github.com"
+          git add src/data/khuyen-nghi.json
+          git diff --cached --quiet || (git commit -m "Cập nhật khuyến nghị CTCK" && git pull --rebase && git push)

@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
+import { BangBaoCao, MAU_NHOM } from "@/components/BangKhuyenNghi";
 import { BieuDoSo } from "@/components/BieuDoSo";
 import { BangMo, LuoiMo } from "@/components/KhungCho";
 import { taoDongLoc } from "@/lib/bo-loc";
+import { giaNghin } from "@/lib/dinh-dang";
+import { BAO_CAO, TEN_NHOM, dongThuan, thongKe } from "@/lib/khuyen-nghi";
 import { layBangGia, layBaoCao, layHoSo, layNen, layNganh, layTaiChinhToanThiTruong } from "@/lib/mofi";
 import { cagr, phanTichDoanhNghiep, phanVi, soVoiNganh, trungVi, type ChiTieuNganh, type SoNam } from "@/lib/phan-tich";
 import { dinhDangCot } from "@/lib/so-sanh";
@@ -38,9 +41,9 @@ const ty = (x: number | null) => (x == null ? "—" : `${so(x / 1000, 0)} tỷ`)
 const pt = (x: number | null) => (x == null ? "—" : `${so(x)}%`);
 const lan = (x: number | null) => (x == null ? "—" : `${so(x, 2)}x`);
 
-function Chuong({ so: thuTu, ten, nhanDinh, children }: { so: number; ten: string; nhanDinh: ReactNode; children: ReactNode }) {
+function Chuong({ so: thuTu, ten, nhanDinh, children, id }: { so: number; ten: string; nhanDinh: ReactNode; children: ReactNode; id?: string }) {
   return (
-    <section className="hien-dan mt-8 first:mt-0">
+    <section id={id} className="hien-dan mt-8 scroll-mt-28 first:mt-0">
       <p className="nhan-muc">Chương {thuTu}</p>
       <h2 className="mt-1 text-xl font-bold tracking-[-0.03em]">{ten}</h2>
       <p className="mt-2 max-w-3xl text-chu-phu">{nhanDinh}</p>
@@ -246,6 +249,20 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
       ? `${ma} không trả cổ tức tiền mặt trong 4 quý gần nhất (có thể trả bằng cổ phiếu hoặc giữ lại để tái đầu tư).`
       : `Tỷ suất cổ tức tiền mặt 4 quý gần nhất ${pt(coTuc.gt)} trên giá hiện tại${tbChiTra != null ? `; bình quân chi ${so(tbChiTra, 0)}% lợi nhuận cho cổ đông mỗi năm` : ""}.`;
 
+  // ---- 9. Khuyến nghị của CTCK
+  const baoMa = BAO_CAO.filter((b) => b.ma === ma);
+  const dt9 = dongThuan(ma);
+  const tk9 = thongKe(baoMa);
+  const giaHienTai = bangGia.coPhieu.find((c) => c.ma === ma)?.gia ?? null;
+  const conLai = giaHienTai && dt9.giaTV ? (dt9.giaTV / giaHienTai - 1) * 100 : null;
+  const nhanDinhKN = !baoMa.length
+    ? `Chưa có báo cáo khuyến nghị nào của CTCK cho ${ma} trong dữ liệu Finlo.`
+    : dt9.ds.length
+      ? `${dt9.ds.length} CTCK đưa giá mục tiêu trong 6 tháng qua, trung vị ${giaNghin(dt9.giaTV!)}${
+          conLai != null ? ` — ${conLai >= 0 ? "cao hơn" : "thấp hơn"} giá hiện tại ${so(Math.abs(conLai))}%` : ""
+        }.${tk9.daKet ? ` Các khuyến nghị trước đây cho ${ma} đạt mục tiêu ${so(tk9.tyLeDat, 0)}% số lần.` : ""}`
+      : `Không có giá mục tiêu mới trong 6 tháng qua; ${baoMa.length} báo cáo trước đó.`;
+
   const sinhLoi = [
     { nhan: "ROE", c: roe, donVi: "%" as const },
     { nhan: "ROA", c: sv("roa"), donVi: "%" as const },
@@ -428,6 +445,39 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
               <CotNam ds={pt_.coTucTra} dinhDang={(x) => (x == null ? "—" : so(x / 1000, 0))} />
             </KhungCot>
           </div>
+        </Chuong>
+
+        <Chuong so={9} id="khuyen-nghi" ten="Khuyến nghị của công ty chứng khoán" nhanDinh={nhanDinhKN}>
+          {dt9.ds.length > 0 && (
+            <Luoi>
+              <The nhan="Giá mục tiêu trung vị" gt={giaNghin(dt9.giaTV!)} tot={conLai != null ? conLai > 0 : null} phu={conLai != null ? `${conLai >= 0 ? "+" : "−"}${so(Math.abs(conLai))}% so với giá hiện tại` : undefined} />
+              <The nhan="Cao nhất / thấp nhất" gt={`${giaNghin(dt9.giaCao!)} / ${giaNghin(dt9.giaThap!)}`} />
+              <The
+                nhan="Khuyến nghị 6 tháng"
+                gt={`${dt9.ds.length} CTCK`}
+                phu={
+                  <span className="flex gap-1">
+                    {(["mua", "giu", "ban"] as const).map((n) =>
+                      dt9.dem[n] ? (
+                        <span key={n} className={`rounded-full px-1.5 ${MAU_NHOM[n]}`}>
+                          {TEN_NHOM[n]} {dt9.dem[n]}
+                        </span>
+                      ) : null,
+                    )}
+                  </span>
+                }
+              />
+              <The nhan="Độ chính xác với mã này" gt={tk9.daKet ? `${so(tk9.tyLeDat, 0)}%` : "—"} phu={`đạt mục tiêu / ${tk9.daKet} khuyến nghị đã kết thúc`} />
+            </Luoi>
+          )}
+          {baoMa.length > 0 && (
+            <>
+              <BangBaoCao ds={baoMa.slice(0, 12)} giaNay={new Map(giaHienTai ? [[ma, giaHienTai]] : [])} anMa />
+              <Link href={`/khuyen-nghi?ma=${ma}#danh-sach`} className="mt-3 inline-block text-[13px] font-semibold text-nhan hover:underline">
+                Xem tất cả {baoMa.length} báo cáo và xếp hạng CTCK →
+              </Link>
+            </>
+          )}
         </Chuong>
       </div>
 

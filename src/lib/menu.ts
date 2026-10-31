@@ -26,6 +26,7 @@ export const NHOM_MENU: NhomMenu[] = [
       { href: "/bieu-do", nhan: "Biểu đồ kỹ thuật", moTa: "Chỉ báo kỹ thuật và chỉ báo riêng FL của Finlo", tuKhoa: "bieu do chart chi bao ky thuat" },
       { href: "/bieu-do/nhieu", nhan: "Nhiều biểu đồ", moTa: "Xem cùng lúc tới 6 mã cổ phiếu, tiền số", tuKhoa: "nhieu bieu do multi chart so sanh luoi" },
       { href: "/bo-loc", nhan: "Bộ lọc cổ phiếu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức", tuKhoa: "bo loc loc co phieu screener pe roe" },
+      { href: "/khuyen-nghi", nhan: "Khuyến nghị CTCK", moTa: "Báo cáo mua/bán của các công ty chứng khoán, chấm điểm theo giá thực tế", tuKhoa: "khuyen nghi bao cao phan tich ctck gia muc tieu target mua ban" },
       { href: "/so-sanh", nhan: "So sánh mã", moTa: "Chồng tối đa 5 mã và chỉ số theo % thay đổi", tuKhoa: "so sanh nhieu ma hieu suat compare" },
     ],
   },
