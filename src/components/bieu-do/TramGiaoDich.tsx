@@ -107,8 +107,15 @@ export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; 
             </>
           )}
           <Link
+            href={`/bieu-do/nhieu?bo=4&ds=${nguon}-${ma}`}
+            title="Xem cùng lúc nhiều mã"
+            className="ml-auto text-[12px] font-semibold text-chu-phu hover:text-nhan"
+          >
+            Nhiều biểu đồ
+          </Link>
+          <Link
             href={nguon === "ts" ? `/tai-san-so/${ma}` : `/co-phieu/${ma}`}
-            className="ml-auto text-[12px] font-semibold text-nhan hover:underline"
+            className="text-[12px] font-semibold text-nhan hover:underline"
           >
             {nguon === "ts" ? "Trang chi tiết" : "Phân tích, tài chính"} →
           </Link>

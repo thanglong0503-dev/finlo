@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
+import { HieuUngCuon } from "@/components/ChuyenDong";
 import { GoiYCaiIos } from "@/components/HuongDanIos";
 import { Logo } from "@/components/Logo";
 import { Suspense } from "react";
 import { MenuDiDong, MenuNhom } from "@/components/Menu";
 import { NutGiaoDien } from "@/components/NutGiaoDien";
+import { ThanhChay } from "@/components/ThanhChay";
 import { TimMa } from "@/components/TimMa";
 import { KICH_BAN_DAU_TRANG } from "@/lib/giao-dien-dau-trang";
 import { NHOM_MENU } from "@/lib/menu";
@@ -59,7 +61,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </nav>
         </header>
 
+        {/* Hai thành phần đọc đường dẫn hiện tại nên phải nằm trong Suspense */}
+        <Suspense fallback={<div className="h-[35px] border-b border-vien bg-nen-phu" aria-hidden />}>
+          <ThanhChay />
+        </Suspense>
         <main className="flex-1">{children}</main>
+        <Suspense fallback={null}>
+          <HieuUngCuon />
+        </Suspense>
         <GoiYCaiIos />
 
         <footer className="group/chan border-t border-vien-toi bg-toi text-chu-toi">

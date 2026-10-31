@@ -121,12 +121,15 @@ export function BieuDoTuongTac({
   ma,
   khiCoNen,
   phienCK = null,
+  gon = false,
 }: {
   nguon: Nguon;
   ma: string;
   khiCoNen?: (nen: NenCB[]) => void; // báo dữ liệu nến đã tải cho khung bên cạnh dùng lại
   // Cổ phiếu: giá trong phiên (ảnh chụp mỗi phút) để cập nhật cây nến hôm nay
   phienCK?: { ngay: string; gia: number; thamChieu: number | null; khoiLuong: number } | null;
+  // Bản gọn cho lưới nhiều biểu đồ: thanh chỉ báo dùng chung đặt ở trên lưới, bỏ công cụ vẽ và vài nút phụ
+  gon?: boolean;
 }) {
   const khiCoNenRef = useRef(khiCoNen);
   useEffect(() => {
@@ -776,7 +779,7 @@ export function BieuDoTuongTac({
           value={kieu}
           onChange={(e) => setKieu(e.target.value as KieuBieuDo)}
           aria-label="Kiểu biểu đồ"
-          className="h-9 rounded-full border border-vien bg-nen px-3 text-[13px] font-medium outline-none focus:border-nhan"
+          className={`${gon ? "hidden" : ""} h-9 rounded-full border border-vien bg-nen px-3 text-[13px] font-medium outline-none focus:border-nhan`}
         >
           {KIEU.map((k) => (
             <option key={k.ma} value={k.ma}>
@@ -800,7 +803,7 @@ export function BieuDoTuongTac({
         </button>
         {nguon === "ts" && <TrangThaiKetNoi trangThai={trangThai} />}
         <div className="ml-auto flex items-center gap-1">
-          {nguon === "ck" && <span className="mr-2 hidden text-[12px] text-chu-phu xl:inline">Giá nghìn đồng</span>}
+          {nguon === "ck" && !gon && <span className="mr-2 hidden text-[12px] text-chu-phu xl:inline">Giá nghìn đồng</span>}
           <button onClick={chupAnh} title="Chụp ảnh biểu đồ" aria-label="Chụp ảnh biểu đồ" className={nutCC}>
             <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
               <path d="M3 6.5h3l1.5-2h5L14 6.5h3v9H3z" />
@@ -815,7 +818,7 @@ export function BieuDoTuongTac({
         </div>
       </div>
 
-      <ThanhChiBao coPhieu={nguon === "ck"} />
+      {!gon && <ThanhChiBao coPhieu={nguon === "ck"} />}
       {khongCoPhaiSinh && (
         <p className="border-b border-vien px-3 py-1.5 text-[12px] text-chu-phu">
           {ma} chưa có hợp đồng vĩnh cửu trên Binance Futures nên các chỉ báo Long/Short, Open Interest, funding không có dữ liệu.
@@ -823,7 +826,7 @@ export function BieuDoTuongTac({
       )}
 
       {/* Biểu đồ giãn hết chiều cao còn lại; màn hình nhỏ (không giới hạn chiều cao) dùng chiều cao tối thiểu */}
-      <div className="relative min-h-0 flex-1" style={{ minHeight: 440 + soKhungPhu * 120 }}>
+      <div className="relative min-h-0 flex-1" style={{ minHeight: gon ? 0 : 440 + soKhungPhu * 120 }}>
         {hien && (
           <div className="pointer-events-none absolute top-1 left-12 z-10 flex max-w-[calc(100%-120px)] flex-wrap gap-x-3 gap-y-0.5 text-[12px] tabular-nums">
             <span className="text-chu-phu">
@@ -917,7 +920,7 @@ export function BieuDoTuongTac({
           <>
             {!nenGoc && <div className="absolute inset-0 animate-pulse bg-nen-phu" />}
             <div ref={khungRef} className="absolute inset-0" />
-            {thanhVe && (
+            {thanhVe && !gon && (
               <VeHinh
                 chart={thanhVe.chart}
                 series={thanhVe.series}

@@ -184,7 +184,8 @@ type Loc = "tat-ca" | NhomChiBao | "finlo";
 
 // Thanh chỉ báo: nút mở thư viện chỉ báo (tìm kiếm, bộ mẫu, nhóm) và các thẻ chỉ báo đang bật,
 // mỗi thẻ có nút chỉnh tham số và nút bỏ.
-export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
+// coPhieu = null: lưới nhiều biểu đồ trộn cổ phiếu và tiền số, hiện mọi chỉ báo (mỗi biểu đồ tự bỏ chỉ báo không hợp)
+export function ThanhChiBao({ coPhieu }: { coPhieu: boolean | null }) {
   const dangBat = useChiBaoDangBat();
   const bangTs = useThamSoChiBao();
   const [mo, setMo] = useState(false);
@@ -194,14 +195,21 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
   const khung = useDongKhiBamNgoai(mo, () => setMo(false));
 
   const nguon = coPhieu ? "ck" : "ts";
-  const dung = CHI_BAO.filter((c) => dungDuoc(c, nguon));
+  const dung = CHI_BAO.filter((c) => coPhieu === null || dungDuoc(c, nguon));
   const soAn = CHI_BAO.length - dung.length;
   const bat = dangBat.map((m) => dung.find((c) => c.ma === m)).filter((c): c is ChiBao => !!c);
   const tk = boDau(tim.trim());
   const hienThi = dung.filter(
     (c) => (loc === "tat-ca" || (loc === "finlo" ? c.finlo : c.nhom === loc)) && (!tk || boDau(`${c.ten} ${c.moTa}`).includes(tk)),
   );
-  const boMau = BO_MAU.filter((b) => b.ds.every((m) => { const c = TIM_CHI_BAO.get(m); return !c || dungDuoc(c, nguon); }));
+  const boMau = BO_MAU.filter(
+    (b) =>
+      coPhieu === null ||
+      b.ds.every((m) => {
+        const c = TIM_CHI_BAO.get(m);
+        return !c || dungDuoc(c, nguon);
+      }),
+  );
   const loai: [Loc, string][] = [["tat-ca", "Tất cả"], ...NHOM.map((n): [Loc, string] => [n.ma, n.ten]), ["finlo", "Của Finlo"]];
 
   return (
@@ -304,7 +312,9 @@ export function ThanhChiBao({ coPhieu }: { coPhieu: boolean }) {
               </ul>
             </div>
             <p className="border-t border-vien px-4 py-2 text-[12px] leading-snug text-chu-phu">
-              {coPhieu
+              {coPhieu === null
+                ? "Chỉ báo không gắn nhãn dùng chung cho cổ phiếu và tiền số. Chỉ báo có nhãn chỉ hiện trên biểu đồ đúng loại tài sản."
+                : coPhieu
                 ? `Chỉ báo không gắn nhãn dùng chung cho cổ phiếu và tiền số. Đang ẩn ${soAn} chỉ báo chỉ dành cho tiền số (Long/Short, Open Interest, funding, CVD) — mở biểu đồ tiền số để dùng.`
                 : `Chỉ báo không gắn nhãn dùng chung cho cổ phiếu và tiền số. Đang ẩn ${soAn} chỉ báo chỉ dành cho cổ phiếu (định giá P/E, giao dịch nội bộ).`}
             </p>

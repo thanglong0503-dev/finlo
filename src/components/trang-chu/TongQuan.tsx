@@ -172,7 +172,7 @@ export async function BangDieuKhien() {
           <Link
             key={cs.ma}
             href={cs.ma === "VNINDEX" ? "/chi-so" : `/chi-so/${cs.ma}`}
-            className="group flex min-w-0 flex-col gap-2 rounded-2xl bg-nen-phu px-4 py-3 hover:bg-nen-noi sm:flex-row sm:items-center sm:gap-3"
+            className="the-noi group flex min-w-0 flex-col gap-2 rounded-2xl bg-nen-phu px-4 py-3 hover:bg-nen-noi sm:flex-row sm:items-center sm:gap-3"
           >
             <div className="min-w-0">
               <p className="text-[11px] text-chu-phu group-hover:text-chu">{cs.ten}</p>

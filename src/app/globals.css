@@ -157,3 +157,160 @@ body {
   -webkit-text-stroke: 1.5px color-mix(in srgb, var(--chu) 30%, transparent);
   transition: -webkit-text-stroke-color 0.3s;
 }
+
+/* ---------------- Chuyển động ---------------- */
+/* Đường cong chung: vào nhanh, dừng êm */
+:root {
+  --em: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Hiện dần khi cuộn tới (ChuyenDong.tsx bật lớp co-cd khi JavaScript chạy) */
+html.co-cd .hien-dan {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s var(--em),
+    transform 0.7s var(--em);
+  transition-delay: var(--tre, 0ms);
+}
+html.co-cd .hien-dan.da-hien {
+  opacity: 1;
+  transform: none;
+}
+
+/* Trượt lên khi mở trang (phần đầu trang chủ) */
+@keyframes len {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.len {
+  animation: len 0.8s var(--em) both;
+  animation-delay: var(--tre, 0ms);
+}
+
+/* Quầng sáng xanh trôi chậm phía sau phần giới thiệu */
+@keyframes troi {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-70px, 50px) scale(1.15);
+  }
+  100% {
+    transform: translate(40px, -30px) scale(0.92);
+  }
+}
+.quang-troi {
+  animation: troi 18s ease-in-out infinite alternate;
+}
+
+/* Chữ có dải xanh lướt qua */
+@keyframes chu-luot {
+  to {
+    background-position: 200% center;
+  }
+}
+.chu-luot {
+  background: linear-gradient(90deg, var(--chu) 0%, var(--chu) 35%, var(--nhan) 50%, var(--chu) 65%, var(--chu) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: chu-luot 5s linear infinite;
+}
+
+/* Dải giá chạy ngang: hai bản nối đuôi, trượt nửa chiều dài là quay vòng */
+@keyframes chay-ngang {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.thanh-chay-ray {
+  animation: chay-ngang linear infinite;
+}
+.thanh-chay:hover .thanh-chay-ray,
+.thanh-chay:focus-within .thanh-chay-ray {
+  animation-play-state: paused;
+}
+/* Hai mép mờ dần */
+.thanh-chay::before,
+.thanh-chay::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  z-index: 1;
+  pointer-events: none;
+}
+.thanh-chay::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--nen-phu), transparent);
+}
+.thanh-chay::after {
+  right: 0;
+  background: linear-gradient(-90deg, var(--nen-phu), transparent);
+}
+
+/* Thẻ nổi lên khi rê chuột */
+/* Dùng "translate" riêng để không đè "transform" của hiệu ứng hiện dần */
+.the-noi {
+  transition:
+    translate 0.35s var(--em),
+    border-color 0.3s,
+    box-shadow 0.35s var(--em);
+}
+.the-noi:hover {
+  translate: 0 -6px;
+  box-shadow: 0 28px 60px -32px color-mix(in srgb, var(--nhan) 55%, transparent);
+}
+
+/* Biểu tượng xoay nhẹ khi rê vào thẻ */
+.group:hover .bieu-tuong-nay {
+  transform: translateY(-3px) rotate(-6deg);
+}
+.bieu-tuong-nay {
+  transition: transform 0.35s var(--em);
+}
+
+/* Chuyển trang: nội dung mới hiện mờ dần */
+@keyframes vao-trang {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.vao-trang {
+  animation: vao-trang 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .len,
+  .quang-troi,
+  .chu-luot,
+  .vao-trang,
+  .thanh-chay-ray {
+    animation: none;
+  }
+  .chu-luot {
+    color: var(--chu);
+    background: none;
+  }
+  .thanh-chay {
+    overflow-x: auto;
+  }
+  .the-noi:hover {
+    translate: none;
+  }
+  .group:hover .bieu-tuong-nay {
+    transform: none;
+  }
+}

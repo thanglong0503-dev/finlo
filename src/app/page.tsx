@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import QRCode from "qrcode";
 import { Suspense, type ReactNode } from "react";
+import { SoChay } from "@/components/ChuyenDong";
 import { DuongNho } from "@/components/DuongNho";
 import { KhoiMo } from "@/components/KhungCho";
 import { CaiDatApp } from "@/components/trang-chu/CaiDatApp";
@@ -38,7 +39,7 @@ export default function TrangChu() {
 
 function TieuDeMuc({ ten, moTa, href, nhanLink }: { ten: string; moTa?: string; href?: string; nhanLink?: string }) {
   return (
-    <div className="mx-auto mb-8 flex max-w-7xl flex-wrap items-end justify-between gap-4 px-4">
+    <div className="hien-dan mx-auto mb-8 flex max-w-7xl flex-wrap items-end justify-between gap-4 px-4">
       <div>
         <h2 className="text-[32px] leading-tight font-bold tracking-[-0.03em] sm:text-[40px]">{ten}</h2>
         {moTa && <p className="mt-2 text-[16px] text-chu-phu">{moTa}</p>}
@@ -59,22 +60,22 @@ function GioiThieu() {
     <section className="relative overflow-hidden">
       {/* Quầng sáng xanh mờ phía sau khung điện thoại */}
       <div
-        className="pointer-events-none absolute top-10 right-[-10%] h-[520px] w-[620px] rounded-full opacity-25 blur-[120px]"
+        className="quang-troi pointer-events-none absolute top-10 right-[-10%] h-[520px] w-[620px] rounded-full opacity-25 blur-[120px]"
         style={{ background: "var(--nhan)" }}
         aria-hidden
       />
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pt-14 pb-16 lg:grid-cols-[1.1fr_1fr] lg:pt-20 lg:pb-24">
         <div>
-          <h1 className="text-[40px] leading-[1.2] font-bold tracking-[-0.035em] sm:text-[56px] lg:text-[64px]">
+          <h1 className="len text-[40px] leading-[1.2] font-bold tracking-[-0.035em] sm:text-[56px] lg:text-[64px]">
             Mọi lớp tài sản.
             <br />
-            Một màn hình.
+            <span className="chu-luot">Một màn hình.</span>
           </h1>
-          <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-chu-phu sm:text-[19px]">
+          <p style={{ ["--tre" as string]: "120ms" }} className="len mt-6 max-w-xl text-[17px] leading-relaxed text-chu-phu sm:text-[19px]">
             Bảng giá cập nhật mỗi phút, phân tích kỹ thuật, định giá FL và hồ sơ doanh nghiệp cho hơn 1.500 mã chứng
             khoán, cùng vàng và tài sản số. Miễn phí, không cần tài khoản.
           </p>
-          <div className="mt-9 flex flex-wrap gap-3">
+          <div style={{ ["--tre" as string]: "240ms" }} className="len mt-9 flex flex-wrap gap-3">
             <Link
               href="/bang-gia"
               className="inline-flex h-12 items-center rounded-full bg-chu px-7 text-[15px] font-semibold text-nen hover:bg-nhan hover:text-white"
@@ -92,14 +93,18 @@ function GioiThieu() {
               Cài ứng dụng
             </a>
           </div>
-          <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6">
-            {[
-              ["1.500+", "mã cổ phiếu"],
-              ["60 giây", "làm mới bảng giá"],
-              ["0 đồng", "không thu phí"],
-            ].map(([so, nhan]) => (
+          <dl style={{ ["--tre" as string]: "360ms" }} className="len mt-12 grid max-w-lg grid-cols-3 gap-6">
+            {(
+              [
+                [1500, "+", "mã cổ phiếu"],
+                [60, " giây", "làm mới bảng giá"],
+                [0, " đồng", "không thu phí"],
+              ] as const
+            ).map(([so, sau, nhan]) => (
               <div key={nhan}>
-                <dt className="text-[24px] font-bold tracking-[-0.03em] sm:text-[28px]">{so}</dt>
+                <dt className="text-[24px] font-bold tracking-[-0.03em] sm:text-[28px]">
+                  <SoChay den={so} sau={sau} />
+                </dt>
                 <dd className="mt-1 text-chu-phu">{nhan}</dd>
               </div>
             ))}
@@ -213,9 +218,9 @@ function LyDo() {
     <section className="py-20">
       <TieuDeMuc ten="Vì sao chọn Finlo" moTa="Công cụ của nhà đầu tư cá nhân, gọn và nhanh." />
       <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:grid-cols-2 lg:grid-cols-4">
-        {ds.map((x) => (
-          <div key={x.ten}>
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-nhan-nhat text-nhan">
+        {ds.map((x, i) => (
+          <div key={x.ten} className="group hien-dan" style={{ ["--tre" as string]: `${i * 90}ms` }}>
+            <span className="bieu-tuong-nay flex h-14 w-14 items-center justify-center rounded-2xl bg-nhan-nhat text-nhan">
               <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 {BIEU_TUONG[x.bt]}
               </svg>
@@ -246,7 +251,8 @@ function LopTaiSan() {
           <Link
             key={x.ten}
             href={x.href}
-            className="group flex flex-col rounded-3xl border border-vien bg-nen-phu p-7 transition-colors hover:border-nhan/50"
+            style={{ ["--tre" as string]: `${i * 90}ms` }}
+            className="hien-dan the-noi group flex flex-col rounded-3xl border border-vien bg-nen-phu p-7 transition-colors hover:border-nhan/50"
           >
             <span className="chu-vien-ro text-[64px] leading-none font-bold tracking-[-0.04em] transition-colors group-hover:[-webkit-text-stroke-color:var(--nhan)]">
               0{i + 1}
@@ -276,7 +282,7 @@ async function CaiApp() {
   return (
     <section id="cai-app" className="scroll-mt-20 py-20">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="grid items-center gap-12 overflow-hidden rounded-[32px] border border-vien bg-nen-phu p-8 sm:p-12 lg:grid-cols-[1fr_auto] lg:p-16">
+        <div className="hien-dan grid items-center gap-12 overflow-hidden rounded-[32px] border border-vien bg-nen-phu p-8 sm:p-12 lg:grid-cols-[1fr_auto] lg:p-16">
           <div>
             <h2 className="text-[32px] leading-tight font-bold tracking-[-0.03em] sm:text-[44px]">
               Finlo trên máy tính
@@ -372,7 +378,7 @@ function KetThuc() {
       >
         Finlo
       </span>
-      <h2 className="relative mx-auto max-w-3xl text-[36px] leading-tight font-bold tracking-[-0.035em] sm:text-[52px]">
+      <h2 className="hien-dan relative mx-auto max-w-3xl text-[36px] leading-tight font-bold tracking-[-0.035em] sm:text-[52px]">
         Bắt đầu theo dõi thị trường ngay hôm nay
       </h2>
       <div className="relative mt-9 flex flex-wrap justify-center gap-3">
