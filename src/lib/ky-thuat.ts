@@ -2,6 +2,7 @@
 // đường trung bình, dao động, hỗ trợ/kháng cự, hiệu suất giá và trạng thái chỉ báo Finlo.
 
 import { atr, ema, flDongTien, flVungGia, flXuHuong, macd, rsi, sma, stochastic, type NenCB, type TinHieu } from "@/lib/chi-bao";
+import { adx, diemXoay, mauHinhNen, muaVu } from "@/lib/ky-thuat-them";
 
 export type HuongTH = "mua" | "ban" | "trung";
 
@@ -25,7 +26,7 @@ function tongHop(ds: DongTH[]): TongHopTH {
 }
 
 // Chỉ dùng phần dữ liệu cần cho các chỉ báo dài nhất (MA200 + EMA200 ổn định)
-export function phanTichKyThuat(nenDayDu: NenCB[]) {
+export function phanTichKyThuat(nenDayDu: NenCB[], homNay?: number) {
   const nen = nenDayDu.slice(-600);
   const n = nen.length;
   const dong = nen.map((x) => x.close);
@@ -67,6 +68,8 @@ export function phanTichKyThuat(nenDayDu: NenCB[]) {
   const tbDien = dien.reduce((s, x) => s + x, 0) / dien.length;
   const lechTb = dien.reduce((s, x) => s + Math.abs(x - tbDien), 0) / dien.length;
   const cci = n >= 20 && lechTb > 0 ? (dien[dien.length - 1] - tbDien) / (0.015 * lechTb) : null;
+  // ADX 14: trên 25 là có xu hướng rõ, hướng theo +DI/−DI
+  const ad = adx(nen);
 
   const daoDong: DongTH[] = [
     {
@@ -98,6 +101,12 @@ export function phanTichKyThuat(nenDayDu: NenCB[]) {
       giaTri: cci,
       huong: cci == null ? "trung" : cci > 100 ? "ban" : cci < -100 ? "mua" : cci > 0 ? "mua" : "ban",
       ghiChu: cci == null ? undefined : cci > 100 ? "Quá mua" : cci < -100 ? "Quá bán" : undefined,
+    },
+    {
+      ten: "ADX (14)",
+      giaTri: ad?.adx ?? null,
+      huong: ad == null || ad.adx < 20 ? "trung" : ad.pdi > ad.mdi ? "mua" : "ban",
+      ghiChu: ad == null ? undefined : ad.adx < 20 ? "Không rõ xu hướng" : `+DI ${ad.pdi.toFixed(0)} / −DI ${ad.mdi.toFixed(0)}`,
     },
     {
       ten: "ROC (12)",
@@ -173,6 +182,9 @@ export function phanTichKyThuat(nenDayDu: NenCB[]) {
       vungGia: tren == null || duoi == null ? null : { tren, duoi, viTri: gia > tren ? "tren" : gia < duoi ? "duoi" : "trong" },
       tinHieu,
     },
+    mauHinh: mauHinhNen(nen, 60),
+    xoay: diemXoay(nen, homNay),
+    muaVu: muaVu(nenDayDu, 10),
   };
 }
 

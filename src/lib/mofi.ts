@@ -408,6 +408,11 @@ export async function layTienSo(): Promise<TienSo[]> {
 export async function layNen(ma: string): Promise<Nen[]> {
   "use cache";
   cacheLife("minutes");
+  return layNenKhongCache(ma);
+}
+
+// Không cache từng mã: dùng khi quét hàng trăm mã một lượt, chỉ cache kết quả tổng hợp
+export async function layNenKhongCache(ma: string): Promise<Nen[]> {
   const d = await layJson<NenTho>(`spot/d/${encodeURIComponent(ma)}.json`);
   return d.t.map((time, i) => ({
     time,

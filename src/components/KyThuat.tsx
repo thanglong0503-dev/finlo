@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { giaNghin } from "@/lib/dinh-dang";
+import { BangPivot, DanhSachMauHinh, MuaVuGia } from "@/components/KyThuatThem";
 import type { DongTH, HuongTH, KetLuan, PhanTichKyThuat, TongHopTH } from "@/lib/ky-thuat";
 
 const so2 = (x: number) => x.toLocaleString("vi-VN", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
@@ -88,16 +89,6 @@ function BangTH({ tieuDe, ds, laGia }: { tieuDe: string; ds: DongTH[]; laGia?: b
 }
 
 export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
-  const { muc } = kt;
-  const thang = [
-    { ten: "R3", gt: muc.r3 },
-    { ten: "R2", gt: muc.r2 },
-    { ten: "R1", gt: muc.r1 },
-    { ten: "Pivot", gt: muc.pivot },
-    { ten: "S1", gt: muc.s1 },
-    { ten: "S2", gt: muc.s2 },
-    { ten: "S3", gt: muc.s3 },
-  ];
   const fl = kt.finlo;
 
   return (
@@ -140,35 +131,7 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <section className="border border-vien rounded-2xl overflow-hidden">
-          <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
-            Hỗ trợ và kháng cự (pivot cổ điển)
-          </h2>
-          <ul>
-            {[...thang, { ten: "Gia", gt: kt.gia }]
-              .sort((x, y) => y.gt - x.gt)
-              .map((t) =>
-                t.ten === "Gia" ? (
-                  <li
-                    key="gia"
-                    className="flex justify-between border-b border-vien bg-nhan-nhat px-4 py-1.5 text-[12px] font-semibold text-nhan"
-                  >
-                    <span>Giá hiện tại</span>
-                    <span className="tabular-nums">{giaNghin(kt.gia)}</span>
-                  </li>
-                ) : (
-                  <li key={t.ten} className="flex justify-between border-b border-vien px-4 py-2 last:border-b-0">
-                    <span
-                      className={t.ten.startsWith("R") ? "text-giam" : t.ten.startsWith("S") ? "text-tang" : "font-semibold"}
-                    >
-                      {t.ten === "Pivot" ? "Điểm xoay" : t.ten.startsWith("R") ? `Kháng cự ${t.ten}` : `Hỗ trợ ${t.ten}`}
-                    </span>
-                    <span className="tabular-nums">{giaNghin(t.gt)}</span>
-                  </li>
-                ),
-              )}
-          </ul>
-        </section>
+        <BangPivot xoay={kt.xoay} gia={kt.gia} />
 
         <section className="border border-vien rounded-2xl overflow-hidden">
           <h2 className="flex items-center gap-2 border-b border-vien px-4 py-2.5 font-semibold">
@@ -220,6 +183,11 @@ export function KyThuat({ ma, kt }: { ma: string; kt: PhanTichKyThuat }) {
           ))}
         </dl>
       </section>
+
+      <div className="mt-6 flex flex-col gap-6">
+        <MuaVuGia mv={kt.muaVu} />
+        <DanhSachMauHinh ds={kt.mauHinh} />
+      </div>
 
       <section className="mt-8">
         <p className="nhan-muc">Chỉ báo Finlo</p>

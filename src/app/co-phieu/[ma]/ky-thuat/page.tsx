@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { LuoiMo } from "@/components/KhungCho";
 import { KyThuat } from "@/components/KyThuat";
 import { phanTichKyThuat } from "@/lib/ky-thuat";
+import { bayGio } from "@/lib/ky-thuat-them";
 import { layNen } from "@/lib/mofi";
 
 export async function generateMetadata({ params }: PageProps<"/co-phieu/[ma]/ky-thuat">): Promise<Metadata> {
@@ -21,8 +23,9 @@ export default function TrangKyThuat({ params }: PageProps<"/co-phieu/[ma]/ky-th
 }
 
 async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
+  await connection();
   const ma = (await params).ma.toUpperCase();
   const nen = await layNen(ma).catch(() => []);
   if (nen.length < 30) return <p className="text-chu-phu">{ma} chưa đủ lịch sử giá để phân tích kỹ thuật.</p>;
-  return <KyThuat ma={ma} kt={phanTichKyThuat(nen)} />;
+  return <KyThuat ma={ma} kt={phanTichKyThuat(nen, bayGio())} />;
 }
