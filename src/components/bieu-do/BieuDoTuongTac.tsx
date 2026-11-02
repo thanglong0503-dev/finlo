@@ -11,6 +11,7 @@ import {
   HistogramSeries,
   LineSeries,
   LineStyle,
+  LineType,
   PriceScaleMode,
   type IChartApi,
   type ISeriesApi,
@@ -224,6 +225,7 @@ export function BieuDoTuongTac({
   }, [nguon, ma, khung]);
 
   const batGiaTri = nguon === "ck" && chiBao.some((c) => c.ma === "fl-gia-tri");
+  const [moGiaiThich, setMoGiaiThich] = useState(false);
   const canDinhGia = nguon === "ck";
   const canNoiBo = nguon === "ck" && chiBao.some((c) => c.can === "noi-bo");
   useEffect(() => {
@@ -429,6 +431,7 @@ export function BieuDoTuongTac({
             color: v.mau,
             lineWidth: v.rong ?? 2,
             lineStyle: NET[v.net ?? "lien"],
+            ...(v.bac ? { lineType: LineType.WithSteps } : {}),
             lineVisible: !v.chiCham,
             pointMarkersVisible: !!v.chiCham,
             pointMarkersRadius: 1.5,
@@ -669,31 +672,26 @@ export function BieuDoTuongTac({
   const soKhungPhu = chiBao.filter((c) => c.khung === "rieng").length;
   // Tóm tắt FL Giá trị cho dòng chú thích trên biểu đồ
   const tomTatGiaTri = useMemo(
-    () => (batGiaTri && nenGoc && giaTriCuaMa ? flGiaTri(nenGoc, giaTriCuaMa.moc, giaTriCuaMa.loai, giaTriCuaMa.peNganh) : null),
+    () => (batGiaTri && nenGoc && giaTriCuaMa ? flGiaTri(nenGoc, giaTriCuaMa.moc) : null),
     [batGiaTri, nenGoc, giaTriCuaMa],
   );
-  // Câu tóm tắt kiểu "giá hôm nay rẻ hơn X% số phiên trong N năm qua" cho FL Giá trị
+  // Câu tóm tắt kiểu "giá hôm nay thấp hơn X% số ngày trong N năm qua" cho FL Giá trị
   const camNhanGiaTri = useMemo(() => {
     const g = tomTatGiaTri;
-    if (!g || g.diem == null || !nenGoc || !giaTriCuaMa) return null;
-    const i = nenGoc.length - 1;
-    const re = g.re[i];
-    const thuongLe = re != null ? (re * g.p50) / g.p20 : null;
-    const dauTien = Math.min(...giaTriCuaMa.moc.map((m) => m.tu));
-    const soNam = Math.max(1, Math.round((nenGoc[i].time - Math.max(dauTien, nenGoc[0].time)) / (365 * 86400)));
+    if (!g || g.diem == null || g.boiNay == null || g.neoNay == null || !nenGoc) return null;
+    const re = g.diem < 50;
     return {
-      thuoc: g.thuoc,
-      soVoi: g.thuoc === "P/E" ? "so với lợi nhuận" : "so với tài sản",
-      re: g.diem < 50,
-      phanTram: Math.round(g.diem < 50 ? 100 - g.diem : g.diem),
-      soNam,
-      thuongLe,
-      chenh: thuongLe ? (nenGoc[i].close / thuongLe - 1) * 100 : null,
+      re,
+      phanTram: Math.round(re ? 100 - g.diem : g.diem),
+      soNam: Math.max(1, Math.round(g.soNam)),
+      soKy: g.soKy,
+      nhom: g.nhom,
       boiNay: g.boiNay,
-      p50: g.p50,
-      peNganh: g.peNganh,
+      neoNay: g.neoNay,
+      gia: nenGoc[nenGoc.length - 1].close,
+      muc: g.muc.map((m) => ({ ten: m.ten, p: m.p, boi: m.boi })),
     };
-  }, [tomTatGiaTri, nenGoc, giaTriCuaMa]);
+  }, [tomTatGiaTri, nenGoc]);
   const cuoi = nenGoc?.[nenGoc.length - 1];
   const hien = chuThich ?? (cuoi ? { nen: cuoi, phanTram: null, gt: [] } : null);
 
@@ -705,8 +703,8 @@ export function BieuDoTuongTac({
       while (j + 1 < moc.length && moc[j + 1].tu <= t) j++;
       return j >= 0 ? moc[j] : null;
     };
-    const cuoiMoc = moc[moc.length - 1];
-    const theoPB = ["ngan_hang", "chung_khoan", "bao_hiem"].includes(giaTriCuaMa.loai) || !(cuoiMoc.eps && cuoiMoc.eps > 0);
+    // Cùng thước đo với FL Giá trị: P/B cho mọi ngành
+    const theoPB = true;
     const lichSu: number[] = [];
     let j = -1;
     for (const x of nenGoc) {
@@ -892,40 +890,23 @@ export function BieuDoTuongTac({
               </span>
             ))}
             {camNhanGiaTri && (
-              <span className="mt-1 flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-vien bg-nen/85 px-2 py-1 text-[11px] backdrop-blur-sm sm:basis-full sm:rounded-xl sm:px-3 sm:py-1.5 sm:text-[12px]">
-                <span className="hidden font-semibold sm:inline">
-                  FL Giá trị · {camNhanGiaTri.thuoc} <span className="font-normal text-chu-phu">{camNhanGiaTri.soVoi}</span>
-                </span>
+              <span className="pointer-events-auto mt-1 flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-vien bg-nen/85 px-2 py-1 text-[11px] backdrop-blur-sm sm:basis-full sm:rounded-xl sm:px-3 sm:py-1.5 sm:text-[12px]">
+                <span className="hidden text-chu-phu sm:inline">FL Giá trị · giá trị sổ sách</span>
                 <span>
-                  <span className="sm:hidden">FL Giá trị: </span>
-                  <span className="hidden sm:inline">Giá hôm nay </span>
-                  {camNhanGiaTri.phanTram >= 99 ? (
-                    <>
-                      <b className={camNhanGiaTri.re ? "text-tang" : "text-giam"}>{camNhanGiaTri.re ? "rẻ nhất" : "đắt nhất"}</b> trong{" "}
-                      {camNhanGiaTri.soNam} năm qua
-                    </>
-                  ) : (
-                    <>
-                      <b className={camNhanGiaTri.re ? "text-tang" : "text-giam"}>
-                        {camNhanGiaTri.re ? "rẻ" : "đắt"} hơn {camNhanGiaTri.phanTram}%
-                      </b>{" "}
-                      số phiên trong {camNhanGiaTri.soNam} năm qua
-                    </>
-                  )}
+                  <b className={camNhanGiaTri.re ? "text-tang" : "text-giam"}>{camNhanGiaTri.nhom}</b>
+                  <span className="sm:hidden">: thấp hơn </span>
+                  <span className="hidden sm:inline">: so với tài sản, giá hôm nay {camNhanGiaTri.re ? "thấp" : "cao"} hơn </span>
+                  {camNhanGiaTri.phanTram}% số ngày trong {camNhanGiaTri.soNam} năm qua
                 </span>
-                {camNhanGiaTri.thuongLe != null && camNhanGiaTri.chenh != null && (
-                  <span className="hidden text-chu-phu sm:inline">
-                    Thường lệ <b className="text-chu">{giaHien(camNhanGiaTri.thuongLe)}</b> (
-                    <span className={camNhanGiaTri.chenh < 0 ? "text-tang" : "text-giam"}>
-                      {camNhanGiaTri.chenh > 0 ? "+" : ""}
-                      {camNhanGiaTri.chenh.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%
-                    </span>
-                    ) · {camNhanGiaTri.thuoc} {camNhanGiaTri.boiNay?.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}, trung vị{" "}
-                    {camNhanGiaTri.p50.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}
-                    {camNhanGiaTri.peNganh != null && <>, ngành {camNhanGiaTri.peNganh.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}</>}
-                  </span>
-                )}
-                <span className="hidden items-center gap-3 text-chu-phu sm:flex">
+                <button
+                  type="button"
+                  onClick={() => setMoGiaiThich((x) => !x)}
+                  aria-label="Cách đọc FL Giá trị"
+                  className="flex h-5 w-5 items-center justify-center rounded-full border border-vien text-[11px] text-chu-phu hover:text-chu"
+                >
+                  ?
+                </button>
+                <span className="hidden basis-full items-center gap-3 text-chu-phu sm:flex">
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-sm bg-tang/40" /> rẻ so với chính {ma}
                   </span>
@@ -934,6 +915,9 @@ export function BieuDoTuongTac({
                   </span>
                 </span>
               </span>
+            )}
+            {camNhanGiaTri && moGiaiThich && (
+              <GiaiThichGiaTri ma={ma} g={camNhanGiaTri} giaHien={giaHien} dong={() => setMoGiaiThich(false)} />
             )}
           </div>
         )}
@@ -1023,6 +1007,57 @@ export function BieuDoTuongTac({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+type TomTatGiaTri = {
+  re: boolean;
+  phanTram: number;
+  soNam: number;
+  soKy: number;
+  nhom: string | null;
+  boiNay: number;
+  neoNay: number;
+  gia: number;
+  muc: { ten: string; p: number; boi: number }[];
+};
+
+// Bảng giải thích FL Giá trị cho mã đang xem: hôm nay, đo gì, đọc hình, dễ hiểu nhầm
+function GiaiThichGiaTri({ ma, g, giaHien, dong }: { ma: string; g: TomTatGiaTri; giaHien: (x: number) => string; dong: () => void }) {
+  const lan = (x: number) => x.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const dong0 = (x: number) => `${Math.round(x).toLocaleString("vi-VN")}đ`;
+  const tv = g.muc[2].boi;
+  return (
+    <div className="pointer-events-auto mt-1 w-full max-w-[520px] basis-full rounded-xl border border-vien bg-nen-phu/95 p-3 text-[12px] leading-relaxed shadow-xl backdrop-blur-md">
+      <div className="flex items-center justify-between">
+        <p className="font-semibold">FL Giá trị</p>
+        <button type="button" onClick={dong} aria-label="Đóng" className="text-chu-phu hover:text-chu">
+          ✕
+        </button>
+      </div>
+      <p className="mt-2 font-medium">Hôm nay</p>
+      <p className="text-chu-phu">
+        So với tài sản, giá {ma} hôm nay {g.re ? "thấp" : "cao"} hơn {g.phanTram}% số ngày trong {g.soNam} năm qua. Hôm nay người
+        mua trả gấp {lan(g.boiNay)} lần tài sản; mức hay gặp nhất là gấp {lan(tv)} lần.
+      </p>
+      <p className="mt-2 font-medium">Đo gì</p>
+      <p className="text-chu-phu">
+        Mỗi cổ phiếu {ma} có {dong0(g.neoNay)} tài sản thuộc về cổ đông (giá trị sổ sách). Giá {dong0(g.gia)} nghĩa là người mua trả
+        gấp {lan(g.boiNay)} lần phần tài sản ấy (P/B). FL Giá trị so con số «gấp bao nhiêu lần» ấy với chính {ma} trong quá khứ.
+      </p>
+      <p className="mt-2 font-medium">Đọc hình</p>
+      <p className="text-chu-phu">
+        Năm vạch là giá của {ma} nếu người mua trả gấp {g.muc.map((m) => lan(m.boi)).join(" · ")} lần, từ mức rẻ hiếm gặp tới đắt hiếm
+        gặp trong quá khứ (hôm nay tương ứng {g.muc.map((m) => giaHien(m.boi * g.neoNay)).join(" · ")}). Nến trong vùng xanh phía dưới
+        là rẻ so với chính {ma}, vùng hồng phía trên là đắt. Vạch đi bậc thang vì giá trị sổ sách chỉ đổi khi có báo cáo tài chính
+        mới{g.soKy > 0 ? `; dựng từ ${g.soKy} kỳ báo cáo` : ""}.
+      </p>
+      <p className="mt-2 font-medium">Dễ hiểu nhầm</p>
+      <p className="text-chu-phu">
+        FL Giá trị không đoán giá sẽ tăng hay giảm, và không phải khuyến nghị mua bán. Rẻ hơn quá khứ chưa chắc là rẻ: doanh nghiệp và
+        cả thị trường có thể đã khác xưa. Giá trị sổ sách cũng có thể cao hơn thực khi doanh nghiệp chưa trích lập đủ cho nợ khó đòi.
+      </p>
     </div>
   );
 }

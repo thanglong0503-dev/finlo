@@ -245,12 +245,12 @@ export function stochastic(nen: NenCB[], n = 14, d = 3) {
 }
 
 // ===================== FL Giá trị =====================
-// Vùng định giá của chính mã theo lịch sử bội số, trộn thêm góc nhìn ngành.
-//  - Thước đo: P/B cho ngân hàng, chứng khoán, bảo hiểm và khi đang lỗ; còn lại P/E.
-//  - Mỗi phiên dùng EPS/BVPS của báo cáo ĐÃ CÔNG BỐ tại phiên đó (không lấy số tương lai).
-//  - Vùng rẻ / đắt: bội số ở bách phân vị 20 / 80 của chính mã nhân với EPS/BVPS hiện hành.
-//  - Giá trị hợp lý FL: nửa trung vị bội số của chính mã, nửa P/E trung vị ngành (nếu dùng P/E).
-//  - Điểm định giá: bội số hôm nay cao hơn bao nhiêu % số phiên trong lịch sử (0 rẻ nhất, 100 đắt nhất).
+// Vùng giá ứng với các mức P/B mà chính mã từng có (cùng cách làm với Mofi Fair Value).
+//  - Thước đo: P/B = giá / giá trị sổ sách mỗi cổ phiếu, cho mọi ngành.
+//  - Mỗi phiên dùng giá trị sổ sách của báo cáo ĐÃ CÔNG BỐ tại phiên đó (không lấy số tương lai),
+//    nên các vạch đi bậc thang, chỉ đổi khi có báo cáo mới.
+//  - Năm vạch: P/B ở bách phân vị 10 / 25 / 50 / 75 / 90 trên toàn bộ lịch sử, nhân giá trị sổ sách hiện hành.
+//  - Điểm: P/B hôm nay cao hơn bao nhiêu % số phiên trong lịch sử (0 rẻ nhất, 100 đắt nhất).
 
 export type MocGiaTri = { tu: number; eps: number | null; bvps: number | null };
 
@@ -260,42 +260,51 @@ const phanVi = (ds: number[], p: number) => {
   return ds[a] + (ds[Math.min(a + 1, ds.length - 1)] - ds[a]) * (i - a);
 };
 
-export function flGiaTri(nen: NenCB[], moc: MocGiaTri[], loai: string, peNganh: number | null) {
-  const ds = [...moc].sort((a, b) => a.tu - b.tu);
-  const cuoi = ds[ds.length - 1];
-  const theoPB = ["ngan_hang", "chung_khoan", "bao_hiem"].includes(loai) || !(cuoi?.eps && cuoi.eps > 0);
-  const thuoc = theoPB ? "P/B" : "P/E";
+export const MUC_GIA_TRI = [
+  { p: 0.1, ten: "Rẻ hiếm gặp" },
+  { p: 0.25, ten: "Rẻ" },
+  { p: 0.5, ten: "Thường gặp" },
+  { p: 0.75, ten: "Đắt" },
+  { p: 0.9, ten: "Đắt hiếm gặp" },
+] as const;
 
-  // Neo (EPS hoặc BVPS) hiện hành tại từng phiên
+export function flGiaTri(nen: NenCB[], moc: MocGiaTri[]) {
+  const ds = [...moc].sort((a, b) => a.tu - b.tu);
+  // Giá trị sổ sách hiện hành tại từng phiên
   const neo: Chuoi = [];
   let j = -1;
   for (const x of nen) {
     while (j + 1 < ds.length && ds[j + 1].tu <= x.time) j++;
-    const m = j >= 0 ? ds[j] : null;
-    const v = m ? (theoPB ? m.bvps : m.eps) : null;
+    const v = j >= 0 ? ds[j].bvps : null;
     neo.push(v != null && v > 0 ? v : null);
   }
   const boi: Chuoi = nen.map((x, i) => (neo[i] ? x.close / neo[i]! : null));
-  // Bỏ 2% hai đầu để vài phiên bất thường không kéo lệch vùng
   const sapXep = (boi.filter((v) => v != null) as number[]).sort((a, b) => a - b);
-  const catBo = Math.floor(sapXep.length * 0.02);
-  const mau = sapXep.slice(catBo, sapXep.length - catBo);
-  if (mau.length < 60) return null; // dưới ~3 tháng dữ liệu thì chưa đủ để nói rẻ/đắt
+  if (sapXep.length < 60) return null; // dưới ~3 tháng dữ liệu thì chưa đủ để nói rẻ/đắt
 
-  const p20 = phanVi(mau, 0.2);
-  const p50 = phanVi(mau, 0.5);
-  const p80 = phanVi(mau, 0.8);
-  const boiHopLy = !theoPB && peNganh ? (p50 + peNganh) / 2 : p50;
-
-  const theo = (k: number): Chuoi => neo.map((n) => (n ? n * k : null));
-  const re = theo(p20);
-  const hopLy = theo(boiHopLy);
-  const dat = theo(p80);
+  const muc = MUC_GIA_TRI.map((m) => ({ ...m, boi: phanVi(sapXep, m.p), gt: [] as Chuoi }));
+  for (const m of muc) m.gt = neo.map((n) => (n ? n * m.boi : null));
 
   const iCuoi = nen.length - 1;
   const boiNay = boi[iCuoi];
   const diem = boiNay != null ? (sapXep.filter((v) => v < boiNay).length / sapXep.length) * 100 : null;
-  const chenh = hopLy[iCuoi] ? (nen[iCuoi].close / hopLy[iCuoi]! - 1) * 100 : null;
+  // Mức gần nhất với P/B hôm nay
+  const nhom =
+    boiNay == null
+      ? null
+      : boiNay < muc[0].boi
+        ? "Rẻ hiếm gặp"
+        : boiNay < muc[1].boi
+          ? "Rẻ"
+          : boiNay <= muc[3].boi
+            ? "Quanh mức thường gặp"
+            : boiNay <= muc[4].boi
+              ? "Đắt"
+              : "Đắt hiếm gặp";
+  // Số năm lịch sử và số kỳ báo cáo đã dùng
+  const dau = nen.findIndex((_, i) => boi[i] != null);
+  const soNam = dau >= 0 ? (nen[iCuoi].time - nen[dau].time) / (365.25 * 86400) : 0;
+  const soKy = dau >= 0 ? ds.filter((m) => m.tu <= nen[iCuoi].time && m.tu >= ds[Math.max(0, ds.findLastIndex((x) => x.tu <= nen[dau].time))].tu).length : 0;
 
-  return { thuoc, re, hopLy, dat, boiNay, p20, p50, p80, boiHopLy, peNganh: theoPB ? null : peNganh, diem, chenh };
+  return { muc, neo, neoNay: neo[iCuoi], boiNay, diem, nhom, soNam, soKy };
 }

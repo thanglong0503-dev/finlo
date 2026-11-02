@@ -66,6 +66,7 @@ export type Ve =
       chiCham?: boolean; // vẽ thành chấm rời (Parabolic SAR)
       nhan?: string; // hiện nhãn tên + giá trị cuối trên trục giá
       khongThang?: boolean; // không kéo giãn thang giá (đường tham khảo nằm xa giá)
+      bac?: boolean; // vẽ bậc thang (giá trị chỉ đổi theo kỳ báo cáo)
       dinhDang: DinhDang;
     }
   | { loai: "cot"; ten: string; gt: Chuoi; mau: (v: number, i: number) => string; dinhDang: DinhDang }
@@ -713,21 +714,28 @@ export const CHI_BAO: ChiBao[] = [
     finlo: true,
     chiCoPhieu: true,
     can: "dinh-gia",
-    moTa: "Mức giá thường lệ của chính mã theo lịch sử bội số (P/E, hoặc P/B với ngân hàng, chứng khoán, bảo hiểm, doanh nghiệp lỗ). Nền xanh là vùng rẻ, nền hồng là vùng đắt so với chính mã; hai đường chấm là mép rẻ (P20) và đắt (P80). Chỉ dùng báo cáo đã công bố tại từng phiên.",
+    moTa: "Vùng giá ứng với các mức P/B mà chính mã từng có. Năm vạch là giá nếu người mua trả gấp bao nhiêu lần giá trị sổ sách ở mức rẻ hiếm gặp (10%), rẻ (25%), thường gặp (50%), đắt (75%), đắt hiếm gặp (90%) trong quá khứ. Nến trong vùng xanh là rẻ, vùng hồng là đắt so với chính mã. Chỉ dùng báo cáo đã công bố tại từng phiên.",
     thamSo: [],
     tinh: (nen, _ts, nc) => {
       if (!nc.dinhGia) return null;
-      const g = flGiaTri(nen, nc.dinhGia.moc, nc.dinhGia.loai, nc.dinhGia.peNganh);
+      const g = flGiaTri(nen, nc.dinhGia.moc);
       if (!g) return null;
-      // Mức thường lệ = trung vị bội số của chính mã nhân EPS/BVPS hiện hành (re = neo × P20)
-      const thuongLe = g.re.map((v) => (v == null ? null : (v * g.p50) / g.p20));
+      const mau = [nc.mau.tang, nc.mau.tang + "aa", nc.mau.chu, nc.mau.giam + "aa", nc.mau.giam];
       return {
         ve: [
-          { loai: "vung", ten: "Vùng định giá", gt: thuongLe, mauTren: nc.mau.giam, mauDuoi: nc.mau.tang },
-          // Mép đắt/rẻ chỉ để tham khảo khi rê chuột: nét chấm mờ, không giãn thang giá để nến không bị ép dẹt
-          { loai: "duong", ten: "Đắt (P80)", gt: g.dat, mau: nc.mau.giam + "88", rong: 1, net: "cham", khongThang: true, dinhDang: "gia" },
-          { loai: "duong", ten: "Thường lệ", gt: thuongLe, mau: nc.mau.chu, rong: 2, nhan: "Thường lệ", dinhDang: "gia" },
-          { loai: "duong", ten: "Rẻ (P20)", gt: g.re, mau: nc.mau.tang + "88", rong: 1, net: "cham", khongThang: true, dinhDang: "gia" },
+          { loai: "vung", ten: "Vùng định giá", gt: g.muc[2].gt, mauTren: nc.mau.giam, mauDuoi: nc.mau.tang },
+          // Các vạch không giãn thang giá để nến không bị ép dẹt khi vạch nằm xa giá
+          ...g.muc.map((m, i) => ({
+            loai: "duong" as const,
+            ten: `${m.ten} (P/B ${m.boi.toLocaleString("vi-VN", { maximumFractionDigits: 2 })})`,
+            gt: m.gt,
+            mau: mau[i],
+            rong: (i === 2 ? 2 : 1) as 1 | 2,
+            nhan: m.ten,
+            khongThang: true,
+            bac: true,
+            dinhDang: "gia" as const,
+          })),
         ],
       };
     },
