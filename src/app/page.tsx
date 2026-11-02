@@ -5,6 +5,7 @@ import { Suspense, type ReactNode } from "react";
 import { SoChay } from "@/components/ChuyenDong";
 import { DuongNho } from "@/components/DuongNho";
 import { KhoiMo } from "@/components/KhungCho";
+import { KhungFireAnt, NhungFireAnt } from "@/components/NhungFireAnt";
 import { CaiDatApp } from "@/components/trang-chu/CaiDatApp";
 import { BangDieuKhien, KhungChoTongQuan } from "@/components/trang-chu/TongQuan";
 import { diem, giaNghin, phanTram } from "@/lib/dinh-dang";
@@ -26,6 +27,14 @@ export default function TrangChu() {
         <Suspense fallback={<KhungChoTongQuan />}>
           <BangDieuKhien />
         </Suspense>
+        <div className="mx-auto mt-4 grid max-w-7xl items-start gap-4 px-4 lg:grid-cols-[1fr_400px]">
+          <KhungFireAnt>
+            <NhungFireAnt widget="futures-basis" tieuDe="Basis phái sinh" cao={280} />
+          </KhungFireAnt>
+          <KhungFireAnt>
+            <NhungFireAnt widget="trending-symbols" tieuDe="Mã được quan tâm" cao={480} />
+          </KhungFireAnt>
+        </div>
       </section>
 
       <LyDo />

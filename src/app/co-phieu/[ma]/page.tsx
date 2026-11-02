@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { BieuDoNen } from "@/components/BieuDoNen";
 import { DongTin } from "@/components/BaoChiClient";
 import { KhoiMo, LuoiMo } from "@/components/KhungCho";
+import { KhungFireAnt, NhungFireAnt } from "@/components/NhungFireAnt";
 import { layBaoChi } from "@/lib/bao-chi";
 import { TomTat } from "@/components/TomTatMa";
 import { giaNghin, khoiLuong, trieuDong, tyDong, vonHoa } from "@/lib/dinh-dang";
@@ -122,6 +123,21 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
           </dl>
         </div>
       </div>
+
+      <section className="mt-6">
+        <p className="nhan-muc">Trong phiên</p>
+        <div className="mt-3 grid items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <KhungFireAnt>
+            <NhungFireAnt widget="order-book" tieuDe={`Sổ lệnh ${cp.ma}`} thamSo={{ symbol: cp.ma }} cao={230} />
+          </KhungFireAnt>
+          <KhungFireAnt>
+            <NhungFireAnt widget="trade-tape" tieuDe={`Khớp lệnh ${cp.ma}`} thamSo={{ symbol: cp.ma }} cao={420} tuCoGian={false} />
+          </KhungFireAnt>
+          <KhungFireAnt className="md:col-span-2 lg:col-span-1">
+            <NhungFireAnt widget="symbol-sentiment" tieuDe={`Cộng đồng nói về ${cp.ma}`} thamSo={{ symbol: cp.ma, showPosts: "false" }} cao={180} />
+          </KhungFireAnt>
+        </div>
+      </section>
 
       <Suspense fallback={<LuoiMo so={4} />}>
         <TomTat ma={cp.ma} nen={nen} vonHoa={cp.vonHoa} peNganh={peNganh} tenNganh={tenNganh ?? null} />
