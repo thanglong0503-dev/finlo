@@ -8,6 +8,7 @@ import { DanhSachMa } from "@/components/bieu-do/DanhSachMa";
 import { BangSoLenh, useThiTruongTienSo } from "@/components/bieu-do/SoLenhTienSo";
 import { ThongTinCoPhieu } from "@/components/bieu-do/ThongTinCoPhieu";
 import { GiaChop } from "@/components/GiaChop";
+import { NhungFireAnt } from "@/components/NhungFireAnt";
 import { dinhDangGia, gon, kiemTraCap, soLe, TrangThaiKetNoi } from "@/lib/binance";
 import type { NenCB } from "@/lib/chi-bao";
 import type { BangGia, TienSoTop } from "@/lib/mofi";
@@ -17,6 +18,8 @@ import type { BangGia, TienSoTop } from "@/lib/mofi";
 // Mã chứng khoán không có trong bảng giá cổ phiếu: hợp đồng tương lai, chứng quyền hoặc quỹ ETF
 const loaiKhac = (ma: string) =>
   /^(VN30|V100)F[12][MQ]$/.test(ma) ? "Hợp đồng tương lai" : /^C[A-Z0-9]{3}\d{4}$/.test(ma) ? "Chứng quyền" : "Quỹ ETF";
+// Chỉ số không có sổ lệnh
+const laChiSo = (ma: string) => /INDEX$|^(VN30|VN100|VNMID|VNSML|VNALL|VNX50|HNX|HNX30|UPCOM)$/.test(ma);
 
 export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; maDau: string; logo?: Record<string, string> }) {
   const [nguon, setNguon] = useState<Nguon>(nguonDau);
@@ -25,6 +28,7 @@ export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; 
   const [tienSo, setTienSo] = useState<TienSoTop[] | null>(null);
   const [nen, setNen] = useState<{ ma: string; ds: NenCB[] } | null>(null);
   const [coCap, setCoCap] = useState<boolean | null>(null);
+  const [khungCK, setKhungCK] = useState<"so-lenh" | "thong-so">("so-lenh");
 
   // Bảng giá cổ phiếu làm mới mỗi phút (giá trong danh sách và khung thông tin chớp khi đổi)
   // Tải ngay khi mở; sau đó chỉ làm mới khi tab đang mở và trong giờ giao dịch
@@ -141,8 +145,38 @@ export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; 
               <BangSoLenh ma={ma} soLenh={thiTruong.soLenh} khop={thiTruong.khop} le={le} soBuoc={14} />
             </>
           )
-        ) : (
+        ) : laChiSo(ma) ? (
           <ThongTinCoPhieu cp={cp} nen={nen?.ma === ma ? nen.ds : null} phien={bangGia?.phien ?? null} />
+        ) : (
+          <>
+            <div className="sticky top-0 z-10 flex gap-1 border-b border-vien bg-nen px-3 py-1.5">
+              {(
+                [
+                  ["so-lenh", "Sổ lệnh"],
+                  ["thong-so", "Thông số"],
+                ] as const
+              ).map(([k, ten]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setKhungCK(k)}
+                  className={`h-7 rounded-full px-3 text-[12px] font-medium ${
+                    khungCK === k ? "bg-nhan text-white" : "text-chu-phu hover:text-chu"
+                  }`}
+                >
+                  {ten}
+                </button>
+              ))}
+            </div>
+            {khungCK === "so-lenh" ? (
+              <div key={ma} className="divide-y divide-vien">
+                <NhungFireAnt widget="order-book" tieuDe={`Sổ lệnh ${ma}`} thamSo={{ symbol: ma }} cao={230} />
+                <NhungFireAnt widget="trade-tape" tieuDe={`Khớp lệnh ${ma}`} thamSo={{ symbol: ma }} cao={420} tuCoGian={false} />
+              </div>
+            ) : (
+              <ThongTinCoPhieu cp={cp} nen={nen?.ma === ma ? nen.ds : null} phien={bangGia?.phien ?? null} />
+            )}
+          </>
         )}
       </aside>
 
