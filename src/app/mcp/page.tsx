@@ -27,7 +27,7 @@ const NHOM: { ten: string; moTa: string; congCu: CongCu[] }[] = [
     moTa: "Các phép tính Finlo dùng trên biểu đồ và bộ lọc, nay hỏi được bằng lời.",
     congCu: [
       { ten: "Phân tích kỹ thuật", ma: "phan_tich_ky_thuat", moTa: "Xu hướng, RSI, MACD, đường trung bình, hỗ trợ và kháng cự.", viDu: "VCB đang ở xu hướng nào?" },
-      { ten: "Định giá FL", ma: "dinh_gia_fl", moTa: "Vùng giá rẻ, hợp lý, đắt theo lịch sử P/E và P/B của chính mã đó.", viDu: "FPT đang rẻ hay đắt so với lịch sử?" },
+      { ten: "Định giá FL", ma: "dinh_gia_fl", moTa: "Giá hôm nay rẻ hay đắt so với tài sản (P/B), so với chính mã đó trong quá khứ, kèm 5 vạch giá.", viDu: "FPT đang rẻ hay đắt so với lịch sử?" },
       { ten: "Lọc cổ phiếu", ma: "loc_co_phieu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức, vốn hoá.", viDu: "Mã có ROE trên 20% và P/E dưới 10" },
       { ten: "So sánh ngành", ma: "so_sanh_nganh", moTa: "Đặt một mã cạnh các doanh nghiệp cùng ngành và trung vị ngành.", viDu: "So VCB với các ngân hàng khác" },
       { ten: "So sánh mã", ma: "so_sanh_ma", moTa: "Hiệu suất, mức sụt sâu nhất, độ biến động của tối đa 5 mã hoặc chỉ số.", viDu: "So FPT, VCB và VN-INDEX trong 1 năm" },
