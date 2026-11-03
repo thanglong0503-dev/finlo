@@ -366,6 +366,14 @@ export async function layChiSo(): Promise<ChiSo[]> {
   });
 }
 
+// Số cổ phiếu lưu hành của mọi mã: quét nhiều mã dùng hàm này để chỉ tải file công ty một lần
+export async function laySoCoPhieu(): Promise<Record<string, number>> {
+  "use cache";
+  cacheLife("days");
+  const { companies } = await layJson<CongTyTho>("tong-hop/cong-ty.json");
+  return Object.fromEntries(companies.flatMap((c) => (c.outstandingShares ? [[c.sym, c.outstandingShares]] : [])));
+}
+
 export async function layHoSo(ma: string): Promise<HoSo | null> {
   "use cache";
   cacheLife("days");
