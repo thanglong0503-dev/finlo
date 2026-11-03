@@ -326,21 +326,24 @@ async function layBangGiaGoc(): Promise<Omit<BangGia, "phien"> & { ngayGiaoDich:
 
 type AnhChupChiSoTho = {
   ngay: string;
-  ds: { ma: string; gia: number; tc: number; tang: number; giam: number; dung: number }[];
+  ds: { ma: string; gia: number; tc: number; mo: number; cao: number; thap: number; kl: number; tang: number; giam: number; dung: number }[];
 };
 
 // Tên chỉ số trong ảnh chụp khác khoá trong chi-so.json
 const MA_CHI_SO_ANH: Record<string, string> = { HNXIndex: "HNX", UpcomIndex: "UPCOM", UPCOMINDEX: "UPCOM" };
+
+async function layAnhChupChiSo() {
+  "use cache";
+  cacheLife(MOT_PHUT);
+  return timAnhChup<AnhChupChiSoTho>("chi-so").catch(() => null);
+}
 
 // Điểm chỉ số được Mofi lưu nhân 1000 (1761870 = 1.761,87 điểm).
 // Trong phiên, điểm hiện tại lấy từ ảnh chụp mỗi phút (kèm số mã tăng/giảm/đứng của rổ).
 export async function layChiSo(): Promise<ChiSo[]> {
   "use cache";
   cacheLife(MOT_PHUT);
-  const [data, anh] = await Promise.all([
-    layJson<ChiSoTho>("tong-hop/chi-so.json"),
-    timAnhChup<AnhChupChiSoTho>("chi-so").catch(() => null),
-  ]);
+  const [data, anh] = await Promise.all([layJson<ChiSoTho>("tong-hop/chi-so.json"), layAnhChupChiSo()]);
   const theoMa = new Map((anh?.ds ?? []).map((x) => [MA_CHI_SO_ANH[x.ma] ?? x.ma.toUpperCase(), x]));
   return Object.entries(data.indices).map(([ma, cs]) => {
     const n = cs.c.length;
@@ -416,7 +419,20 @@ export async function layTienSo(): Promise<TienSo[]> {
 export async function layNen(ma: string): Promise<Nen[]> {
   "use cache";
   cacheLife("minutes");
-  return layNenKhongCache(ma);
+  const [nen, anh] = await Promise.all([layNenKhongCache(ma), layAnhChupPhien().catch(() => null)]);
+  const x = anh?.theoMa.get(ma);
+  return anh && x ? ghepNenPhien(nen, anh.phien.ngay, { gia: x.gia, kl: x.kl }) : nen;
+}
+
+// File nến ngày của Mofi chỉ chốt muộn, trong ngày có thể dừng ở giữa phiên. Ghép số mới nhất của phiên vào cây nến
+// cuối, hoặc thêm cây mới nếu file chưa có ngày này, để biểu đồ khớp với giá đang hiện.
+export function ghepNenPhien(nen: Nen[], ngay: string | null | undefined, p: { gia: number; kl: number; mo?: number; cao?: number; thap?: number }, time = Date.parse(`${ngay}T00:00:00+07:00`) / 1000): Nen[] {
+  const cuoi = nen[nen.length - 1];
+  if (!ngay || !cuoi || !(p.gia > 0) || !(p.kl > 0)) return nen;
+  const ngayCuoi = new Date((cuoi.time + 7 * 3600) * 1000).toISOString().slice(0, 10);
+  if (ngay < ngayCuoi) return nen;
+  if (ngay > ngayCuoi) return [...nen, { time, open: p.mo ?? p.gia, high: p.cao ?? p.gia, low: p.thap ?? p.gia, close: p.gia, volume: p.kl }];
+  return [...nen.slice(0, -1), { ...cuoi, high: Math.max(cuoi.high, p.cao ?? p.gia), low: Math.min(cuoi.low, p.thap ?? p.gia), close: p.gia, volume: p.kl }];
 }
 
 // Không cache từng mã: dùng khi quét hàng trăm mã một lượt, chỉ cache kết quả tổng hợp
@@ -674,14 +690,16 @@ export async function layViMo(ma: string): Promise<ChuoiViMo | null> {
 
 export async function layNenChiSo(ma: string): Promise<{ ten: string; nen: Nen[] } | null> {
   "use cache";
-  cacheLife("minutes");
-  const data = await layJson<ChiSoTho>("tong-hop/chi-so.json");
+  cacheLife(MOT_PHUT);
+  const [data, anh] = await Promise.all([layJson<ChiSoTho>("tong-hop/chi-so.json"), layAnhChupChiSo()]);
   const cs = data.indices[ma];
   if (!cs) return null;
   // Điểm lưu nhân 1000, giữ nguyên để dùng chung biểu đồ nến với cổ phiếu (biểu đồ chia 1000 khi hiển thị)
+  const nen = cs.t.map((time, i) => ({ time, open: cs.o[i], high: cs.h[i], low: cs.l[i], close: cs.c[i], volume: cs.v[i] }));
+  const x = anh?.ds.find((d) => (MA_CHI_SO_ANH[d.ma] ?? d.ma.toUpperCase()) === ma);
   return {
     ten: cs.name,
-    nen: cs.t.map((time, i) => ({ time, open: cs.o[i], high: cs.h[i], low: cs.l[i], close: cs.c[i], volume: cs.v[i] })),
+    nen: anh && x ? ghepNenPhien(nen, anh.ngay, { gia: x.gia * 1000, kl: x.kl, mo: x.mo * 1000, cao: x.cao * 1000, thap: x.thap * 1000 }, Date.parse(`${anh.ngay}T00:00:00Z`) / 1000) : nen,
   };
 }
 

@@ -3,7 +3,7 @@
 
 import { ketLuanDay, moPhongBatDay, THAM_SO, type GiaTriDay, type KetQuaDay, type LyDoThoat, type MaKetLuan } from "@/lib/bat-day";
 import { flGiaTri, MUC_GIA_TRI, type NenCB } from "@/lib/chi-bao";
-import { layBangGia, layBaoCao, layNenKhongCache, laySoCoPhieu, layTaiChinhToanThiTruong } from "@/lib/mofi";
+import { ghepNenPhien, layBangGia, layBaoCao, layNenKhongCache, laySoCoPhieu, layTaiChinhToanThiTruong } from "@/lib/mofi";
 import { mocDinhGia } from "@/lib/tai-chinh";
 
 const SO_MA = 500;
@@ -57,8 +57,9 @@ export async function quetBatDay() {
   for (let i = 0; i < ung.length; i += 16) {
     await Promise.all(
       ung.slice(i, i + 16).map(async (cp) => {
-        const nen = await layNenKhongCache(cp.ma).catch(() => null);
-        if (!nen?.length) return;
+        const tho = await layNenKhongCache(cp.ma).catch(() => null);
+        if (!tho?.length) return;
+        const nen = ghepNenPhien(tho, bang.phien?.ngay, { gia: cp.gia, kl: cp.khoiLuong });
         const kt: KetQuaDay | null = moPhongBatDay(nen);
         if (!kt || kt.giaTriTb20 < GIA_TRI_TOI_THIEU) return;
         soMa++;

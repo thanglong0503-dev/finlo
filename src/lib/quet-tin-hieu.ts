@@ -4,7 +4,7 @@
 
 import { macd, rsi, sma, type NenCB } from "@/lib/chi-bao";
 import { mauHinhNen } from "@/lib/ky-thuat-them";
-import { layBangGia, layNenKhongCache } from "@/lib/mofi";
+import { ghepNenPhien, layBangGia, layNenKhongCache } from "@/lib/mofi";
 
 export type LoaiTinHieu =
   | "rsi-qua-ban"
@@ -125,8 +125,9 @@ export async function quetTinHieu() {
   for (let i = 0; i < ung.length; i += 16) {
     await Promise.all(
       ung.slice(i, i + 16).map(async (cp) => {
-        const nen = await layNenKhongCache(cp.ma).catch(() => null);
-        if (!nen?.length) return;
+        const tho = await layNenKhongCache(cp.ma).catch(() => null);
+        if (!tho?.length) return;
+        const nen = ghepNenPhien(tho, bang.phien?.ngay, { gia: cp.gia, kl: cp.khoiLuong });
         const q = quetMot(nen.slice(-400));
         if (!q || q.giaTriTb20 < GIA_TRI_TOI_THIEU) return;
         ngay = Math.max(ngay, nen[nen.length - 1].time);
