@@ -1,7 +1,6 @@
 // Quét FL Bắt đáy cho các mã vốn hoá lớn đủ thanh khoản. Kỹ thuật tính cho mọi mã, báo cáo tài chính chỉ tải cho mã đã giảm sâu.
-// Chỉ cache kết quả tổng hợp theo giờ, không cache nến từng mã.
+// Chạy mỗi ngày một lần bởi scripts/quet-ngay.ts, website chỉ đọc src/data/bat-day.json.
 
-import { cacheLife } from "next/cache";
 import { ketLuanDay, moPhongBatDay, THAM_SO, type GiaTriDay, type KetQuaDay, type LyDoThoat, type MaKetLuan } from "@/lib/bat-day";
 import { flGiaTri, MUC_GIA_TRI, type NenCB } from "@/lib/chi-bao";
 import { layBangGia, layBaoCao, layNenKhongCache, laySoCoPhieu, layTaiChinhToanThiTruong } from "@/lib/mofi";
@@ -43,8 +42,6 @@ export type DongBatDay = {
 export type TinBan = { ma: string; ten: string; lyDo: LyDoThoat; ngay: number; giaMua: number; giaBan: number | null; lai: number | null; daXay: boolean };
 
 export async function quetBatDay() {
-  "use cache";
-  cacheLife("hours");
   const [bang, tc, soCP] = await Promise.all([layBangGia(), layTaiChinhToanThiTruong().catch(() => null), laySoCoPhieu().catch(() => null)]);
   const ung = [...bang.coPhieu]
     .filter((c) => c.ma.length === 3 && c.gia > 0)
@@ -101,6 +98,8 @@ export async function quetBatDay() {
     );
   }
   ds.sort((a, b) => b.diem - a.diem || b.giaTriTb20 - a.giaTriTb20);
-  tinBan.sort((a, b) => b.ngay - a.ngay);
-  return { luc: new Date().toISOString(), ngay, soMa, ds, tinBan };
+  tinBan.sort((a, b) => b.ngay - a.ngay || a.ma.localeCompare(b.ma));
+  return { ngay, soMa, ds, tinBan };
 }
+
+export type KetQuaBatDay = Awaited<ReturnType<typeof quetBatDay>>;

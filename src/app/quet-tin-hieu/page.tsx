@@ -3,8 +3,9 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { BangMo, LuoiMo } from "@/components/KhungCho";
+import duLieu from "@/data/quet-tin-hieu.json";
 import { giaNghin, mauTangGiam, phanTram, tyDong } from "@/lib/dinh-dang";
-import { LOAI, quetTinHieu, type LoaiTinHieu } from "@/lib/quet-tin-hieu";
+import { LOAI, type KetQuaQuetTinHieu, type LoaiTinHieu } from "@/lib/quet-tin-hieu";
 
 export const metadata: Metadata = {
   title: "Quét tín hiệu kỹ thuật",
@@ -18,7 +19,7 @@ export default function TrangQuetTinHieu({ searchParams }: PageProps<"/quet-tin-
       <p className="nhan-muc">Phân tích kỹ thuật</p>
       <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em]">Quét tín hiệu toàn thị trường</h1>
       <p className="mt-2 max-w-3xl text-chu-phu">
-        Mỗi giờ Finlo quét nến ngày của các mã thanh khoản trên 2 tỷ đồng/phiên và lọc ra những mã vừa có tín hiệu kỹ
+        Mỗi ngày sau phiên Finlo quét nến ngày của các mã thanh khoản trên 2 tỷ đồng/phiên và lọc ra những mã vừa có tín hiệu kỹ
         thuật. Đây là kết quả máy tính theo quy tắc cố định, không phải khuyến nghị đầu tư.
       </p>
       <Suspense
@@ -42,8 +43,7 @@ async function NoiDung({ searchParams }: { searchParams: Promise<Record<string, 
   await connection();
   const sp = await searchParams;
   const loai = LOAI.find((l) => l.k === sp.loai)?.k ?? null;
-  const kq = await quetTinHieu().catch(() => null);
-  if (!kq) return <p className="mt-6 text-chu-phu">Chưa quét được dữ liệu, vui lòng thử lại sau.</p>;
+  const kq = duLieu as unknown as KetQuaQuetTinHieu;
 
   const dem = (k: LoaiTinHieu) => kq.ds.filter((d) => d.chiTiet[k]).length;
   const coTin = kq.ds.filter((d) => Object.keys(d.chiTiet).length > 0);
@@ -83,7 +83,7 @@ async function NoiDung({ searchParams }: { searchParams: Promise<Record<string, 
           </span>
         </h2>
         {ds.length === 0 ? (
-          <p className="px-4 py-6 text-chu-phu">Hôm nay không có mã nào cho tín hiệu này.</p>
+          <p className="px-4 py-6 text-chu-phu">Phiên này không có mã nào cho tín hiệu này.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px]">

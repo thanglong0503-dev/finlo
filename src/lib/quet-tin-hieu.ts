@@ -1,8 +1,7 @@
 // Quét tín hiệu kỹ thuật cho các mã thanh khoản cao: quá mua/quá bán RSI, giao cắt MA, vượt/thủng MA200,
 // đỉnh/đáy 52 tuần, khối lượng đột biến, MACD cắt tín hiệu và mẫu hình nến phiên gần nhất.
-// Chỉ cache kết quả tổng hợp (theo giờ), không cache nến từng mã.
+// Chạy mỗi ngày một lần bởi scripts/quet-ngay.ts, website chỉ đọc src/data/quet-tin-hieu.json.
 
-import { cacheLife } from "next/cache";
 import { macd, rsi, sma, type NenCB } from "@/lib/chi-bao";
 import { mauHinhNen } from "@/lib/ky-thuat-them";
 import { layBangGia, layNenKhongCache } from "@/lib/mofi";
@@ -118,8 +117,6 @@ function quetMot(nen: NenCB[]) {
 }
 
 export async function quetTinHieu() {
-  "use cache";
-  cacheLife("hours");
   const bang = await layBangGia();
   const ung = bang.coPhieu.filter((cp) => cp.ma.length === 3 && cp.gia > 0).slice(0, SO_MA);
   const kq: DongQuet[] = [];
@@ -147,5 +144,8 @@ export async function quetTinHieu() {
     );
   }
   kq.sort((a, b) => b.giaTriTb20 - a.giaTriTb20);
-  return { luc: new Date().toISOString(), ngay, soMa: kq.length, ds: kq };
+  // Chỉ lưu mã có tín hiệu: trang không hiện các mã còn lại
+  return { ngay, soMa: kq.length, ds: kq.filter((d) => Object.keys(d.chiTiet).length > 0) };
 }
+
+export type KetQuaQuetTinHieu = Awaited<ReturnType<typeof quetTinHieu>>;

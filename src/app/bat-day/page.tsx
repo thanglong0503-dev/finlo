@@ -5,11 +5,12 @@ import { Suspense } from "react";
 import { TraMaBatDay } from "@/components/bat-day/ChungBatDay";
 import { KhongKhuyenNghi, KiemChung } from "@/components/bat-day/NoiDungChung";
 import { BangMo, LuoiMo } from "@/components/KhungCho";
+import duLieu from "@/data/bat-day.json";
 import { KET_LUAN, type MaKetLuan } from "@/lib/bat-day";
 import { sma } from "@/lib/chi-bao";
 import { diem, giaNghin, mauTangGiam, phanTram } from "@/lib/dinh-dang";
 import { layNenChiSo } from "@/lib/mofi";
-import { quetBatDay, type TinBan } from "@/lib/quet-bat-day";
+import type { KetQuaBatDay, TinBan } from "@/lib/quet-bat-day";
 
 export const metadata: Metadata = {
   title: "FL Bắt đáy",
@@ -24,7 +25,7 @@ export default function TrangBatDay({ searchParams }: PageProps<"/bat-day">) {
           <p className="nhan-muc">Phân tích kỹ thuật và định giá</p>
           <h1 className="mt-2 text-3xl font-bold tracking-[-0.03em]">FL Bắt đáy</h1>
           <p className="mt-2 max-w-3xl text-chu-phu">
-            Mỗi giờ Finlo lọc các mã giảm từ 20% so với đỉnh 1 năm, có P/B thuộc nhóm rẻ nhất 25% lịch sử của chính mã và đang có lãi, rồi xem giá đang rơi, đang giữ đáy hay đã bật lên.
+            Mỗi ngày sau phiên Finlo lọc các mã giảm từ 20% so với đỉnh 1 năm, có P/B thuộc nhóm rẻ nhất 25% lịch sử của chính mã và đang có lãi, rồi xem giá đang rơi, đang giữ đáy hay đã bật lên.
           </p>
         </div>
         <div>
@@ -85,8 +86,7 @@ async function BoiCanh() {
 async function NoiDung({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await connection();
   const sp = await searchParams;
-  const kq = await quetBatDay().catch(() => null);
-  if (!kq) return <p className="text-chu-phu">Chưa quét được dữ liệu, vui lòng thử lại sau.</p>;
+  const kq = duLieu as unknown as KetQuaBatDay;
 
   const vungRe = kq.ds.filter((d) => KET_LUAN[d.ketLuan].vungRe);
   const chon = NHOM.find((n) => n.k === sp.nhom)?.k ?? null;
@@ -129,7 +129,7 @@ async function NoiDung({ searchParams }: { searchParams: Promise<Record<string, 
                 <tr className="border-b border-vien text-left text-[12px] text-chu-phu">
                   <th className="px-4 py-2 font-medium">Mã</th>
                   <th className="px-3 py-2 text-right font-medium">Giá</th>
-                  <th className="px-3 py-2 text-right font-medium">Hôm nay</th>
+                  <th className="px-3 py-2 text-right font-medium">Phiên cuối</th>
                   <th className="px-3 py-2 text-right font-medium">Từ đỉnh 1 năm</th>
                   <th className="px-3 py-2 text-right font-medium">P/B so lịch sử</th>
                   <th className="px-3 py-2 font-medium">Trạng thái</th>

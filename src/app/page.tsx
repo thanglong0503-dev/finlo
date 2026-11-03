@@ -201,7 +201,7 @@ const TINH_NANG_CHINH = [
   },
   {
     ten: "Quét tín hiệu",
-    moTa: "Mỗi giờ quét các mã thanh khoản tốt và lọc ra những mã vừa có tín hiệu kỹ thuật.",
+    moTa: "Mỗi ngày quét các mã thanh khoản tốt và lọc ra những mã vừa có tín hiệu kỹ thuật.",
     y: ["RSI quá mua, quá bán", "Giao cắt MA, vượt và thủng MA200", "Đỉnh, đáy 52 tuần", "Khối lượng đột biến, mẫu hình nến"],
     href: "/quet-tin-hieu",
     nut: "Xem tín hiệu",

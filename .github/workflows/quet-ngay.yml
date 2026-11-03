@@ -1,0 +1,41 @@
+# Quét FL Bắt đáy và Quét tín hiệu mỗi ngày làm việc lúc 18h giờ Việt Nam, sau khi có dữ liệu cuối phiên.
+# Có thay đổi thì commit vào main, Vercel tự triển khai lại. Chạy tay: tab Actions > Quét mỗi ngày > Run workflow.
+name: Quét mỗi ngày
+
+on:
+  schedule:
+    - cron: "0 11 * * 1-5"
+  workflow_dispatch:
+  # Chạy luôn khi quy tắc quét thay đổi (lần commit tự động chỉ đổi file dữ liệu nên không lặp)
+  push:
+    branches: [main]
+    paths:
+      - scripts/quet-ngay.ts
+      - src/lib/bat-day.ts
+      - src/lib/quet-bat-day.ts
+      - src/lib/quet-tin-hieu.ts
+      - .github/workflows/quet-ngay.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: quet-ngay
+  cancel-in-progress: false
+
+jobs:
+  quet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx --yes tsx@4.19.2 --tsconfig scripts/tsconfig.quet.json scripts/quet-ngay.ts
+      - name: Commit nếu có thay đổi
+        run: |
+          git config user.name "finlo-bot"
+          git config user.email "finlo-bot@users.noreply.github.com"
+          git add src/data/bat-day.json src/data/quet-tin-hieu.json
+          git diff --cached --quiet || (git commit -m "Cập nhật quét mỗi ngày" && git pull --rebase && git push)
