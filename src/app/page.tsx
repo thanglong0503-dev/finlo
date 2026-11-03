@@ -5,40 +5,20 @@ import { Suspense, type ReactNode } from "react";
 import { SoChay } from "@/components/ChuyenDong";
 import { DuongNho } from "@/components/DuongNho";
 import { KhoiMo } from "@/components/KhungCho";
-import { KhungFireAnt, NhungFireAnt } from "@/components/NhungFireAnt";
 import { CaiDatApp } from "@/components/trang-chu/CaiDatApp";
-import { BangDieuKhien, KhungChoTongQuan } from "@/components/trang-chu/TongQuan";
 import { diem, giaNghin, phanTram } from "@/lib/dinh-dang";
+import { NHOM_MENU } from "@/lib/menu";
 import { layBangGia, layChiSo } from "@/lib/mofi";
 
-// Trang chủ: giới thiệu Finlo, bảng tổng quan thị trường trực tiếp, các lớp tài sản, cài ứng dụng và hỏi đáp
+// Trang chủ chỉ giới thiệu: Finlo là gì, toàn bộ tính năng kèm nút vào từng trang, cài ứng dụng và hỏi đáp.
+// Số liệu thị trường nằm ở trang /thi-truong.
 export default function TrangChu() {
   return (
     <>
       <GioiThieu />
-
-      <section className="pt-6 pb-20">
-        <TieuDeMuc
-          ten="Thị trường hôm nay"
-          moTa="Số liệu phiên cập nhật mỗi phút trong giờ giao dịch."
-          href="/bang-gia"
-          nhanLink="Mở bảng giá"
-        />
-        <Suspense fallback={<KhungChoTongQuan />}>
-          <BangDieuKhien />
-        </Suspense>
-        <div className="mx-auto mt-4 grid max-w-7xl items-start gap-4 px-4 lg:grid-cols-[1fr_400px]">
-          <KhungFireAnt>
-            <NhungFireAnt widget="futures-basis" tieuDe="Basis phái sinh" cao={280} />
-          </KhungFireAnt>
-          <KhungFireAnt>
-            <NhungFireAnt widget="trending-symbols" tieuDe="Mã được quan tâm" cao={480} />
-          </KhungFireAnt>
-        </div>
-      </section>
-
+      <TinhNangChinh />
+      <TatCaTinhNang />
       <LyDo />
-      <LopTaiSan />
       <CaiApp />
       <HoiDap />
       <KetThuc />
@@ -81,16 +61,19 @@ function GioiThieu() {
             <span className="chu-luot">Một màn hình.</span>
           </h1>
           <p style={{ ["--tre" as string]: "120ms" }} className="len mt-6 max-w-xl text-[17px] leading-relaxed text-chu-phu sm:text-[19px]">
-            Bảng giá cập nhật mỗi phút, phân tích kỹ thuật, định giá FL và hồ sơ doanh nghiệp cho hơn 1.500 mã chứng
+            Tổng quan thị trường, bảng giá, phân tích kỹ thuật, định giá FL và hồ sơ doanh nghiệp cho hơn 1.500 mã chứng
             khoán, cùng vàng và tài sản số. Miễn phí, không cần tài khoản.
           </p>
           <div style={{ ["--tre" as string]: "240ms" }} className="len mt-9 flex flex-wrap gap-3">
             <Link
-              href="/bang-gia"
+              href="/thi-truong"
               className="inline-flex h-12 items-center rounded-full bg-chu px-7 text-[15px] font-semibold text-nen hover:bg-nhan hover:text-white"
             >
-              Mở bảng giá
+              Vào thị trường
             </Link>
+            <a href="#tinh-nang" className="inline-flex h-12 items-center rounded-full bg-nen-noi px-7 text-[15px] font-semibold hover:bg-vien">
+              Xem tính năng
+            </a>
             <a
               href="#cai-app"
               className="inline-flex h-12 items-center gap-2 rounded-full bg-nen-noi px-7 text-[15px] font-semibold hover:bg-vien"
@@ -192,6 +175,127 @@ async function DienThoaiMau() {
   );
 }
 
+// ---------------- Tính năng ----------------
+
+const TINH_NANG_CHINH = [
+  {
+    ten: "Tổng quan thị trường",
+    moTa: "Toàn cảnh một phiên giao dịch trên một trang, kèm phần điểm nhấn tự viết từ số liệu.",
+    y: ["Bản đồ nhiệt top 100 và VN30", "Độ rộng, thanh khoản, khối ngoại", "Phái sinh và basis", "Chỉ số thế giới, hàng hoá, sự kiện"],
+    href: "/thi-truong",
+    nut: "Vào thị trường",
+  },
+  {
+    ten: "Hồ sơ từng mã",
+    moTa: "Mọi thông tin của một cổ phiếu ở cùng một nơi, từ giá trong phiên đến báo cáo tài chính.",
+    y: ["Sổ lệnh, khớp lệnh trong phiên", "Hồ sơ doanh nghiệp, báo cáo tài chính", "So sánh ngành, giao dịch nội bộ", "Điểm xoay, mẫu hình nến, mùa vụ"],
+    href: "/co-phieu/FPT",
+    nut: "Xem thử FPT",
+  },
+  {
+    ten: "Biểu đồ kỹ thuật",
+    moTa: "Biểu đồ tương tác với chỉ báo phổ biến và bộ chỉ báo riêng của Finlo.",
+    y: ["FL Xu hướng, FL Dòng tiền, FL Vùng giá", "FL Giá trị: 5 vùng định giá theo P/B", "Sổ lệnh ngay cạnh biểu đồ", "Xem cùng lúc tới 6 mã"],
+    href: "/bieu-do",
+    nut: "Mở biểu đồ",
+  },
+  {
+    ten: "Quét tín hiệu",
+    moTa: "Mỗi giờ quét các mã thanh khoản tốt và lọc ra những mã vừa có tín hiệu kỹ thuật.",
+    y: ["RSI quá mua, quá bán", "Giao cắt MA, vượt và thủng MA200", "Đỉnh, đáy 52 tuần", "Khối lượng đột biến, mẫu hình nến"],
+    href: "/quet-tin-hieu",
+    nut: "Xem tín hiệu",
+  },
+  {
+    ten: "Khuyến nghị CTCK",
+    moTa: "Báo cáo mua, bán của các công ty chứng khoán, được chấm điểm theo diễn biến giá thực tế.",
+    y: ["Giá mục tiêu theo từng báo cáo", "Xếp hạng công ty chứng khoán", "Đối chiếu với giá sau khuyến nghị"],
+    href: "/khuyen-nghi",
+    nut: "Xem khuyến nghị",
+  },
+  {
+    ten: "Finlo MCP",
+    moTa: "Hỏi Claude bằng dữ liệu của Finlo: giá, tài chính, định giá và kỹ thuật của từng mã. Hiện dùng nội bộ.",
+    y: ["Trợ lý AI đọc số liệu Finlo", "Tra cứu, so sánh, lọc mã bằng lời"],
+    href: "/mcp",
+    nut: "Tìm hiểu thêm",
+  },
+];
+
+function TinhNangChinh() {
+  return (
+    <section id="tinh-nang" className="scroll-mt-20 py-20">
+      <TieuDeMuc ten="Finlo có gì" moTa="Sáu công cụ chính cho nhà đầu tư cá nhân. Bấm vào thẻ để dùng ngay." />
+      <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:grid-cols-2 lg:grid-cols-3">
+        {TINH_NANG_CHINH.map((x, i) => (
+          <Link
+            key={x.ten}
+            href={x.href}
+            style={{ ["--tre" as string]: `${(i % 3) * 90}ms` }}
+            className="hien-dan the-noi group flex flex-col rounded-3xl border border-vien bg-nen-phu p-7 transition-colors hover:border-nhan/50"
+          >
+            <span className="chu-vien-ro text-[56px] leading-none font-bold tracking-[-0.04em] transition-colors group-hover:[-webkit-text-stroke-color:var(--nhan)]">
+              0{i + 1}
+            </span>
+            <h3 className="mt-4 text-[22px] font-bold tracking-[-0.02em]">{x.ten}</h3>
+            <p className="mt-2 leading-relaxed text-chu-phu">{x.moTa}</p>
+            <ul className="mt-4 mb-7 flex-1 space-y-1.5">
+              {x.y.map((y) => (
+                <li key={y} className="flex items-start gap-2 text-[13px]">
+                  <svg viewBox="0 0 16 16" width="14" height="14" className="mt-0.5 shrink-0 text-nhan" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="m3 8.5 3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {y}
+                </li>
+              ))}
+            </ul>
+            <span className="inline-flex h-10 w-fit items-center rounded-full bg-nen-noi px-5 font-semibold group-hover:bg-chu group-hover:text-nen">
+              {x.nut} →
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// Trang thông tin về Finlo không phải tính năng; trang mới thêm vào menu sẽ tự xuất hiện ở đây
+const KHONG_LA_TINH_NANG = new Set(["/gioi-thieu", "/doi-tac", "/lien-he"]);
+
+function TatCaTinhNang() {
+  return (
+    <section className="py-20">
+      <TieuDeMuc ten="Tất cả tính năng" moTa="Danh sách đầy đủ, bấm vào tên để mở." />
+      <div className="mx-auto max-w-7xl space-y-10 px-4">
+        {NHOM_MENU.map((nhom) => {
+          const trang = nhom.trang.filter((t) => !KHONG_LA_TINH_NANG.has(t.href));
+          if (!trang.length) return null;
+          return (
+            <div key={nhom.ten} className="hien-dan">
+              <h3 className="text-[18px] font-bold">{nhom.ten}</h3>
+              <ul className="mt-3 grid overflow-hidden rounded-2xl border border-vien sm:grid-cols-2 lg:grid-cols-3">
+                {trang.map((t) => (
+                  <li key={t.href} className="-mr-px -mb-px border-r border-b border-vien">
+                    <Link href={t.href} className="group flex h-full flex-col gap-1 p-4 hover:bg-nen-phu">
+                      <span className="flex items-center justify-between gap-2 font-semibold group-hover:text-nhan">
+                        {t.nhan}
+                        <span aria-hidden className="text-chu-phu group-hover:text-nhan">
+                          →
+                        </span>
+                      </span>
+                      <span className="text-[13px] leading-snug text-chu-phu">{t.moTa}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ---------------- Vì sao Finlo ----------------
 
 const BIEU_TUONG: Record<string, ReactNode> = {
@@ -237,41 +341,6 @@ function LyDo() {
             <h3 className="mt-5 text-[18px] font-bold">{x.ten}</h3>
             <p className="mt-2 leading-relaxed text-chu-phu">{x.moTa}</p>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ---------------- Các lớp tài sản ----------------
-
-function LopTaiSan() {
-  const ds = [
-    { ten: "Chứng khoán", moTa: "Hơn 1.500 mã HOSE, HNX, UPCOM với bảng giá, bộ lọc và biểu đồ kỹ thuật.", href: "/bang-gia", nut: "Xem bảng giá" },
-    { ten: "Biểu đồ kỹ thuật", moTa: "Biểu đồ tương tác với chỉ báo phổ biến và bộ chỉ báo FL của Finlo.", href: "/bieu-do", nut: "Mở biểu đồ" },
-    { ten: "Tài sản số", moTa: "Bitcoin, Ethereum và top 30 theo vốn hoá, giá và sổ lệnh trực tiếp.", href: "/tai-san-so", nut: "Xem tài sản số" },
-    { ten: "Kim loại quý", moTa: "Vàng miếng, vàng nhẫn của các thương hiệu lớn và vàng thế giới.", href: "/kim-loai-quy", nut: "Xem giá vàng" },
-  ];
-  return (
-    <section className="py-20">
-      <TieuDeMuc ten="Mọi thứ bạn cần để theo dõi thị trường" />
-      <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:grid-cols-2 lg:grid-cols-4">
-        {ds.map((x, i) => (
-          <Link
-            key={x.ten}
-            href={x.href}
-            style={{ ["--tre" as string]: `${i * 90}ms` }}
-            className="hien-dan the-noi group flex flex-col rounded-3xl border border-vien bg-nen-phu p-7 transition-colors hover:border-nhan/50"
-          >
-            <span className="chu-vien-ro text-[64px] leading-none font-bold tracking-[-0.04em] transition-colors group-hover:[-webkit-text-stroke-color:var(--nhan)]">
-              0{i + 1}
-            </span>
-            <h3 className="mt-4 text-[22px] font-bold tracking-[-0.02em]">{x.ten}</h3>
-            <p className="mt-2 flex-1 leading-relaxed text-chu-phu">{x.moTa}</p>
-            <span className="mt-8 inline-flex h-10 w-fit items-center rounded-full bg-nen-noi px-5 font-semibold group-hover:bg-chu group-hover:text-nen">
-              {x.nut}
-            </span>
-          </Link>
         ))}
       </div>
     </section>
@@ -336,7 +405,7 @@ function HoiDap() {
   const ds = [
     {
       h: "Dữ liệu của Finlo lấy từ đâu?",
-      d: "Giá chứng khoán, chỉ số, báo cáo tài chính và tin doanh nghiệp lấy từ kho dữ liệu Mofi. Tài sản số lấy trực tiếp từ Binance. Giá vàng tổng hợp từ các thương hiệu lớn.",
+      d: "Giá chứng khoán, chỉ số, báo cáo tài chính và tin doanh nghiệp lấy từ kho dữ liệu Mofi. Tài sản số lấy trực tiếp từ Binance. Giá vàng tổng hợp từ các thương hiệu lớn. Chỉ số thế giới và hàng hoá lấy từ dữ liệu công khai của Yahoo Finance.",
     },
     {
       h: "Giá có trễ không?",
@@ -344,7 +413,7 @@ function HoiDap() {
     },
     {
       h: "Các chỉ báo FL là gì?",
-      d: "Là bộ chỉ báo do Finlo thiết kế: FL Xu hướng chấm điểm xu hướng, FL Dòng tiền đo tiền vào/ra, FL Vùng giá báo phá vỡ, FL Giá trị ước tính vùng rẻ/đắt theo lịch sử định giá của chính mã.",
+      d: "Là bộ chỉ báo do Finlo thiết kế: FL Xu hướng chấm điểm xu hướng, FL Dòng tiền đo tiền vào/ra, FL Vùng giá báo phá vỡ, FL Giá trị ước tính vùng rẻ/đắt theo lịch sử P/B của chính mã.",
     },
     {
       h: "Finlo có thu phí hay cần tài khoản không?",
@@ -392,13 +461,13 @@ function KetThuc() {
       </h2>
       <div className="relative mt-9 flex flex-wrap justify-center gap-3">
         <Link
-          href="/bang-gia"
+          href="/thi-truong"
           className="inline-flex h-12 items-center rounded-full bg-chu px-8 text-[15px] font-semibold text-nen hover:bg-nhan hover:text-white"
         >
-          Mở bảng giá
+          Vào thị trường
         </Link>
-        <Link href="/bo-loc" className="inline-flex h-12 items-center rounded-full bg-nen-noi px-8 text-[15px] font-semibold hover:bg-vien">
-          Lọc cổ phiếu
+        <Link href="/bang-gia" className="inline-flex h-12 items-center rounded-full bg-nen-noi px-8 text-[15px] font-semibold hover:bg-vien">
+          Mở bảng giá
         </Link>
       </div>
     </section>

@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Finlo",
     description: "Chứng khoán, kim loại quý và tài sản số trên cùng một màn hình.",
     lang: "vi",
-    start_url: "/?nguon=app",
+    start_url: "/thi-truong?nguon=app",
     scope: "/",
     display: "standalone",
     background_color: "#000000",

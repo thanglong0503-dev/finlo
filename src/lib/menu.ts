@@ -8,7 +8,7 @@ export const NHOM_MENU: NhomMenu[] = [
   {
     ten: "Thị trường",
     trang: [
-      { href: "/", nhan: "Tổng quan", moTa: "Chỉ số, độ rộng, mã nổi bật hôm nay", tuKhoa: "trang chu tong quan hom nay" },
+      { href: "/thi-truong", nhan: "Tổng quan", moTa: "Chỉ số, bản đồ nhiệt, độ rộng, khối ngoại, phái sinh, thế giới", tuKhoa: "thi truong hom nay tong quan vn-index ban do nhiet the gioi hang hoa" },
       { href: "/chi-so", nhan: "Chỉ số", moTa: "VN-INDEX, VN30, HNX… và P/E toàn thị trường", tuKhoa: "vnindex vn30 hnx upcom pe thi truong" },
       { href: "/nganh", nhan: "Ngành", moTa: "Bản đồ nhiệt 34 ngành, P/E ngành", tuKhoa: "nganh heatmap ban do nhiet" },
       { href: "/ngan-hang", nhan: "Ngân hàng", moTa: "Huy động, cho vay, nợ xấu từng ngân hàng", tuKhoa: "ngan hang tin dung huy dong no xau ldr" },

@@ -35,6 +35,9 @@ const THEO_NGAY = new Map(NGAY_NGHI.map((n) => [n.ngay, n]));
 // Ngày (YYYY-MM-DD) theo giờ Việt Nam của một thời điểm (giây)
 export const ngayVN = (giay: number) => new Date((giay + 7 * 3600) * 1000).toISOString().slice(0, 10);
 
+// Hôm nay theo giờ Việt Nam; trang phải gọi connection() trước
+export const homNayVN = () => ngayVN(Date.now() / 1000);
+
 export const ngayNghiCua = (ymd: string) => THEO_NGAY.get(ymd) ?? null;
 
 // Ngày có giao dịch: thứ Hai–thứ Sáu và không phải ngày nghỉ lễ
