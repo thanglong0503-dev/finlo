@@ -42,8 +42,9 @@ export function tongHopNganh(ds: CoPhieu[], nganh: DuLieuNganh): TongHopNganh[] 
     .sort((a, b) => b.vonHoa - a.vonHoa);
 }
 
-// Màu nền ô bản đồ nhiệt theo % thay đổi: càng đậm càng biến động mạnh (tối đa ở ±3%)
-export function mauNhiet(phanTram: number) {
+// Màu nền ô bản đồ nhiệt theo % thay đổi: càng đậm càng biến động mạnh (tối đa ở ±3%). Mã chạm trần tím, chạm sàn xanh lam
+export function mauNhiet(phanTram: number, muc?: "tran" | "san" | null) {
+  if (muc) return `color-mix(in srgb, var(${muc === "tran" ? "--tran" : "--san-gia"}) 75%, var(--nen))`;
   const doDam = Math.min(Math.abs(phanTram) / 3, 1);
   const mau = phanTram > 0 ? "var(--tang)" : phanTram < 0 ? "var(--giam)" : "var(--dung)";
   return `color-mix(in srgb, ${mau} ${Math.round(12 + doDam * 58)}%, var(--nen))`;

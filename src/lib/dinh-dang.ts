@@ -49,9 +49,16 @@ export const mauTangGiam = (x: number) => (x > 0 ? "text-tang" : x < 0 ? "text-g
 
 // Màu giá theo chuẩn bảng điện Việt Nam: trần tím, sàn xanh lam, tham chiếu vàng, còn lại xanh/đỏ.
 // Chưa có giá trần/sàn (ngoài ảnh chụp phiên) thì chỉ tô theo tăng/giảm.
+// Giá đang chạm trần hay sàn của phiên
+export function mucChamBien(cp: { gia: number; tran: number | null; giaSan: number | null }) {
+  if (cp.tran != null && cp.gia >= cp.tran) return "tran" as const;
+  if (cp.giaSan != null && cp.giaSan > 0 && cp.gia <= cp.giaSan) return "san" as const;
+  return null;
+}
+
 export function mauGia(cp: { gia: number; phanTram: number; tran: number | null; giaSan: number | null; thamChieu: number | null }) {
-  if (cp.tran != null && cp.gia >= cp.tran) return "text-tran";
-  if (cp.giaSan != null && cp.giaSan > 0 && cp.gia <= cp.giaSan) return "text-san-gia";
+  const muc = mucChamBien(cp);
+  if (muc) return muc === "tran" ? "text-tran" : "text-san-gia";
   if (cp.thamChieu != null && cp.gia === cp.thamChieu) return "text-dung";
   return mauTangGiam(cp.phanTram);
 }

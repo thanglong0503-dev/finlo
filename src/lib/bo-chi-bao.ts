@@ -714,7 +714,7 @@ export const CHI_BAO: ChiBao[] = [
     finlo: true,
     chiCoPhieu: true,
     can: "dinh-gia",
-    moTa: "Vùng giá ứng với các mức P/B mà chính mã từng có. Năm vạch là giá nếu người mua trả gấp bao nhiêu lần giá trị sổ sách ở mức rẻ hiếm gặp (10%), rẻ (25%), thường gặp (50%), đắt (75%), đắt hiếm gặp (90%) trong quá khứ. Nến trong vùng xanh là rẻ, vùng hồng là đắt so với chính mã. Chỉ dùng báo cáo đã công bố tại từng phiên.",
+    moTa: "Các mức giá ứng với P/B mà chính mã từng có. Năm vạch là giá nếu người mua trả gấp bao nhiêu lần giá trị sổ sách ở mức rẻ hiếm gặp (10%), rẻ (25%), thường gặp (50%), đắt (75%), đắt hiếm gặp (90%) trong quá khứ. Nến dưới vạch giữa là rẻ, trên vạch giữa là đắt so với chính mã. Chỉ dùng báo cáo đã công bố tại từng phiên.",
     thamSo: [],
     tinh: (nen, _ts, nc) => {
       if (!nc.dinhGia) return null;
@@ -723,7 +723,6 @@ export const CHI_BAO: ChiBao[] = [
       const mau = [nc.mau.tang, nc.mau.tang + "aa", nc.mau.chu, nc.mau.giam + "aa", nc.mau.giam];
       return {
         ve: [
-          { loai: "vung", ten: "Vùng định giá", gt: g.muc[2].gt, mauTren: nc.mau.giam, mauDuoi: nc.mau.tang },
           // Các vạch không giãn thang giá để nến không bị ép dẹt khi vạch nằm xa giá
           ...g.muc.map((m, i) => ({
             loai: "duong" as const,

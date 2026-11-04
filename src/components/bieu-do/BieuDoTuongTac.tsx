@@ -906,14 +906,7 @@ export function BieuDoTuongTac({
                 >
                   ?
                 </button>
-                <span className="hidden basis-full items-center gap-3 text-chu-phu sm:flex">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-sm bg-tang/40" /> rẻ so với chính {ma}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-sm bg-giam/40" /> đắt so với chính {ma}
-                  </span>
-                </span>
+                <span className="hidden basis-full text-chu-phu sm:inline">dưới vạch giữa là rẻ, trên vạch giữa là đắt so với chính {ma}</span>
               </span>
             )}
             {camNhanGiaTri && moGiaiThich && (
@@ -1049,8 +1042,8 @@ function GiaiThichGiaTri({ ma, g, giaHien, dong }: { ma: string; g: TomTatGiaTri
       <p className="mt-2 font-medium">Đọc hình</p>
       <p className="text-chu-phu">
         Năm vạch là giá của {ma} nếu người mua trả gấp {g.muc.map((m) => lan(m.boi)).join(" · ")} lần, từ mức rẻ hiếm gặp tới đắt hiếm
-        gặp trong quá khứ (hôm nay tương ứng {g.muc.map((m) => giaHien(m.boi * g.neoNay)).join(" · ")}). Nến trong vùng xanh phía dưới
-        là rẻ so với chính {ma}, vùng hồng phía trên là đắt. Vạch đi bậc thang vì giá trị sổ sách chỉ đổi khi có báo cáo tài chính
+        gặp trong quá khứ (hôm nay tương ứng {g.muc.map((m) => giaHien(m.boi * g.neoNay)).join(" · ")}). Nến nằm dưới vạch giữa
+        là rẻ so với chính {ma}, nằm trên vạch giữa là đắt. Vạch đi bậc thang vì giá trị sổ sách chỉ đổi khi có báo cáo tài chính
         mới{g.soKy > 0 ? `; dựng từ ${g.soKy} kỳ báo cáo` : ""}.
       </p>
       <p className="mt-2 font-medium">Dễ hiểu nhầm</p>

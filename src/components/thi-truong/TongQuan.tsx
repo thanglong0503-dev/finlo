@@ -11,7 +11,7 @@ import { CoPhieuNoiBat, type DongNoiBat, type KhoaNoiBat } from "@/components/th
 import { DongHoPhien } from "@/components/trang-chu/DongHoPhien";
 import { TheoDoiGon } from "@/components/trang-chu/TheoDoiGon";
 import { layBaoChi } from "@/lib/bao-chi";
-import { diem, mauGia, mauTangGiam, phanTram, thayDoi, trieuDong, tyDong, usd } from "@/lib/dinh-dang";
+import { diem, mauGia, mauTangGiam, mucChamBien, phanTram, thayDoi, trieuDong, tyDong, usd } from "@/lib/dinh-dang";
 import { homNayVN, ngayGiaoDichKe } from "@/lib/lich-nghi";
 import { layBangGia, layBangVang, layChiSo, layNenChiSo, layNganh, layTienSo, layTin, type CoPhieu } from "@/lib/mofi";
 import { mauNhiet, tongHopNganh } from "@/lib/nganh";
@@ -176,6 +176,7 @@ export async function BangDieuKhien() {
         von: c.vonHoa!,
         gt: c.giaTri,
         pt: c.phanTram,
+        muc: mucChamBien(c),
         top: top100.has(c.ma),
         vn30: vn30.has(c.ma),
       };

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { phanTram } from "@/lib/dinh-dang";
 import { mauNhiet } from "@/lib/nganh";
 
-export type OMa = { ma: string; ten: string; nganh: string; von: number; gt: number; pt: number; top: boolean; vn30: boolean };
+export type OMa = { ma: string; ten: string; nganh: string; von: number; gt: number; pt: number; muc: "tran" | "san" | null; top: boolean; vn30: boolean };
 
 type Khung = { x: number; y: number; w: number; h: number };
 
@@ -72,6 +72,14 @@ const THEO = [
   ["gt", "Theo giá trị giao dịch"],
 ] as const;
 
+const CHU_GIAI = [
+  ["Sàn", mauNhiet(-1, "san")],
+  ["Giảm", mauNhiet(-3)],
+  ["Tham chiếu", mauNhiet(0)],
+  ["Tăng", mauNhiet(3)],
+  ["Trần", mauNhiet(1, "tran")],
+] as const;
+
 // Bản đồ nhiệt cổ phiếu theo ngành: ô theo vốn hoá hoặc giá trị giao dịch, màu theo % hôm nay
 export function BanDoNhietMa({ ds }: { ds: OMa[] }) {
   const khung = useRef<HTMLDivElement>(null);
@@ -115,6 +123,14 @@ export function BanDoNhietMa({ ds }: { ds: OMa[] }) {
         <NutChon ds={RO} chon={ro} datChon={datRo} />
         <span className="mx-1 hidden h-4 w-px bg-vien sm:block" />
         <NutChon ds={THEO} chon={theo} datChon={datTheo} />
+        <span className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 pr-1 text-[11px] text-chu-phu">
+          {CHU_GIAI.map(([ten, nen]) => (
+            <span key={ten} className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ background: nen }} />
+              {ten}
+            </span>
+          ))}
+        </span>
       </div>
       <div ref={khung} className="relative overflow-hidden rounded-lg" style={{ height: cao }}>
         {rong > 0 &&
@@ -132,7 +148,7 @@ export function BanDoNhietMa({ ds }: { ds: OMa[] }) {
                   href={`/co-phieu/${o.ma}`}
                   title={`${o.ma} · ${o.ten}: ${phanTram(o.pt)}`}
                   className="absolute flex flex-col items-center justify-center overflow-hidden border border-nen hover:z-10 hover:outline hover:outline-2 hover:outline-chu"
-                  style={{ left: o.x, top: o.y, width: o.w, height: o.h, background: mauNhiet(o.pt) }}
+                  style={{ left: o.x, top: o.y, width: o.w, height: o.h, background: mauNhiet(o.pt, o.muc), color: o.muc ? "#fff" : undefined }}
                 >
                   {o.w > 30 && o.h > 16 && (
                     <span className="leading-tight font-semibold" style={{ fontSize: Math.min(20, Math.max(10, Math.min(o.w / 4, o.h / 2.6))) }}>
