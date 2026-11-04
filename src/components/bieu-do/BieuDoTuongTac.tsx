@@ -24,6 +24,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ThanhChiBao, thamSoCua, useChiBaoDangBat, useThamSoChiBao } from "@/components/bieu-do/ChiBaoChon";
 import { VeHinh } from "@/components/bieu-do/VeHinh";
+import { VungGiuaHaiDuong } from "@/components/bieu-do/VungGiuaHaiDuong";
 import { dungDuoc, TIM_CHI_BAO, type ChiBao, type DinhDang, type NguCanh } from "@/lib/bo-chi-bao";
 import { capGiaoDich, kiemTraCap, REST, soLe, TrangThaiKetNoi, useLuongBinance } from "@/lib/binance";
 import { flGiaTri, type MocGiaTri, type Chuoi, type NenCB } from "@/lib/chi-bao";
@@ -382,8 +383,7 @@ export function BieuDoTuongTac({
 
     // Tạo series cho từng chỉ báo theo kết quả tính lần đầu; chỉ báo khung riêng mỗi cái một khung
     type MotSeries = ISeriesApi<"Line"> | ISeriesApi<"Histogram"> | ISeriesApi<"Area">;
-    // Mỗi phần vẽ có thể cần nhiều series (vùng tô = hai vùng trên/dưới)
-    type Ve1 = { c: ChiBao; ts: Record<string, number>; series: MotSeries[][] };
+    type Ve1 = { c: ChiBao; ts: Record<string, number>; series: MotSeries[][]; vung: Map<number, VungGiuaHaiDuong> };
     const khongDoiThang = () => null;
     const dsVe: Ve1[] = [];
     let soKhung = 0;
@@ -394,29 +394,14 @@ export function BieuDoTuongTac({
       if (!kq) continue;
       const khungSo = c.khung === "rieng" ? ++soKhung : 0;
       const tyLe = c.khung === "kl" ? { priceScaleId: "kl" } : {};
-      const series = kq.ve.map((v): MotSeries[] => {
+      const vung = new Map<number, VungGiuaHaiDuong>();
+      const series = kq.ve.map((v, i): MotSeries[] => {
         if (v.loai === "vung") {
-          // Hai vùng tô: dưới đường (rẻ) và trên đường (đắt); không tham gia tính thang giá
-          const vung = (mau: string, tren: boolean) =>
-            chart.addSeries(
-              AreaSeries,
-              {
-                lineVisible: false,
-                lineColor: "transparent",
-                // Tô phẳng, nhạt như MFV: đọc rõ nến phía trên
-                topColor: mau + "1c",
-                bottomColor: mau + "1c",
-                invertFilledArea: tren,
-                priceLineVisible: false,
-                lastValueVisible: false,
-                crosshairMarkerVisible: false,
-                autoscaleInfoProvider: khongDoiThang,
-                // Cùng định dạng với giá để trục và nhãn không bị đổi sang số thô
-                priceFormat: khungSo === 0 ? dinhDangGia : undefined,
-              },
-              khungSo,
-            );
-          return [vung(v.mauDuoi, false), vung(v.mauTren, true)];
+          // Tô phẳng, nhạt như MFV: đọc rõ nến phía trên
+          const lop = new VungGiuaHaiDuong(v.mau + "1c");
+          nen.attachPrimitive(lop);
+          vung.set(i, lop);
+          return [];
         }
         const dd = v.dinhDang === "gia" ? dinhDangGia : dinhDangKhac(v.dinhDang);
         if (v.loai === "cot")
@@ -452,7 +437,7 @@ export function BieuDoTuongTac({
       }
       for (const m of kq.muc ?? [])
         series[0]?.[0]?.createPriceLine({ price: m.gia, color: m.mau, lineStyle: LineStyle.Dashed, lineWidth: 1, axisLabelVisible: false });
-      dsVe.push({ c, ts: tsC, series });
+      dsVe.push({ c, ts: tsC, series, vung });
     }
     klSeries.current = klS;
     // Nến luôn vẽ trên cùng (đè lên vùng tô và đường chỉ báo)
@@ -521,7 +506,7 @@ export function BieuDoTuongTac({
       for (const l of duongNgang) nen.removePriceLine(l);
       duongNgang = [];
 
-      for (const { c, ts, series } of dsVe) {
+      for (const { c, ts, series, vung } of dsVe) {
         const kq = c.tinh(ds, ts, nc);
         if (!kq) continue;
         kq.ve.forEach((v, i) => {
@@ -529,7 +514,7 @@ export function BieuDoTuongTac({
           if (!nhom) return;
           const s = nhom[0];
           if (v.loai === "vung") {
-            for (const x of nhom) x.setData(duong(ds, v.gt));
+            vung.get(i)?.datDuLieu(v.tren, v.duoi);
             return;
           }
           if (v.loai === "cot")
@@ -906,7 +891,14 @@ export function BieuDoTuongTac({
                 >
                   ?
                 </button>
-                <span className="hidden basis-full text-chu-phu sm:inline">dưới vạch giữa là rẻ, trên vạch giữa là đắt so với chính {ma}</span>
+                <span className="hidden basis-full items-center gap-3 text-chu-phu sm:flex">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-tang/40" /> rẻ so với chính {ma}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-giam/40" /> đắt so với chính {ma}
+                  </span>
+                </span>
               </span>
             )}
             {camNhanGiaTri && moGiaiThich && (
@@ -1042,8 +1034,8 @@ function GiaiThichGiaTri({ ma, g, giaHien, dong }: { ma: string; g: TomTatGiaTri
       <p className="mt-2 font-medium">Đọc hình</p>
       <p className="text-chu-phu">
         Năm vạch là giá của {ma} nếu người mua trả gấp {g.muc.map((m) => lan(m.boi)).join(" · ")} lần, từ mức rẻ hiếm gặp tới đắt hiếm
-        gặp trong quá khứ (hôm nay tương ứng {g.muc.map((m) => giaHien(m.boi * g.neoNay)).join(" · ")}). Nến nằm dưới vạch giữa
-        là rẻ so với chính {ma}, nằm trên vạch giữa là đắt. Vạch đi bậc thang vì giá trị sổ sách chỉ đổi khi có báo cáo tài chính
+        gặp trong quá khứ (hôm nay tương ứng {g.muc.map((m) => giaHien(m.boi * g.neoNay)).join(" · ")}). Nến trong dải xanh
+        là rẻ so với chính {ma}, trong dải hồng là đắt; nến nằm ngoài dải là rẻ hoặc đắt hiếm gặp. Vạch đi bậc thang vì giá trị sổ sách chỉ đổi khi có báo cáo tài chính
         mới{g.soKy > 0 ? `; dựng từ ${g.soKy} kỳ báo cáo` : ""}.
       </p>
       <p className="mt-2 font-medium">Dễ hiểu nhầm</p>

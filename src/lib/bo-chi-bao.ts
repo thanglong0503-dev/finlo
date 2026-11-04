@@ -70,8 +70,8 @@ export type Ve =
       dinhDang: DinhDang;
     }
   | { loai: "cot"; ten: string; gt: Chuoi; mau: (v: number, i: number) => string; dinhDang: DinhDang }
-  // Tô nền phía trên đường (mauTren) và phía dưới đường (mauDuoi) tới mép khung, không làm đổi thang giá
-  | { loai: "vung"; ten: string; gt: Chuoi; mauTren: string; mauDuoi: string };
+  // Tô phần giữa hai đường, không làm đổi thang giá
+  | { loai: "vung"; ten: string; tren: Chuoi; duoi: Chuoi; mau: string };
 
 export type Moc = { time: number; len: boolean; mau: string; chu: string };
 
@@ -714,7 +714,7 @@ export const CHI_BAO: ChiBao[] = [
     finlo: true,
     chiCoPhieu: true,
     can: "dinh-gia",
-    moTa: "Các mức giá ứng với P/B mà chính mã từng có. Năm vạch là giá nếu người mua trả gấp bao nhiêu lần giá trị sổ sách ở mức rẻ hiếm gặp (10%), rẻ (25%), thường gặp (50%), đắt (75%), đắt hiếm gặp (90%) trong quá khứ. Nến dưới vạch giữa là rẻ, trên vạch giữa là đắt so với chính mã. Chỉ dùng báo cáo đã công bố tại từng phiên.",
+    moTa: "Các mức giá ứng với P/B mà chính mã từng có. Năm vạch là giá nếu người mua trả gấp bao nhiêu lần giá trị sổ sách ở mức rẻ hiếm gặp (10%), rẻ (25%), thường gặp (50%), đắt (75%), đắt hiếm gặp (90%) trong quá khứ. Nến trong dải xanh là rẻ, trong dải hồng là đắt so với chính mã; nến ngoài dải là rẻ hoặc đắt hiếm gặp. Chỉ dùng báo cáo đã công bố tại từng phiên.",
     thamSo: [],
     tinh: (nen, _ts, nc) => {
       if (!nc.dinhGia) return null;
@@ -723,6 +723,9 @@ export const CHI_BAO: ChiBao[] = [
       const mau = [nc.mau.tang, nc.mau.tang + "aa", nc.mau.chu, nc.mau.giam + "aa", nc.mau.giam];
       return {
         ve: [
+          // Chỉ tô trong dải: nửa dưới là rẻ, nửa trên là đắt; ngoài dải để trống
+          { loai: "vung", ten: "Vùng rẻ", tren: g.muc[2].gt, duoi: g.muc[0].gt, mau: nc.mau.tang },
+          { loai: "vung", ten: "Vùng đắt", tren: g.muc[4].gt, duoi: g.muc[2].gt, mau: nc.mau.giam },
           // Các vạch không giãn thang giá để nến không bị ép dẹt khi vạch nằm xa giá
           ...g.muc.map((m, i) => ({
             loai: "duong" as const,
