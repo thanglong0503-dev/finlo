@@ -10,6 +10,8 @@ export const NHOM_MENU: NhomMenu[] = [
     trang: [
       { href: "/thi-truong", nhan: "Tổng quan", moTa: "Chỉ số, bản đồ nhiệt, độ rộng, khối ngoại, phái sinh, thế giới", tuKhoa: "thi truong hom nay tong quan vn-index ban do nhiet the gioi hang hoa" },
       { href: "/chi-so", nhan: "Chỉ số", moTa: "VN-INDEX, VN30, HNX… và P/E toàn thị trường", tuKhoa: "vnindex vn30 hnx upcom pe thi truong" },
+      { href: "/ban-tin", nhan: "Bản tin cuối phiên", moTa: "Tóm tắt phiên mỗi ngày: chỉ số, ngành, khối ngoại, tín hiệu mới", tuKhoa: "ban tin cuoi phien tom tat hom nay thi truong dong cua" },
+      { href: "/dong-tien-ngoai", nhan: "Dòng tiền khối ngoại", moTa: "Bản đồ mua bán ròng theo ngành, mã gom xả nhiều phiên liên tiếp", tuKhoa: "khoi ngoai nuoc ngoai dong tien mua rong ban rong gom xa foreign" },
       { href: "/nganh", nhan: "Ngành", moTa: "Bản đồ nhiệt 34 ngành, P/E ngành", tuKhoa: "nganh heatmap ban do nhiet" },
       { href: "/ngan-hang", nhan: "Ngân hàng", moTa: "Huy động, cho vay, nợ xấu từng ngân hàng", tuKhoa: "ngan hang tin dung huy dong no xau ldr" },
       { href: "/cong-ty-chung-khoan", nhan: "Công ty chứng khoán", moTa: "Cho vay ký quỹ, tự doanh, môi giới", tuKhoa: "cong ty chung khoan margin cho vay ky quy tu doanh moi gioi" },
@@ -24,6 +26,7 @@ export const NHOM_MENU: NhomMenu[] = [
     trang: [
       { href: "/bang-gia", nhan: "Bảng giá", moTa: "1.525 mã, trần/sàn, khối ngoại, cập nhật mỗi phút", tuKhoa: "bang gia co phieu hose hnx" },
       { href: "/bang-gia/vn30", nhan: "Bảng giá VN30", moTa: "Bảng điện rổ VN30: 3 bước giá mua bán, khớp lệnh, nước ngoài, cập nhật mỗi phút", tuKhoa: "bang dien vn30 so lenh 3 buoc gia du mua du ban khop lenh room nuoc ngoai" },
+      { href: "/danh-muc", nhan: "Danh mục cá nhân", moTa: "Nhập mã, giá vốn, khối lượng để xem lãi lỗ và tỷ trọng; lưu trên máy của bạn", tuKhoa: "danh muc ca nhan portfolio lai lo gia von ty trong" },
       { href: "/bieu-do", nhan: "Biểu đồ kỹ thuật", moTa: "Chỉ báo kỹ thuật và chỉ báo riêng FL của Finlo", tuKhoa: "bieu do chart chi bao ky thuat" },
       { href: "/bieu-do/nhieu", nhan: "Nhiều biểu đồ", moTa: "Xem cùng lúc tới 6 mã cổ phiếu, tiền số", tuKhoa: "nhieu bieu do multi chart so sanh luoi" },
       { href: "/bo-loc", nhan: "Bộ lọc cổ phiếu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức", tuKhoa: "bo loc loc co phieu screener pe roe" },

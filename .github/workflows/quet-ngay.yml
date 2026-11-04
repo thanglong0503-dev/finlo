@@ -1,4 +1,4 @@
-# Quét FL Bắt đáy và Quét tín hiệu mỗi ngày làm việc lúc 18h giờ Việt Nam, sau khi có dữ liệu cuối phiên.
+# Quét FL Bắt đáy, Quét tín hiệu, Dòng tiền khối ngoại và Bản tin cuối phiên mỗi ngày làm việc lúc 18h giờ Việt Nam, sau khi có dữ liệu cuối phiên.
 # Có thay đổi thì commit vào main, Vercel tự triển khai lại. Chạy tay: tab Actions > Quét mỗi ngày > Run workflow.
 name: Quét mỗi ngày
 
@@ -14,6 +14,7 @@ on:
       - src/lib/bat-day.ts
       - src/lib/quet-bat-day.ts
       - src/lib/quet-tin-hieu.ts
+      - src/lib/quet-cuoi-phien.ts
       - .github/workflows/quet-ngay.yml
 
 permissions:
@@ -37,5 +38,5 @@ jobs:
         run: |
           git config user.name "finlo-bot"
           git config user.email "finlo-bot@users.noreply.github.com"
-          git add src/data/bat-day.json src/data/quet-tin-hieu.json
+          git add src/data/bat-day.json src/data/quet-tin-hieu.json src/data/dong-tien-ngoai.json src/data/ban-tin.json
           git diff --cached --quiet || (git commit -m "Cập nhật quét mỗi ngày" && git pull --rebase && git push)
