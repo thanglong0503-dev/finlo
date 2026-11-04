@@ -130,7 +130,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cham-song {
+  .cham-song,
+  .chop-tang,
+  .chop-giam {
     animation: none;
   }
 }

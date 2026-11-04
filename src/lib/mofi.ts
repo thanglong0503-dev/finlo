@@ -1,8 +1,9 @@
 // Lấy dữ liệu thị trường từ kho JSON của Mofi (data.mofi.vn).
-// Chỉ chạy phía server: trình duyệt không gọi thẳng được vì data.mofi.vn chưa mở CORS.
+// Chỉ chạy phía server. Riêng bảng điện VN30 lấy thẳng từ trình duyệt để không tốn băng thông Vercel (lib/bang-dien.ts).
 // Mỗi hàm public được cache bằng "use cache" + cacheLife("minutes"): làm mới khoảng mỗi phút.
 
 import { cacheLife } from "next/cache";
+import type { BangTho } from "@/lib/bang-dien";
 
 const BASE = "https://data.mofi.vn";
 
@@ -249,6 +250,13 @@ async function timAnhChup<T>(thuMuc: "bang" | "chi-so"): Promise<T | null> {
     }
   }
   return tho;
+}
+
+// File gốc của ảnh chụp mới nhất, cho bảng điện cần thêm các cột cao, thấp, room
+export async function layAnhChupBangTho() {
+  "use cache";
+  cacheLife(MOT_PHUT);
+  return timAnhChup<BangTho>("bang");
 }
 
 export async function layAnhChupPhien() {

@@ -23,6 +23,7 @@ export const NHOM_MENU: NhomMenu[] = [
     ten: "Chứng khoán",
     trang: [
       { href: "/bang-gia", nhan: "Bảng giá", moTa: "1.525 mã, trần/sàn, khối ngoại, cập nhật mỗi phút", tuKhoa: "bang gia co phieu hose hnx" },
+      { href: "/bang-gia/vn30", nhan: "Bảng giá VN30", moTa: "Bảng điện rổ VN30: 3 bước giá mua bán, khớp lệnh, nước ngoài, cập nhật mỗi phút", tuKhoa: "bang dien vn30 so lenh 3 buoc gia du mua du ban khop lenh room nuoc ngoai" },
       { href: "/bieu-do", nhan: "Biểu đồ kỹ thuật", moTa: "Chỉ báo kỹ thuật và chỉ báo riêng FL của Finlo", tuKhoa: "bieu do chart chi bao ky thuat" },
       { href: "/bieu-do/nhieu", nhan: "Nhiều biểu đồ", moTa: "Xem cùng lúc tới 6 mã cổ phiếu, tiền số", tuKhoa: "nhieu bieu do multi chart so sanh luoi" },
       { href: "/bo-loc", nhan: "Bộ lọc cổ phiếu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức", tuKhoa: "bo loc loc co phieu screener pe roe" },
