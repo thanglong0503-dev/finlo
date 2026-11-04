@@ -117,7 +117,7 @@ export function BangDienVn30({ dau }: { dau: BangDienDau }) {
         <NhanPhien phien={phien} />
       </p>
 
-      <div className="mt-3 max-h-[calc(100dvh-9rem)] overflow-auto rounded-xl border border-vien text-[13px]">
+      <div className="isolate mt-3 max-h-[calc(100dvh-9rem)] overflow-auto rounded-xl border border-vien text-[13px]">
         <table className="w-full min-w-[1320px] border-separate border-spacing-0">
           <thead className="sticky top-0 z-20 bg-nen text-[11px] text-chu-phu">
             <tr>
