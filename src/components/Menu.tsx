@@ -5,11 +5,15 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { TimMa } from "@/components/TimMa";
-import { NHOM_MENU } from "@/lib/menu";
+import { MENU, NHOM_MENU } from "@/lib/menu";
 
 // Trang đang mở: "/chi-so" sáng cả khi ở "/chi-so/VN30"; trang chủ chỉ sáng đúng "/"
-const dangMo = (pathname: string, href: string) =>
+const khop = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+
+// Chỉ mục khớp dài nhất được sáng: ở "/bang-gia/vn30" thì sáng "Bảng giá VN30", không sáng cả "Bảng giá"
+const dangMo = (pathname: string, href: string) =>
+  khop(pathname, href) && !MENU.some((t) => t.href.length > href.length && khop(pathname, t.href));
 
 const MuiTen = ({ len }: { len: boolean }) => (
   <svg viewBox="0 0 10 6" width="8" height="5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
@@ -17,7 +21,7 @@ const MuiTen = ({ len }: { len: boolean }) => (
   </svg>
 );
 
-// Menu máy tính: 3 nhóm trên thanh đen, rê chuột/bấm để mở bảng trang kèm mô tả
+// Menu máy tính: các nhóm trên thanh đen, rê chuột/bấm để mở bảng nhiều cột (mỗi cột một chủ đề, trang kèm mô tả ngắn)
 export function MenuNhom() {
   const pathname = usePathname();
   const [mo, setMo] = useState<string | null>(null);
@@ -71,20 +75,31 @@ export function MenuNhom() {
               {coTrangMo && <span className="absolute inset-x-3 bottom-3 h-0.5 rounded-full bg-nhan-sang" />}
             </button>
             {mo === n.ten && (
-              <div className="absolute top-full left-0 z-40 w-80 overflow-hidden rounded-2xl border border-vien-toi bg-toi-phu p-1.5 shadow-2xl">
-                {n.trang.map((t) => {
-                  const dang = dangMo(pathname, t.href);
-                  return (
-                    <Link
-                      key={t.href}
-                      href={t.href}
-                      className={`block rounded-xl px-3.5 py-2.5 hover:bg-white/5 ${dang ? "bg-white/5" : ""}`}
-                    >
-                      <span className={`block font-semibold ${dang ? "text-nhan-sang" : "text-chu-toi"}`}>{t.nhan}</span>
-                      <span className="block text-[12px] text-chu-toi-phu">{t.moTa}</span>
-                    </Link>
-                  );
-                })}
+              // Bảng nhiều cột kiểu OKX/TradingView: rộng ra thay vì dài xuống. Header có làm mờ nền nên "fixed" ở đây
+              // tính theo khung header, bảng luôn nằm giữa và không tràn khỏi màn hình.
+              <div
+                className="fixed top-full left-1/2 z-40 grid w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 gap-x-2 rounded-2xl border border-vien-toi bg-toi-phu p-3 shadow-2xl"
+                style={{ gridTemplateColumns: `repeat(${n.cot.length}, minmax(0, 15.5rem))` }}
+              >
+                {n.cot.map((c) => (
+                  <div key={c.ten} className="min-w-0">
+                    <p className="px-3 pt-1 pb-1.5 text-[12px] font-semibold text-chu-toi-phu">{c.ten}</p>
+                    {c.trang.map((t) => {
+                      const dang = dangMo(pathname, t.href);
+                      return (
+                        <Link
+                          key={t.href}
+                          href={t.href}
+                          aria-current={dang ? "page" : undefined}
+                          className={`block rounded-xl px-3 py-2 hover:bg-white/5 ${dang ? "bg-white/5" : ""}`}
+                        >
+                          <span className={`block font-semibold ${dang ? "text-nhan-sang" : "text-chu-toi"}`}>{t.nhan}</span>
+                          <span className="line-clamp-2 block text-[12px] leading-snug text-chu-toi-phu">{t.moTa}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -139,27 +154,46 @@ export function MenuDiDong() {
         createPortal(
           <div className="fixed inset-x-0 top-[60px] bottom-0 z-40 overflow-y-auto bg-toi px-4 pt-4 pb-10 text-chu-toi md:hidden">
             <TimMa nenToi phimTat={false} tuDongChon={mo === "tim"} className="w-full" />
-            {NHOM_MENU.map((n) => (
-              <section key={n.ten} className="mt-6">
-                <p className="px-1 text-[13px] font-semibold text-chu-toi-phu">{n.ten}</p>
-                <div className="mt-2 overflow-hidden rounded-2xl bg-toi-phu">
-                  {n.trang.map((t) => {
-                    const dang = dangMo(pathname, t.href);
-                    return (
-                      <Link
-                        key={t.href}
-                        href={t.href}
-                        onClick={() => setMo(false)}
-                        className={`block border-b border-vien-toi px-4 py-3 last:border-b-0 ${dang ? "bg-white/5" : ""}`}
-                      >
-                        <span className={`block font-semibold ${dang ? "text-nhan-sang" : "text-chu-toi"}`}>{t.nhan}</span>
-                        <span className="block text-[12px] text-chu-toi-phu">{t.moTa}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+            {/* Mỗi nhóm thu gọn được; nhóm chứa trang đang mở thì mở sẵn. Trong nhóm chỉ hiện tên trang cho ngắn. */}
+            <div className="mt-4 space-y-2">
+              {NHOM_MENU.map((n) => (
+                <details
+                  key={n.ten}
+                  open={n.trang.some((t) => dangMo(pathname, t.href))}
+                  className="group overflow-hidden rounded-2xl bg-toi-phu"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 font-semibold [&::-webkit-details-marker]:hidden">
+                    {n.ten}
+                    <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-chu-toi-phu transition-transform group-open:rotate-180" aria-hidden>
+                      <path d="M1 1l4 4 4-4" />
+                    </svg>
+                  </summary>
+                  <div className="space-y-3 px-2 pb-3">
+                    {n.cot.map((c) => (
+                      <div key={c.ten}>
+                        <p className="px-2 pb-1 text-[12px] text-chu-toi-phu">{c.ten}</p>
+                        <div className="grid grid-cols-2 gap-1">
+                          {c.trang.map((t) => {
+                            const dang = dangMo(pathname, t.href);
+                            return (
+                              <Link
+                                key={t.href}
+                                href={t.href}
+                                onClick={() => setMo(false)}
+                                aria-current={dang ? "page" : undefined}
+                                className={`flex min-h-11 items-center rounded-xl px-3 py-2 text-[14px] leading-tight font-medium ${dang ? "bg-white/10 text-nhan-sang" : "bg-white/[0.03] text-chu-toi"}`}
+                              >
+                                {t.nhan}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ))}
+            </div>
             <Link
               href="/#cai-app"
               onClick={() => setMo(false)}
