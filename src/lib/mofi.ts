@@ -960,3 +960,20 @@ export async function layNoNhom(): Promise<Record<string, Record<string, NoNhom>
   const tho = await layJson<{ nganHang: Record<string, Record<string, NoNhom>> }>("tong-hop/no-nhom.json").catch(() => null);
   return tho?.nganHang ?? {};
 }
+
+// ---- Số liệu theo quý đã chuẩn hoá của từng mã (đồng), dùng cho phân tích và định giá chuyên sâu ----
+
+export async function layDanhGia(ma: string): Promise<import("@/lib/phan-tich-sau").DanhGia | null> {
+  "use cache";
+  cacheLife("hours");
+  return layJson<import("@/lib/phan-tich-sau").DanhGia>(`financial/danh-gia/${encodeURIComponent(ma)}.json`).catch(() => null);
+}
+
+// Cấu hình định giá Mofi chọn cho từng ngành; Finlo chỉ lấy EPS chuẩn hoá của ngành chu kỳ
+export async function layEpsChuanHoa(ma: string): Promise<number | null> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<{ thuoc?: { neo?: { epsChuanHoa?: number } }[] }>(`dinh-gia/${encodeURIComponent(ma)}.json`).catch(() => null);
+  const x = tho?.thuoc?.find((t) => t.neo?.epsChuanHoa != null)?.neo?.epsChuanHoa;
+  return typeof x === "number" && x > 0 ? x : null;
+}
