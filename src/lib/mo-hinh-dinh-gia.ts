@@ -37,6 +37,7 @@ export type GiaDinh = {
 
 export const SO_NAM = 10;
 const NGUONG_CHI_TRA = 0.3;
+const DAI_QUA_RONG = 3; // cận trên/cận dưới của dải bội số lịch sử
 
 export const chiPhiVonChu = (gd: GiaDinh) => gd.rf + gd.beta * gd.erp;
 
@@ -176,6 +177,15 @@ export function cacPhuongPhap(dv: DauVaoDinhGia, gd: GiaDinh): PhuongPhap[] {
     const b = dv.boi.evEbitda;
     const gia = (boi: number) => (dv.ebitda! * boi - dv.noRong - dv.loiIchThieuSo) / dv.soCp;
     them("ev", "EV/EBITDA theo lịch sử", gia(b.p25), gia(b.tv), gia(b.p75), `EBITDA 4 quý × ${so(b.p25)}–${so(b.p75)} lần, trừ nợ ròng`);
+  }
+  // Dải lịch sử quá rộng thường do vốn chủ hoặc số cổ phiếu đổi mạnh (tái cấu trúc, phát hành lớn, mới niêm yết):
+  // vẫn bày để tham khảo nhưng không tính vào tổng hợp
+  for (const p of ds) {
+    const b = p.ma === "pe-ls" ? dv.boi.pe : p.ma === "pb-ls" ? dv.boi.pb : p.ma === "ev" ? dv.boi.evEbitda : null;
+    if (b && b.p25 > 0 && b.p75 / b.p25 > DAI_QUA_RONG) {
+      p.trongSo = 0;
+      p.ghiChu += `; chỉ tham khảo vì dải lịch sử quá rộng, cận trên gấp ${so(b.p75 / b.p25)} lần cận dưới`;
+    }
   }
   const dd = ddm(dv, gd);
   if (dd) {
