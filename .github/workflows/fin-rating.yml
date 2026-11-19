@@ -1,0 +1,39 @@
+# Chấm Fin Rating, giá trị ước tính và cổ tức cho toàn thị trường mỗi sáng thứ Bảy 8h giờ Việt Nam.
+# Báo cáo tài chính chỉ đổi theo quý nên quét mỗi tuần một lần là đủ, nhẹ tay với máy chủ Mofi.
+# Có thay đổi thì commit vào main, Vercel tự triển khai lại. Chạy tay: tab Actions > Fin Rating mỗi tuần > Run workflow.
+name: Fin Rating mỗi tuần
+
+on:
+  schedule:
+    - cron: "0 1 * * 6"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/quet-fin-rating.ts
+      - src/lib/fin-rating.ts
+      - .github/workflows/fin-rating.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fin-rating
+  cancel-in-progress: false
+
+jobs:
+  quet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx --yes tsx@4.19.2 --tsconfig scripts/tsconfig.quet.json scripts/quet-fin-rating.ts
+      - name: Commit nếu có thay đổi
+        run: |
+          git config user.name "finlo-bot"
+          git config user.email "finlo-bot@users.noreply.github.com"
+          git add src/data/fin-rating.json src/data/fin-rating-chi-tiet.json
+          git diff --cached --quiet || (git commit -m "Cập nhật Fin Rating mỗi tuần" && git pull --rebase && git push)

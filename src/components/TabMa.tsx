@@ -8,6 +8,7 @@ const TAB = [
   { duoi: "/ho-so", nhan: "Hồ sơ doanh nghiệp" },
   { duoi: "/tai-chinh", nhan: "Tài chính" },
   { duoi: "/phan-tich", nhan: "Phân tích" },
+  { duoi: "/fin-rating", nhan: "Fin Rating" },
   { duoi: "/ky-thuat", nhan: "Phân tích kỹ thuật" },
   { duoi: "/so-sanh", nhan: "So sánh ngành" },
   { duoi: "/noi-bo", nhan: "Giao dịch nội bộ" },

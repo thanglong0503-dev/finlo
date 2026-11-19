@@ -63,6 +63,9 @@ const CAY: Omit<NhomMenu, "trang">[] = [
           { href: "/bo-loc", nhan: "Bộ lọc cổ phiếu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức", tuKhoa: "bo loc loc co phieu screener pe roe" },
           { href: "/quet-tin-hieu", nhan: "Quét tín hiệu", moTa: "RSI quá mua/bán, giao cắt MA, đỉnh đáy 52 tuần, mẫu hình nến", tuKhoa: "quet tin hieu scanner rsi qua mua qua ban giao cat ma200 dinh 52 tuan khoi luong dot bien mau hinh nen" },
           { href: "/bat-day", nhan: "FL Bắt đáy", moTa: "Mã giảm sâu, rẻ so với lịch sử, tín hiệu mua bán, mức cắt lỗ; tra từng mã", tuKhoa: "bat day dao roi vung re tin hieu mua ban cat lo chot loi co mua duoc khong" },
+          { href: "/fin-rating", nhan: "Fin Rating", moTa: "Chấm điểm cổ phiếu từ 1 đến 10 theo 7 trục, so với ngành và thị trường", tuKhoa: "fin rating cham diem xep hang co phieu diem so radar chat luong doanh nghiep" },
+          { href: "/xep-hang-dinh-gia", nhan: "Xếp hạng định giá", moTa: "Giá so với giá trị ước tính của mô hình định giá Finlo", tuKhoa: "xep hang dinh gia re dat gia tri hop ly gia tri noi tai dcf tiem nang upside" },
+          { href: "/co-phieu-co-tuc", nhan: "Cổ phiếu cổ tức", moTa: "Tỷ suất cổ tức tiền mặt, số năm trả đều, tỷ lệ chi trả", tuKhoa: "co phieu co tuc ty suat co tuc tien mat tra deu dividend yield thu nhap thu dong" },
           { href: "/khuyen-nghi", nhan: "Khuyến nghị CTCK", moTa: "Báo cáo mua/bán của các công ty chứng khoán, chấm điểm theo giá thực tế", tuKhoa: "khuyen nghi bao cao phan tich ctck gia muc tieu target mua ban" },
         ],
       },
@@ -97,6 +100,12 @@ const CAY: Omit<NhomMenu, "trang">[] = [
           { href: "/mcp", nhan: "Finlo MCP", moTa: "Hỏi Claude bằng dữ liệu Finlo: 22 công cụ", tuKhoa: "mcp claude ai tro ly cong cu" },
           { href: "/doi-tac", nhan: "Đối tác", moTa: "Hợp tác dữ liệu, nội dung, quảng bá", tuKhoa: "doi tac hop tac partner quang cao" },
           { href: "/lien-he", nhan: "Liên hệ", moTa: "Góp ý, báo lỗi dữ liệu", tuKhoa: "lien he email gop y bao loi" },
+        ],
+      },
+      {
+        ten: "Học đầu tư",
+        trang: [
+          { href: "/thuat-ngu", nhan: "Từ điển thuật ngữ", moTa: "P/E, ROE, DCF, NIM, RSI… giải thích kèm ví dụ số liệu thật", tuKhoa: "tu dien thuat ngu la gi giai thich pe pb roe roic dcf wacc nim car no xau rsi macd hoc dau tu" },
         ],
       },
     ],

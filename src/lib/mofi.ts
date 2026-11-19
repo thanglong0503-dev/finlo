@@ -977,3 +977,14 @@ export async function layEpsChuanHoa(ma: string): Promise<number | null> {
   const x = tho?.thuoc?.find((t) => t.neo?.epsChuanHoa != null)?.neo?.epsChuanHoa;
   return typeof x === "number" && x > 0 ? x : null;
 }
+
+// ---- Lịch thực hiện quyền theo mã (VSDC qua Mofi): dùng để biết các đợt thưởng, chia cổ phiếu ----
+
+export type QuyenCp = { ngayDKCC: string; loai: string; tyLe: { co: number; duoc: number } | null };
+
+export async function layQuyen(ma: string): Promise<QuyenCp[]> {
+  "use cache";
+  cacheLife("hours");
+  const tho = await layJson<{ quyen?: QuyenCp[] }>(`su-kien-quyen/${encodeURIComponent(ma)}.json`).catch(() => null);
+  return (tho?.quyen ?? []).map((q) => ({ ngayDKCC: q.ngayDKCC, loai: q.loai, tyLe: q.tyLe ?? null }));
+}

@@ -170,6 +170,25 @@ function ruiRoGia(nen: NenGon[], vni: NenGon[], beta: ReturnType<typeof tinhBeta
   ];
 }
 
+// Số cổ phiếu để tính giá trị mỗi cổ phiếu. Số lưu hành và vốn góp trên báo cáo thường chậm cập nhật sau đợt thưởng
+// hoặc trả cổ tức bằng cổ phiếu, trong khi giá đã điều chỉnh: lấy vốn góp ở quý trước ngày chốt quyền nhân tỷ lệ thưởng.
+const LOAI_THEM_CP = new Set(["thuong_cp", "co_tuc_cp", "chia_tach"]);
+export function soCpHieuLuc(soCp: number, dg: DanhGia | null, quyen: { ngayDKCC: string; loai: string; tyLe: { co: number; duoc: number } | null }[], denNgay: string) {
+  const Q = dg?.quy ?? [];
+  const vonGop = (i: number) => (Q[i]?.so.vonGop ?? 0) / 1e4;
+  let kq = Math.max(soCp, vonGop(Q.length - 1));
+  const motNamTruoc = `${Number(denNgay.slice(0, 4)) - 1}${denNgay.slice(4)}`;
+  const dot = quyen
+    .filter((q) => LOAI_THEM_CP.has(q.loai) && q.tyLe && q.tyLe.co > 0 && q.ngayDKCC > motNamTruoc && q.ngayDKCC <= denNgay)
+    .sort((a, b) => a.ngayDKCC.localeCompare(b.ngayDKCC));
+  if (dot.length) {
+    const i = Q.findLastIndex((k) => k.ky < dot[0].ngayDKCC);
+    const goc = i >= 0 ? vonGop(i) : 0;
+    if (goc > 0) kq = Math.max(kq, dot.reduce((s, q) => s * ((q.tyLe!.co + q.tyLe!.duoc) / q.tyLe!.co), goc));
+  }
+  return kq;
+}
+
 export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp: number; gia: number; rf: number; peNganh: number | null; tenNganh: string | null; epsChuanHoa: number | null; noXau: number | null }) {
   const { dg, nen, vni, soCp, gia, rf } = a;
   const { Q, L, v, ttm, ttm0, bq } = boDoc(dg);
@@ -294,6 +313,8 @@ export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp
   const tcSucKhoe: TieuChi[] = [];
   const tc = (ds: TieuChi[], ten: string, dat: boolean | null, chiTiet: string) => ds.push({ ten, dat, chiTiet });
   let fScore: { diem: number; ds: TieuChi[] } | null = null;
+  // Số thô cho Fin Rating (chấm điểm toàn thị trường), không định dạng
+  const tho: Record<string, number | null> = {};
 
   tc(tcChatLuong, "ROE từ 15% trở lên", roe != null ? roe >= 15 : null, `ROE 4 quý ${pt(roe)}, bình quân 5 năm ${pt(roeTb)}`);
   tc(tcChatLuong, "ROE cao hơn chi phí vốn chủ", roe != null ? roe > ke : null, `Chi phí vốn chủ ước tính ${pt(ke)} (lãi tiết kiệm ${pt(rf)} + beta ${so(giaDinh.beta, 2)} × 8%)`);
@@ -387,6 +408,19 @@ export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp
     tc(tcSucKhoe, "EBIT gấp hơn 3 lần lãi vay", laiVay > 0 ? (phuLai != null ? phuLai > 3 : null) : true, laiVay > 0 ? `EBIT gấp ${lan(phuLai, 1)} lãi vay` : "Không phát sinh lãi vay");
     tc(tcSucKhoe, "Tài sản ngắn hạn đủ trả nợ ngắn hạn", hienHanh != null ? hienHanh > 1 : null, `Hệ số thanh toán hiện hành ${lan(hienHanh)}`);
     tc(tcSucKhoe, "Nợ vay thấp hơn vốn chủ", vayVon != null ? vayVon < 1 : null, `Nợ vay bằng ${lan(vayVon)} vốn chủ`);
+    Object.assign(tho, {
+      roic,
+      bienRong: bienRongNay,
+      fScore: fScore.diem,
+      tyLeTien,
+      donTich: donTich != null ? donTich * 100 : null,
+      roicTrenWacc: roic != null ? roic - waccNay : null,
+      // Tiền nhiều hơn nợ cho số âm (tốt); có nợ mà EBITDA âm thì coi như rất xấu
+      noEbitda: ebitda != null && ebitda > 0 ? noRong / ebitda : noRong <= 0 ? 0 : 20,
+      phuLai: laiVay > 0 ? phuLai : 100,
+      hienHanh,
+      vayVon,
+    });
   } else if (loai === "ngan_hang") {
     const sinhLai = (i: number) => (v(i, "choVayKhachHang") ?? 0) + (v(i, "chungKhoanDauTu") ?? 0) + (v(i, "tienGuiChoVayTCTD") ?? 0) + (v(i, "tienGuiNHNN") ?? 0);
     const nimCua = (i: number) => {
@@ -437,6 +471,17 @@ export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp
     tc(tcSucKhoe, "CAR từ 10% trở lên", typeof car === "number" ? car >= 10 : null, typeof car === "number" ? `CAR ${pt(car, 2)}` : "Chưa có số CAR");
     tc(tcSucKhoe, "Nợ xấu dưới 2%", a.noXau != null ? a.noXau < 2 : null, a.noXau != null ? `Nợ xấu ${pt(a.noXau, 2)}` : "Chưa có thuyết minh nhóm nợ");
     tc(tcSucKhoe, "Cho vay không vượt tiền gửi", ldr != null ? ldr < 1 : null, `LDR thô ${pt(ldr != null ? ldr * 100 : null)}`);
+    Object.assign(tho, {
+      nim,
+      cir,
+      tinDung,
+      noXau: a.noXau,
+      ngoaiLai: ngoaiLai != null ? ngoaiLai * 100 : null,
+      car: typeof car === "number" ? car : null,
+      ldr: ldr != null ? ldr * 100 : null,
+      donBay,
+      baoPhu: a.noXau != null && a.noXau > 0 && duPhong != null ? (duPhong * 100) / a.noXau : null,
+    });
   } else if (loai === "chung_khoan") {
     const choVay = v(L, "choVay");
     const kyQuy = chia(choVay, vonChu);
@@ -484,6 +529,15 @@ export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp
     tc(tcSucKhoe, "Còn xa trần cho vay ký quỹ", kyQuy != null ? kyQuy < 1.5 : null, `Dư nợ cho vay bằng ${pt(kyQuy != null ? kyQuy * 100 : null)} vốn chủ, trần 200%`);
     tc(tcSucKhoe, "Lợi nhuận che được hơn 2 lần lãi vay", phuLai != null ? phuLai > 2 : null, `Hệ số thanh toán lãi vay ${lan(phuLai, 1)}`);
     tc(tcSucKhoe, "Đòn bẩy dưới 4 lần", donBay != null ? donBay < 4 : null, `Tài sản bằng ${lan(donBay, 1)} vốn chủ`);
+    Object.assign(tho, {
+      bienRong: bienRongNay,
+      tyTrongTuDoanh,
+      chuaThucHien: chuaThucHien != null ? Math.abs(chuaThucHien) * 100 : null,
+      chenh,
+      kyQuy: kyQuy != null ? kyQuy * 100 : null,
+      phuLai: laiDaTra > 0 ? phuLai : 100,
+      donBay,
+    });
   } else {
     const donBay = chia(v(L, "tongTaiSan"), vonChu);
     chatLuong.the = [
@@ -493,6 +547,7 @@ export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp
       { nhan: "Tài sản / vốn chủ", gt: lan(donBay, 1), tot: null },
     ];
     chatLuong.duong = [{ ten: "ROE và biên lợi nhuận ròng, 4 quý cuốn chiếu (%)", duong: [{ ten: "ROE", diem: chuoi(roeCua) }, { ten: "Biên ròng", diem: chuoi(tyLe("lnstMe", kDt)) }] }];
+    Object.assign(tho, { bienRong: bienRongNay, donBay });
     chatLuong.ghiChu = "Bảo hiểm cần bộ chỉ tiêu riêng (tỷ lệ kết hợp, lợi suất đầu tư) mà Finlo chưa dựng; phần này chỉ có các chỉ tiêu chung.";
   }
 
@@ -522,6 +577,23 @@ export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp
   tc(tcCoTuc, "Chi trả dưới 80% lợi nhuận", chiTraNay != null ? chiTraNay < 80 : null, chiTraNay != null ? `Chi ${pt(chiTraNay, 0)} lợi nhuận 4 quý` : "Không tính được");
   tc(tcCoTuc, "Trả đều trong 5 năm", soNamTra >= 4, `Có chi cổ tức tiền mặt ${soNamTra}/5 năm gần nhất`);
 
+  Object.assign(tho, {
+    roe,
+    roeTb,
+    roa,
+    dt3: cagr.dt3,
+    ln3: cagr.ln3,
+    lnCungKy,
+    quyTang: quyGan.length === 4 ? quyGan.filter((x) => x.gt! > 0).length : null,
+    tySuat,
+    soNamTra,
+    chiTra: chiTraNay,
+    coTucCp: coTuc / soCp,
+    peViTri: pe?.nay != null ? (pe.vi ?? null) : null,
+    pbViTri: pb?.nay != null ? (pb.vi ?? null) : null,
+    peSoNganh: pe?.nay != null && a.peNganh ? pe.nay / a.peNganh : null,
+  });
+
   const truCot: TruCot[] = [
     { ten: "Định giá", ds: tcDinhGia },
     { ten: "Chất lượng", ds: tcChatLuong },
@@ -550,6 +622,7 @@ export function phanTichSau(a: { dg: DanhGia; nen: NenGon[]; vni: NenGon[]; soCp
     fScore,
     ruiRo: ruiRoGia(nen, vni, beta),
     truCot,
+    tho,
   };
 }
 

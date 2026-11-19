@@ -9,8 +9,8 @@ import { DinhGiaChuyenSau } from "@/components/phan-tich/DinhGiaChuyenSau";
 import { taoDongLoc } from "@/lib/bo-loc";
 import { giaNghin } from "@/lib/dinh-dang";
 import { BAO_CAO, TEN_NHOM, dongThuan, thongKe } from "@/lib/khuyen-nghi";
-import { layBangGia, layBaoCao, layDanhGia, layEpsChuanHoa, layHoSo, layLaiSuat, layNen, layNenChiSo, layNganh, layNoNhom, layTaiChinhToanThiTruong } from "@/lib/mofi";
-import { phanTichSau, type TheSo, type TruCot } from "@/lib/phan-tich-sau";
+import { layBangGia, layBaoCao, layDanhGia, layEpsChuanHoa, layHoSo, layLaiSuat, layNen, layNenChiSo, layNganh, layNoNhom, layQuyen, layTaiChinhToanThiTruong } from "@/lib/mofi";
+import { phanTichSau, soCpHieuLuc, type TheSo, type TruCot } from "@/lib/phan-tich-sau";
 import { cagr, phanTichDoanhNghiep, phanVi, soVoiNganh, trungVi, type ChiTieuNganh, type SoNam } from "@/lib/phan-tich";
 import { dinhDangCot } from "@/lib/so-sanh";
 
@@ -203,7 +203,7 @@ const cuoiCo = (ds: SoNam[]) => [...ds].reverse().find((x) => x.gt != null)?.gt 
 
 async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   const ma = (await params).ma.toUpperCase();
-  const [bc, hoSo, nen, bangGia, tc, nganh, dg, epsChuanHoa, vni, laiSuat] = await Promise.all([
+  const [bc, hoSo, nen, bangGia, tc, nganh, dg, epsChuanHoa, vni, laiSuat, quyen] = await Promise.all([
     layBaoCao(ma),
     layHoSo(ma),
     layNen(ma).catch(() => []),
@@ -214,6 +214,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
     layEpsChuanHoa(ma),
     layNenChiSo("VNINDEX").catch(() => null),
     layLaiSuat().catch(() => null),
+    layQuyen(ma),
   ]);
   if (!bc || !hoSo?.soCoPhieu || !nen.length)
     return <p className="text-chu-phu">{ma} chưa có đủ báo cáo tài chính để phân tích.</p>;
@@ -240,7 +241,7 @@ async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
   }
   const sau =
     dg && dg.quy.length >= 8
-      ? phanTichSau({ dg, nen, vni: vni?.nen ?? [], soCp: hoSo.soCoPhieu, gia: giaNay, rf, peNganh: khoa ? (nganh.pe[khoa] ?? null) : null, tenNganh, epsChuanHoa, noXau })
+      ? phanTichSau({ dg, nen, vni: vni?.nen ?? [], soCp: soCpHieuLuc(hoSo.soCoPhieu, dg, quyen, new Date(nen[nen.length - 1].time * 1000 + 7 * 3600e3).toISOString().slice(0, 10)), gia: giaNay, rf, peNganh: khoa ? (nganh.pe[khoa] ?? null) : null, tenNganh, epsChuanHoa, noXau })
       : null;
   const datTong = sau ? sau.truCot.flatMap((t) => t.ds).filter((x) => x.dat != null) : [];
 
