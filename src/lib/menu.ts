@@ -63,6 +63,7 @@ const CAY: Omit<NhomMenu, "trang">[] = [
           { href: "/bo-loc", nhan: "Bộ lọc cổ phiếu", moTa: "Lọc theo P/E, P/B, ROE, tăng trưởng, cổ tức", tuKhoa: "bo loc loc co phieu screener pe roe" },
           { href: "/quet-tin-hieu", nhan: "Quét tín hiệu", moTa: "RSI quá mua/bán, giao cắt MA, đỉnh đáy 52 tuần, mẫu hình nến", tuKhoa: "quet tin hieu scanner rsi qua mua qua ban giao cat ma200 dinh 52 tuan khoi luong dot bien mau hinh nen" },
           { href: "/bat-day", nhan: "FL Bắt đáy", moTa: "Mã giảm sâu, rẻ so với lịch sử, tín hiệu mua bán, mức cắt lỗ; tra từng mã", tuKhoa: "bat day dao roi vung re tin hieu mua ban cat lo chot loi co mua duoc khong" },
+          { href: "/ket-luan", nhan: "Kết luận Finlo", moTa: "Tổng hợp mọi bộ phân tích: danh sách tích sản và đầu cơ kèm lý do", tuKhoa: "ket luan tong hop co phieu nen mua tich san dau co luot song top co phieu chon loc danh sach" },
           { href: "/fin-rating", nhan: "Fin Rating", moTa: "Chấm điểm cổ phiếu từ 1 đến 10 theo 7 trục, so với ngành và thị trường", tuKhoa: "fin rating cham diem xep hang co phieu diem so radar chat luong doanh nghiep" },
           { href: "/xep-hang-dinh-gia", nhan: "Xếp hạng định giá", moTa: "Giá so với giá trị ước tính của mô hình định giá Finlo", tuKhoa: "xep hang dinh gia re dat gia tri hop ly gia tri noi tai dcf tiem nang upside" },
           { href: "/co-phieu-co-tuc", nhan: "Cổ phiếu cổ tức", moTa: "Tỷ suất cổ tức tiền mặt, số năm trả đều, tỷ lệ chi trả", tuKhoa: "co phieu co tuc ty suat co tuc tien mat tra deu dividend yield thu nhap thu dong" },
