@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cacheLife } from "next/cache";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -68,6 +69,14 @@ const so = (x: number, le = 2) => x.toLocaleString("vi-VN", { maximumFractionDig
 
 async function NoiDung() {
   await connection();
+  return <NoiDungDaLuu />;
+}
+
+// Phép tổng hợp chạy trên toàn bộ dữ liệu phân tích, tốn khoảng nửa giây CPU mỗi lần.
+// Lưu bền kết quả đã dựng (dùng chung giữa các máy chủ); giá đổi mỗi phút nên làm mới theo nhịp bảng giá.
+async function NoiDungDaLuu() {
+  "use cache: remote";
+  cacheLife({ stale: 60, revalidate: 60, expire: 900 });
   const bang = await layBangGia().catch(() => null);
   const gia = new Map((bang?.coPhieu ?? []).filter((c) => c.gia > 0).map((c) => [c.ma, c.gia]));
   const phanTramNgay = new Map((bang?.coPhieu ?? []).map((c) => [c.ma, c.phanTram]));

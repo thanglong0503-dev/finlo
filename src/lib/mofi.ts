@@ -1,6 +1,7 @@
 // Lấy dữ liệu thị trường từ kho JSON của Mofi (data.mofi.vn).
 // Chỉ chạy phía server. Riêng bảng điện VN30 lấy thẳng từ trình duyệt để không tốn băng thông Vercel (lib/bang-dien.ts).
-// Mỗi hàm public được cache bằng "use cache" + cacheLife("minutes"): làm mới khoảng mỗi phút.
+// Mỗi hàm public được cache bằng "use cache: remote" + cacheLife: lưu bền và dùng chung giữa các máy chủ của Vercel,
+// nên máy vừa khởi động không phải tải lại và xử lý lại file Mofi (phần tốn CPU nhất).
 
 import { cacheLife } from "next/cache";
 import type { BangTho } from "@/lib/bang-dien";
@@ -19,6 +20,15 @@ async function layJson<T>(path: string): Promise<T> {
     }
   }
 }
+
+// Dùng trong hàm có cache: file không tồn tại (404) là kết quả thật nên được lưu;
+// lỗi tạm thời (mạng, quá giờ, 5xx) phải ném ra, vì Next.js không lưu kết quả lỗi và lần sau sẽ thử lại.
+const chi404 =
+  <T,>(macDinh: T) =>
+  (e: unknown): T => {
+    if (String(e).includes("HTTP 404")) return macDinh;
+    throw e;
+  };
 
 // ---- Kiểu dữ liệu thô từ Mofi ----
 
@@ -145,7 +155,7 @@ const MOT_PHUT = { stale: 30, revalidate: 30, expire: 600 };
 
 // Bảng giá: giá cuối ngày làm nền, phủ lên bằng ảnh chụp mới nhất trong phiên (mỗi phút)
 export async function layBangGia(): Promise<BangGia> {
-  "use cache";
+  "use cache: remote";
   cacheLife(MOT_PHUT);
   const [{ ngayGiaoDich, ...goc }, anh] = await Promise.all([layBangGiaGoc(), layAnhChupPhien().catch(() => null)]);
   // Ảnh chụp cũ hơn dữ liệu cuối ngày (mofi thiếu file hôm nay) thì bỏ qua
@@ -254,13 +264,13 @@ async function timAnhChup<T>(thuMuc: "bang" | "chi-so"): Promise<T | null> {
 
 // File gốc của ảnh chụp mới nhất, cho bảng điện cần thêm các cột cao, thấp, room
 export async function layAnhChupBangTho() {
-  "use cache";
+  "use cache: remote";
   cacheLife(MOT_PHUT);
   return timAnhChup<BangTho>("bang");
 }
 
 export async function layAnhChupPhien() {
-  "use cache";
+  "use cache: remote";
   cacheLife(MOT_PHUT);
   const tho = await timAnhChup<AnhChupTho>("bang");
   if (!tho) return null;
@@ -294,7 +304,7 @@ export async function layAnhChupPhien() {
 
 // Giá cuối ngày (tổng hợp) cùng hồ sơ công ty
 async function layBangGiaGoc(): Promise<Omit<BangGia, "phien"> & { ngayGiaoDich: string }> {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   const [gia, congTy] = await Promise.all([
     layJson<GiaMoiNhatTho>("tong-hop/gia-moi-nhat.json"),
@@ -341,7 +351,7 @@ type AnhChupChiSoTho = {
 const MA_CHI_SO_ANH: Record<string, string> = { HNXIndex: "HNX", UpcomIndex: "UPCOM", UPCOMINDEX: "UPCOM" };
 
 async function layAnhChupChiSo() {
-  "use cache";
+  "use cache: remote";
   cacheLife(MOT_PHUT);
   return timAnhChup<AnhChupChiSoTho>("chi-so").catch(() => null);
 }
@@ -349,7 +359,7 @@ async function layAnhChupChiSo() {
 // Điểm chỉ số được Mofi lưu nhân 1000 (1761870 = 1.761,87 điểm).
 // Trong phiên, điểm hiện tại lấy từ ảnh chụp mỗi phút (kèm số mã tăng/giảm/đứng của rổ).
 export async function layChiSo(): Promise<ChiSo[]> {
-  "use cache";
+  "use cache: remote";
   cacheLife(MOT_PHUT);
   const [data, anh] = await Promise.all([layJson<ChiSoTho>("tong-hop/chi-so.json"), layAnhChupChiSo()]);
   const theoMa = new Map((anh?.ds ?? []).map((x) => [MA_CHI_SO_ANH[x.ma] ?? x.ma.toUpperCase(), x]));
@@ -379,14 +389,14 @@ export async function layChiSo(): Promise<ChiSo[]> {
 
 // Số cổ phiếu lưu hành của mọi mã: quét nhiều mã dùng hàm này để chỉ tải file công ty một lần
 export async function laySoCoPhieu(): Promise<Record<string, number>> {
-  "use cache";
+  "use cache: remote";
   cacheLife("days");
   const { companies } = await layJson<CongTyTho>("tong-hop/cong-ty.json");
   return Object.fromEntries(companies.flatMap((c) => (c.outstandingShares ? [[c.sym, c.outstandingShares]] : [])));
 }
 
 export async function layHoSo(ma: string): Promise<HoSo | null> {
-  "use cache";
+  "use cache: remote";
   cacheLife("days");
   const { companies } = await layJson<CongTyTho>("tong-hop/cong-ty.json");
   const ct = companies.find((c) => c.sym === ma);
@@ -407,7 +417,7 @@ const TIEN_SO = [
 ];
 
 export async function layTienSo(): Promise<TienSo[]> {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   return Promise.all(
     TIEN_SO.map(async ({ ma, ten }) => {
@@ -425,7 +435,7 @@ export async function layTienSo(): Promise<TienSo[]> {
 }
 
 export async function layNen(ma: string): Promise<Nen[]> {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   const [nen, anh] = await Promise.all([layNenKhongCache(ma), layAnhChupPhien().catch(() => null)]);
   const x = anh?.theoMa.get(ma);
@@ -467,7 +477,7 @@ type VonHoaTho = {
 const tenTuId = (id: string) => id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export async function layBangTienSo(soLuong = 30): Promise<BangTienSo> {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   const data = await layJson<VonHoaTho>("crypto/von-hoa/moi-nhat.json");
   // Mỗi ký hiệu có thể trùng nhiều đồng; lấy đồng đầu tiên có thứ hạng
@@ -509,7 +519,7 @@ type VangMoiNhatTho = {
 type VangLichSuTho = { ngay: string[]; gia: Record<string, Record<string, (number | null)[]>> };
 
 export async function layBangVang(): Promise<BangVang> {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   const [moi, lichSu] = await Promise.all([
     layJson<VangMoiNhatTho>("vang/moi-nhat.json"),
@@ -576,15 +586,16 @@ type BaoCaoTho = {
 };
 
 // Báo cáo chỉ đổi mỗi quý nên cache theo giờ; mã không có báo cáo (ETF, chứng quyền…) trả null
-export async function layBaoCao(ma: string): Promise<BaoCao | null> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layBaoCao(ma: string): Promise<BaoCao | null> {
+  return layBaoCaoLuu(ma).catch(() => null);
+}
+
+async function layBaoCaoLuu(ma: string): Promise<BaoCao | null> {
+  "use cache: remote";
   cacheLife("hours");
-  let tho: BaoCaoTho;
-  try {
-    tho = await layJson<BaoCaoTho>(`financial/bao-cao/${encodeURIComponent(ma)}.json`);
-  } catch {
-    return null;
-  }
+  const tho = await layJson<BaoCaoTho>(`financial/bao-cao/${encodeURIComponent(ma)}.json`).catch(chi404(null));
+  if (!tho) return null;
   const soQuy = tho.quy.length;
   const soNam = tho.nam.length;
   const chuan = (a: (number | null)[] | undefined, dai: number) =>
@@ -650,7 +661,7 @@ type LaiSuatTho = {
 };
 
 export async function layLaiSuat(): Promise<BangLaiSuat> {
-  "use cache";
+  "use cache: remote";
   cacheLife("hours");
   const tho = await layJson<LaiSuatTho>("lai-suat/moi-nhat.json");
   return {
@@ -683,21 +694,22 @@ export type ChuoiViMo = {
 
 type ChuoiViMoTho = Omit<ChuoiViMo, "nguon"> & { nguon: { ten: string } };
 
-export async function layViMo(ma: string): Promise<ChuoiViMo | null> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layViMo(ma: string): Promise<ChuoiViMo | null> {
+  return layViMoLuu(ma).catch(() => null);
+}
+
+async function layViMoLuu(ma: string): Promise<ChuoiViMo | null> {
+  "use cache: remote";
   cacheLife("hours");
-  try {
-    const tho = await layJson<ChuoiViMoTho>(`vi-mo/${encodeURIComponent(ma)}.json`);
-    return { ...tho, nguon: tho.nguon?.ten ?? "" };
-  } catch {
-    return null;
-  }
+  const tho = await layJson<ChuoiViMoTho>(`vi-mo/${encodeURIComponent(ma)}.json`).catch(chi404(null));
+  return tho ? { ...tho, nguon: tho.nguon?.ten ?? "" } : null;
 }
 
 // ---- Chỉ số: nến ngày của một chỉ số và P/E toàn thị trường ----
 
 export async function layNenChiSo(ma: string): Promise<{ ten: string; nen: Nen[] } | null> {
-  "use cache";
+  "use cache: remote";
   cacheLife(MOT_PHUT);
   const [data, anh] = await Promise.all([layJson<ChiSoTho>("tong-hop/chi-so.json"), layAnhChupChiSo()]);
   const cs = data.indices[ma];
@@ -714,7 +726,7 @@ export async function layNenChiSo(ma: string): Promise<{ ten: string; nen: Nen[]
 export type PeThiTruong = { ngay: string[]; pe: number[]; vnindex: number[]; trungVi: number | null };
 
 export async function layPeThiTruong(): Promise<PeThiTruong> {
-  "use cache";
+  "use cache: remote";
   cacheLife("hours");
   const tho = await layJson<{ meta: { trungViCaChuoi?: number }; ngay: string[]; pe: number[]; vnindex: number[] }>(
     "tong-hop/pe-thi-truong.json",
@@ -731,7 +743,7 @@ export type DuLieuNganh = {
 };
 
 export async function layNganh(): Promise<DuLieuNganh> {
-  "use cache";
+  "use cache: remote";
   cacheLife("hours");
   const [n, pe] = await Promise.all([
     layJson<{ meta: { tenRo: Record<string, string> }; ma: Record<string, { nganh: string | null }> }>(
@@ -776,7 +788,7 @@ type TaiChinhTho = {
 };
 
 export async function layTaiChinhToanThiTruong(): Promise<Record<string, TaiChinhMa>> {
-  "use cache";
+  "use cache: remote";
   cacheLife("hours");
   const tho = await layJson<TaiChinhTho>("financial/danh-gia/_toan-thi-truong.json");
   const so = (x: number | undefined) => (typeof x === "number" && Number.isFinite(x) ? x : null);
@@ -811,7 +823,7 @@ export async function layTaiChinhToanThiTruong(): Promise<Record<string, TaiChin
 export type TinDoanhNghiep = { ma: string; tieuDe: string; ngay: string; loai: string; mucDo: "cao" | "vua" | "thap" };
 
 export async function layTin(): Promise<{ capNhat: string; tin: TinDoanhNghiep[] }> {
-  "use cache";
+  "use cache: remote";
   cacheLife("hours");
   const tho = await layJson<{
     meta: { asOf: string };
@@ -843,8 +855,13 @@ export type HoSoDoanhNghiep = {
   coTuc: { nam: number; gt: number }[];
 };
 
-export async function layHoSoDoanhNghiep(ma: string): Promise<HoSoDoanhNghiep | null> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layHoSoDoanhNghiep(ma: string): Promise<HoSoDoanhNghiep | null> {
+  return layHoSoDoanhNghiepLuu(ma).catch(() => null);
+}
+
+async function layHoSoDoanhNghiepLuu(ma: string): Promise<HoSoDoanhNghiep | null> {
+  "use cache: remote";
   cacheLife("hours");
   const tho = await layJson<{
     loai: string;
@@ -853,7 +870,7 @@ export async function layHoSoDoanhNghiep(ma: string): Promise<HoSoDoanhNghiep | 
     mach?: { nam: number; so: Record<string, { gt: number; nhan: string }> }[];
     von?: { nam: number; gt: number }[];
     coTuc?: { nam: number; gt: number }[];
-  }>(`financial/ho-so/${encodeURIComponent(ma)}.json`).catch(() => null);
+  }>(`financial/ho-so/${encodeURIComponent(ma)}.json`).catch(chi404(null));
   if (!tho) return null;
   return {
     loai: tho.loai,
@@ -888,12 +905,17 @@ export type GiaoDichNoiBo = {
   giaTri: number | null; // đồng, ước tính theo giá đóng cửa
 };
 
-export async function layNoiBo(ma: string): Promise<{ capNhat: string; ghiChu: string | null; dong: GiaoDichNoiBo[] } | null> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layNoiBo(ma: string): Promise<{ capNhat: string; ghiChu: string | null; dong: GiaoDichNoiBo[] } | null> {
+  return layNoiBoLuu(ma).catch(() => null);
+}
+
+async function layNoiBoLuu(ma: string): Promise<{ capNhat: string; ghiChu: string | null; dong: GiaoDichNoiBo[] } | null> {
+  "use cache: remote";
   cacheLife("hours");
   const tho = await layJson<{ capNhat: string; ghiChu?: string; dong: GiaoDichNoiBo[] }>(
     `noi-bo/${encodeURIComponent(ma)}.json`,
-  ).catch(() => null);
+  ).catch(chi404(null));
   if (!tho) return null;
   const dong = tho.dong.map((d) => ({
     ngay: d.ngay,
@@ -917,10 +939,15 @@ export async function layNoiBo(ma: string): Promise<{ capNhat: string; ghiChu: s
 
 // ---- Logo doanh nghiệp (ảnh nằm trên mofi.vn, trình duyệt tải thẳng, lazy-load) ----
 
-export async function layLogo(): Promise<Record<string, string>> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layLogo(): Promise<Record<string, string>> {
+  return layLogoLuu().catch(() => ({}));
+}
+
+async function layLogoLuu(): Promise<Record<string, string>> {
+  "use cache: remote";
   cacheLife("days");
-  const tho = await layJson<Record<string, { d: string; v: string }>>("tong-hop/logo.json").catch(() => ({}));
+  const tho = await layJson<Record<string, { d: string; v: string }>>("tong-hop/logo.json");
   return Object.fromEntries(Object.entries(tho).map(([ma, x]) => [ma, `https://mofi.vn/logo/${ma}.${x.d}?v=${x.v}`]));
 }
 
@@ -935,45 +962,62 @@ export type TongQuanNganhTC = {
   thanhVien: Record<string, { cuoi?: SoTaiChinh | null; cuoiNamTruoc?: SoTaiChinh | null; ttm?: SoTaiChinh | null; ttmNamTruoc?: SoTaiChinh | null }>;
 };
 
-export async function layTongQuanNganhTC(ro: "ngan-hang" | "chung-khoan"): Promise<TongQuanNganhTC | null> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layTongQuanNganhTC(ro: "ngan-hang" | "chung-khoan"): Promise<TongQuanNganhTC | null> {
+  return layTongQuanNganhTCLuu(ro).catch(() => null);
+}
+
+async function layTongQuanNganhTCLuu(ro: "ngan-hang" | "chung-khoan"): Promise<TongQuanNganhTC | null> {
+  "use cache: remote";
   cacheLife("hours");
-  try {
-    const r = await fetch(`https://mofi.vn/du-lieu/tong-quan-nganh-${ro}.json`, {
-      signal: AbortSignal.timeout(10000),
-      headers: { "user-agent": "FinloBot/1.0 (+https://www.finlo.id.vn)" },
-    });
-    if (!r.ok) return null;
-    const j = (await r.json()) as TongQuanNganhTC;
-    return { dungLuc: j.dungLuc, quy: j.quy, thanhVien: j.thanhVien };
-  } catch {
-    return null;
-  }
+  const r = await fetch(`https://mofi.vn/du-lieu/tong-quan-nganh-${ro}.json`, {
+    signal: AbortSignal.timeout(10000),
+    headers: { "user-agent": "FinloBot/1.0 (+https://www.finlo.id.vn)" },
+  });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`Mofi tong-quan-nganh-${ro}: HTTP ${r.status}`);
+  const j = (await r.json()) as TongQuanNganhTC;
+  return { dungLuc: j.dungLuc, quy: j.quy, thanhVien: j.thanhVien };
 }
 
 // Dư nợ cho vay theo nhóm nợ 1–5 của từng ngân hàng theo quý (thuyết minh báo cáo tài chính)
 export type NoNhom = { nhom1: number; nhom2: number; nhom3: number; nhom4: number; nhom5: number; tong: number; noXau: number };
 
-export async function layNoNhom(): Promise<Record<string, Record<string, NoNhom>>> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layNoNhom(): Promise<Record<string, Record<string, NoNhom>>> {
+  return layNoNhomLuu().catch(() => ({}));
+}
+
+async function layNoNhomLuu(): Promise<Record<string, Record<string, NoNhom>>> {
+  "use cache: remote";
   cacheLife("hours");
-  const tho = await layJson<{ nganHang: Record<string, Record<string, NoNhom>> }>("tong-hop/no-nhom.json").catch(() => null);
+  const tho = await layJson<{ nganHang: Record<string, Record<string, NoNhom>> }>("tong-hop/no-nhom.json");
   return tho?.nganHang ?? {};
 }
 
 // ---- Số liệu theo quý đã chuẩn hoá của từng mã (đồng), dùng cho phân tích và định giá chuyên sâu ----
 
-export async function layDanhGia(ma: string): Promise<import("@/lib/phan-tich-sau").DanhGia | null> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layDanhGia(ma: string): Promise<import("@/lib/phan-tich-sau").DanhGia | null> {
+  return layDanhGiaLuu(ma).catch(() => null);
+}
+
+async function layDanhGiaLuu(ma: string): Promise<import("@/lib/phan-tich-sau").DanhGia | null> {
+  "use cache: remote";
   cacheLife("hours");
-  return layJson<import("@/lib/phan-tich-sau").DanhGia>(`financial/danh-gia/${encodeURIComponent(ma)}.json`).catch(() => null);
+  return layJson<import("@/lib/phan-tich-sau").DanhGia>(`financial/danh-gia/${encodeURIComponent(ma)}.json`).catch(chi404(null));
 }
 
 // Cấu hình định giá Mofi chọn cho từng ngành; Finlo chỉ lấy EPS chuẩn hoá của ngành chu kỳ
-export async function layEpsChuanHoa(ma: string): Promise<number | null> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layEpsChuanHoa(ma: string): Promise<number | null> {
+  return layEpsChuanHoaLuu(ma).catch(() => null);
+}
+
+async function layEpsChuanHoaLuu(ma: string): Promise<number | null> {
+  "use cache: remote";
   cacheLife("hours");
-  const tho = await layJson<{ thuoc?: { neo?: { epsChuanHoa?: number } }[] }>(`dinh-gia/${encodeURIComponent(ma)}.json`).catch(() => null);
+  const tho = await layJson<{ thuoc?: { neo?: { epsChuanHoa?: number } }[] }>(`dinh-gia/${encodeURIComponent(ma)}.json`).catch(chi404(null));
   const x = tho?.thuoc?.find((t) => t.neo?.epsChuanHoa != null)?.neo?.epsChuanHoa;
   return typeof x === "number" && x > 0 ? x : null;
 }
@@ -982,9 +1026,14 @@ export async function layEpsChuanHoa(ma: string): Promise<number | null> {
 
 export type QuyenCp = { ngayDKCC: string; loai: string; tyLe: { co: number; duoc: number } | null };
 
-export async function layQuyen(ma: string): Promise<QuyenCp[]> {
-  "use cache";
+// Lỗi tạm thời không bị lưu (xem chi404); lượt này trả giá trị dự phòng như trước
+export function layQuyen(ma: string): Promise<QuyenCp[]> {
+  return layQuyenLuu(ma).catch(() => []);
+}
+
+async function layQuyenLuu(ma: string): Promise<QuyenCp[]> {
+  "use cache: remote";
   cacheLife("hours");
-  const tho = await layJson<{ quyen?: QuyenCp[] }>(`su-kien-quyen/${encodeURIComponent(ma)}.json`).catch(() => null);
+  const tho = await layJson<{ quyen?: QuyenCp[] }>(`su-kien-quyen/${encodeURIComponent(ma)}.json`).catch(chi404(null));
   return (tho?.quyen ?? []).map((q) => ({ ngayDKCC: q.ngayDKCC, loai: q.loai, tyLe: q.tyLe ?? null }));
 }

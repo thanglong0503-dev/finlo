@@ -86,7 +86,7 @@ const doiVps = (x: GiaVps, ten: string): MaKhac => {
 };
 
 export async function layDanhSachKhac(): Promise<DanhSachKhac> {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   const [ds, nganh] = await Promise.all([layDanhSachNgay(), layNganh().catch(() => null)]);
   const etfMa = ds.hsx_e ?? [];
@@ -132,7 +132,7 @@ export async function layDanhSachKhac(): Promise<DanhSachKhac> {
 
 // Nến ngày cho mã không có trong dữ liệu cổ phiếu của Mofi: hợp đồng tương lai (Mofi) và ETF, chứng quyền (VPS)
 export async function layNenKhac(ma: string) {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   if (laPhaiSinh(ma)) {
     const d = await json<{ t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[] }>(

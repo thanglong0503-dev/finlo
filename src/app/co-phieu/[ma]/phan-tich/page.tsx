@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cacheLife } from "next/cache";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
@@ -202,7 +203,14 @@ const MUC_LUC = [
 const cuoiCo = (ds: SoNam[]) => [...ds].reverse().find((x) => x.gt != null)?.gt ?? null;
 
 async function NoiDung({ params }: { params: Promise<{ ma: string }> }) {
-  const ma = (await params).ma.toUpperCase();
+  return <NoiDungDaLuu ma={(await params).ma.toUpperCase()} />;
+}
+
+// Phân tích sâu tính trên toàn thị trường (bộ lọc, so ngành), tốn vài trăm mili giây CPU mỗi lần.
+// Lưu bền kết quả đã dựng theo từng mã, dùng chung giữa các máy chủ.
+async function NoiDungDaLuu({ ma }: { ma: string }) {
+  "use cache: remote";
+  cacheLife({ stale: 300, revalidate: 300, expire: 3600 });
   const [bc, hoSo, nen, bangGia, tc, nganh, dg, epsChuanHoa, vni, laiSuat, quyen] = await Promise.all([
     layBaoCao(ma),
     layHoSo(ma),

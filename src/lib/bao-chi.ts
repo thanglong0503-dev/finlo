@@ -39,7 +39,7 @@ const the = (item: string, ten: string) => {
 const BO_QUA = new Set(["CEO", "HCM", "VND", "USD", "GDP", "CPI", "ETF", "IPO", "FDI", "VAT", "NHNN", "HOSE", "HNX", "TTCK", "CTCK", "BĐS", "KCN", "ESG", "AGM", "EPS", "ROE", "TOP", "SJC", "API", "APP", "VIP", "SME", "TCT", "UBND", "QĐ", "HĐQT", "NĐT", "VNI", "PGS", "IMF", "FED", "OPEC"]);
 
 export async function layBaoChi(dsMa: string[]): Promise<BaiBao[]> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 300, revalidate: 900, expire: 3600 });
   const coMa = new Set(dsMa);
   const ketQua = await Promise.all(

@@ -59,7 +59,7 @@ type CoinGeckoThiTruong = {
 };
 
 export async function layThiTruongTienSo(): Promise<ThiTruongTienSo | null> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 120, revalidate: 300, expire: 3600 });
   try {
     const [toanCau, dsTho] = await Promise.all([
@@ -117,27 +117,32 @@ const PHAN_LOAI: Record<string, string> = {
 };
 
 // Chỉ số Sợ hãi & Tham lam 0–100 (alternative.me), cập nhật mỗi ngày
-export async function layTamLy(): Promise<TamLy | null> {
-  "use cache";
+// Lỗi tạm thời ném ra trong phần có cache để không bị lưu; lượt đó trả null như trước
+export function layTamLy(): Promise<TamLy | null> {
+  return layTamLyLuu().catch(() => null);
+}
+
+async function layTamLyLuu(): Promise<TamLy> {
+  "use cache: remote";
   cacheLife("hours");
-  try {
-    const j = await layJson<{ data: { value: string; value_classification: string; timestamp: string }[] }>(
-      "https://api.alternative.me/fng/?limit=90",
-    );
-    const ds = j.data.map((x) => ({ time: Number(x.timestamp), value: Number(x.value), loai: x.value_classification })).reverse();
-    const cuoi = ds[ds.length - 1];
-    return { hienTai: cuoi.value, phanLoai: PHAN_LOAI[cuoi.loai] ?? cuoi.loai, lichSu: ds.map(({ time, value }) => ({ time, value })) };
-  } catch {
-    return null;
-  }
+  const j = await layJson<{ data: { value: string; value_classification: string; timestamp: string }[] }>(
+    "https://api.alternative.me/fng/?limit=90",
+  );
+  const ds = j.data.map((x) => ({ time: Number(x.timestamp), value: Number(x.value), loai: x.value_classification })).reverse();
+  const cuoi = ds[ds.length - 1];
+  return { hienTai: cuoi.value, phanLoai: PHAN_LOAI[cuoi.loai] ?? cuoi.loai, lichSu: ds.map(({ time, value }) => ({ time, value })) };
 }
 
 export type MuaAltcoin = { diem: number; soVuot: number; soXet: number; btc90: number; vuot: { ma: string; p90: number }[] };
 
 // Chỉ số Mùa altcoin: % trong top 50 altcoin (bỏ đồng ổn định, token bọc) có giá 90 ngày tăng hơn Bitcoin.
 // Trên 75 là mùa altcoin, dưới 25 là mùa Bitcoin.
-export async function layMuaAltcoin(dsMa: string[]): Promise<MuaAltcoin | null> {
-  "use cache";
+export function layMuaAltcoin(dsMa: string[]): Promise<MuaAltcoin | null> {
+  return layMuaAltcoinLuu(dsMa).catch(() => null);
+}
+
+async function layMuaAltcoinLuu(dsMa: string[]): Promise<MuaAltcoin> {
+  "use cache: remote";
   cacheLife("hours");
   const loi90 = async (ma: string) => {
     try {
@@ -151,30 +156,31 @@ export async function layMuaAltcoin(dsMa: string[]): Promise<MuaAltcoin | null> 
     }
   };
   const btc = await loi90("BTC");
-  if (btc == null) return null;
+  if (btc == null) throw new Error("Không lấy được giá BTC 90 ngày");
   // Nhiều đồng không niêm yết trên Binance: xét rộng tới 110 đồng để đủ 50 altcoin có dữ liệu
   const ung = dsMa.filter((m) => m !== "BTC").slice(0, 110);
   const kq = (await Promise.all(ung.map(async (ma) => ({ ma, p90: await loi90(ma) })))).filter(
     (x): x is { ma: string; p90: number } => x.p90 != null,
   );
   const top = kq.slice(0, 50);
-  if (top.length < 20) return null;
+  if (top.length < 20) throw new Error("Thiếu dữ liệu altcoin");
   const vuot = top.filter((x) => x.p90 > btc).sort((a, b) => b.p90 - a.p90);
   return { diem: Math.round((vuot.length / top.length) * 100), soVuot: vuot.length, soXet: top.length, btc90: btc, vuot: vuot.slice(0, 8) };
 }
 
 // Độ cao khối Bitcoin hiện tại (mempool.space) để đếm ngược halving; khối mới ~10 phút nên lưu đệm theo giờ là đủ
-export async function layKhoiBitcoin(): Promise<{ khoi: number; luc: number } | null> {
-  "use cache";
+export function layKhoiBitcoin(): Promise<{ khoi: number; luc: number } | null> {
+  return layKhoiBitcoinLuu().catch(() => null);
+}
+
+async function layKhoiBitcoinLuu(): Promise<{ khoi: number; luc: number }> {
+  "use cache: remote";
   cacheLife("hours");
-  try {
-    const r = await fetch("https://mempool.space/api/blocks/tip/height", {
-      signal: AbortSignal.timeout(8000),
-      headers: { "user-agent": "FinloBot/1.0 (+https://www.finlo.id.vn)" },
-    });
-    const khoi = Number(await r.text());
-    return r.ok && khoi > 0 ? { khoi, luc: Date.now() } : null;
-  } catch {
-    return null;
-  }
+  const r = await fetch("https://mempool.space/api/blocks/tip/height", {
+    signal: AbortSignal.timeout(8000),
+    headers: { "user-agent": "FinloBot/1.0 (+https://www.finlo.id.vn)" },
+  });
+  const khoi = Number(await r.text());
+  if (!r.ok || !(khoi > 0)) throw new Error("mempool.space không trả độ cao khối");
+  return { khoi, luc: Date.now() };
 }

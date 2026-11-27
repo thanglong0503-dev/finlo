@@ -21,7 +21,7 @@ type TxDayDu = {
 
 // Một khối đã xác nhận không đổi nữa: lưu đệm lâu theo hash
 async function giaoDichLonTrongKhoi(hash: string, cao: number, luc: number): Promise<GiaoDichLon[]> {
-  "use cache";
+  "use cache: remote";
   cacheLife("max");
   const tom = await nap<{ txid: string; value: number }[]>(`/v1/block/${hash}/summary`);
   // Chỉ mở chi tiết 30 giao dịch có tổng đầu ra lớn nhất để tiết kiệm request
@@ -40,7 +40,7 @@ async function giaoDichLonTrongKhoi(hash: string, cao: number, luc: number): Pro
 }
 
 export async function layCaMapBtc(soKhoi = 6): Promise<{ khoi: { cao: number; luc: number }[]; giaoDich: GiaoDichLon[] } | null> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 60, revalidate: 120, expire: 900 });
   try {
     const khoi = (await nap<{ id: string; height: number; timestamp: number }[]>("/v1/blocks")).slice(0, soKhoi);

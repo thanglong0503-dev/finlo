@@ -59,7 +59,7 @@ async function mot([ma, ten, phu]: readonly [string, string, string]): Promise<G
 }
 
 export async function layTheGioi() {
-  "use cache";
+  "use cache: remote";
   cacheLife("minutes");
   const [chiSo, hangHoa] = await Promise.all([Promise.all(CHI_SO.map(mot)), Promise.all(HANG_HOA.map(mot))]);
   return { chiSo: chiSo.filter((x) => x != null), hangHoa: hangHoa.filter((x) => x != null) };
