@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { apDungGoi } from "@/lib/gia-truc-tiep-chung";
+import { dangTrucTiep, useGiaTrucTiep } from "@/lib/gia-truc-tiep";
 import { useLamMoi } from "@/lib/lam-moi";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BieuDoTuongTac, type Nguon } from "@/components/bieu-do/BieuDoTuongTac";
@@ -32,12 +34,16 @@ export function TramGiaoDich({ nguonDau, maDau, logo = {} }: { nguonDau: Nguon; 
 
   // Bảng giá cổ phiếu làm mới mỗi phút (giá trong danh sách và khung thông tin chớp khi đổi)
   // Tải ngay khi mở; sau đó chỉ làm mới khi tab đang mở và trong giờ giao dịch
+  // Giá trực tiếp từ máy chủ; đang nhận thì bỏ lượt hỏi định kỳ
+  useGiaTrucTiep((goi) => setBangGia((b) => (b ? apDungGoi(b, goi) : b)), bangGia?.phien ?? null);
   useLamMoi(
-    () =>
+    () => {
+      if (dangTrucTiep()) return;
       fetch("/api/bang-gia")
         .then((r) => (r.ok ? r.json() : null))
         .then((d: BangGia | null) => d && setBangGia(d))
-        .catch(() => {}),
+        .catch(() => {});
+    },
     60_000,
     { taiNgay: true },
   );

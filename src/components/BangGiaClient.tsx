@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { LogoMa } from "@/components/LogoMa";
+import { apDungGoi } from "@/lib/gia-truc-tiep-chung";
+import { dangTrucTiep, useGiaTrucTiep } from "@/lib/gia-truc-tiep";
 import { useLamMoi } from "@/lib/lam-moi";
 import { useMemo, useState } from "react";
 import { GiaChop } from "@/components/GiaChop";
-import { NhanPhien } from "@/components/NhanPhien";
+import { NhanPhien, NhanTrucTiep } from "@/components/NhanPhien";
 import { NutTheoDoi } from "@/components/NutTheoDoi";
 import { giaNghin, khoiLuong, mauGia, phanTram, thayDoi, trieuDong, tyDong, vonHoa } from "@/lib/dinh-dang";
 import type { BangGia, CoPhieu } from "@/lib/mofi";
@@ -42,8 +44,10 @@ export function BangGiaClient({ duLieuDau, logo = {} }: { duLieuDau: BangGia; lo
   const [soDong, setSoDong] = useState(MOI_TRANG);
   const theoDoi = useTheoDoi();
 
-  // Ảnh chụp bảng giá đổi mỗi phút: làm mới mỗi phút, chỉ khi tab đang mở và trong giờ giao dịch
+  // Máy chủ đẩy giá ngay khi có ảnh chụp phút mới; không nối được thì hỏi lại mỗi phút như cũ
+  const trucTiep = useGiaTrucTiep((goi) => setDuLieu((b) => apDungGoi(b, goi)), duLieu.phien);
   useLamMoi(async () => {
+    if (dangTrucTiep()) return;
     try {
       const res = await fetch("/api/bang-gia");
       if (res.ok) setDuLieu(await res.json());
@@ -79,6 +83,7 @@ export function BangGiaClient({ duLieuDau, logo = {} }: { duLieuDau: BangGia; lo
     <>
       <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-chu-phu">
         <NhanPhien phien={duLieu.phien} />
+        {trucTiep && <NhanTrucTiep />}
         <span>· {ds.length.toLocaleString("vi-VN")} mã · giá nghìn đồng</span>
       </p>
       <p className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-chu-phu">
@@ -223,7 +228,7 @@ export function BangGiaClient({ duLieuDau, logo = {} }: { duLieuDau: BangGia; lo
       </div>
       <p className="mt-2 text-[11px] text-chu-phu">
         Dòng nhỏ dưới mã: giá trần · tham chiếu · sàn. NN ròng: giá trị nước ngoài mua trừ bán. Mua CĐ: tỷ lệ khối
-        lượng mua chủ động. Trong giờ giao dịch dữ liệu cập nhật mỗi phút.
+        lượng mua chủ động. Trong giờ giao dịch giá tự nhảy mỗi khi có số liệu phút mới, không cần tải lại trang.
       </p>
 
       {soDong < ds.length && (

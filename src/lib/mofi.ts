@@ -157,7 +157,17 @@ const MOT_PHUT = { stale: 30, revalidate: 30, expire: 600 };
 export async function layBangGia(): Promise<BangGia> {
   "use cache: remote";
   cacheLife(MOT_PHUT);
-  const [{ ngayGiaoDich, ...goc }, anh] = await Promise.all([layBangGiaGoc(), layAnhChupPhien().catch(() => null)]);
+  const [goc, anh] = await Promise.all([layBangGiaGoc(), layAnhChupPhien().catch(() => null)]);
+  return ghepAnhChup(goc, anh);
+}
+
+type AnhChup = ReturnType<typeof docAnhChup>;
+
+// Phủ ảnh chụp trong phiên lên giá cuối ngày. Dùng chung cho bảng giá và trạm phát giá trực tiếp (lib/tram-gia.ts)
+export function ghepAnhChup(
+  { ngayGiaoDich, ...goc }: Omit<BangGia, "phien"> & { ngayGiaoDich: string },
+  anh: AnhChup | null,
+): BangGia {
   // Ảnh chụp cũ hơn dữ liệu cuối ngày (mofi thiếu file hôm nay) thì bỏ qua
   if (!anh || anh.phien.ngay < ngayGiaoDich) return { ...goc, phien: null };
 
@@ -188,7 +198,7 @@ export async function layBangGia(): Promise<BangGia> {
   return { capNhat: new Date(anh.phien.luc).toISOString(), phien: anh.phien, coPhieu };
 }
 
-type AnhChupTho = {
+export type AnhChupTho = {
   ngay: string;
   hhmm: string;
   dot: string;
@@ -273,8 +283,10 @@ export async function layAnhChupPhien() {
   "use cache: remote";
   cacheLife(MOT_PHUT);
   const tho = await timAnhChup<AnhChupTho>("bang");
-  if (!tho) return null;
+  return tho ? docAnhChup(tho) : null;
+}
 
+export function docAnhChup(tho: AnhChupTho) {
   const theoMa = new Map(
     tho.ma.map((ma, i) => [
       ma,
@@ -303,7 +315,7 @@ export async function layAnhChupPhien() {
 }
 
 // Giá cuối ngày (tổng hợp) cùng hồ sơ công ty
-async function layBangGiaGoc(): Promise<Omit<BangGia, "phien"> & { ngayGiaoDich: string }> {
+export async function layBangGiaGoc(): Promise<Omit<BangGia, "phien"> & { ngayGiaoDich: string }> {
   "use cache: remote";
   cacheLife("minutes");
   const [gia, congTy] = await Promise.all([

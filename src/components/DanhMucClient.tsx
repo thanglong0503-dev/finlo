@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ghiDanhMuc, locHopLe, themMua, useDanhMuc } from "@/lib/danh-muc";
 import { giaNghin, mauTangGiam, phanTram, soNguyen, vnd } from "@/lib/dinh-dang";
+import { apDungGoi } from "@/lib/gia-truc-tiep-chung";
+import { dangTrucTiep, useGiaTrucTiep } from "@/lib/gia-truc-tiep";
 import { useLamMoi } from "@/lib/lam-moi";
 import type { BangGia, CoPhieu } from "@/lib/mofi";
 
@@ -41,8 +43,11 @@ export function DanhMucClient() {
   const coMa = ds.length > 0;
 
   // Giá lấy qua /api/bang-gia đã có sẵn và được lưu đệm 60 giây, như trang Bảng giá
+  // Giá trực tiếp từ máy chủ; đang nhận thì bỏ lượt hỏi định kỳ
+  useGiaTrucTiep((goi) => setDuLieu((b) => (b ? apDungGoi(b, goi) : b)), duLieu?.phien ?? null);
   useLamMoi(
     async () => {
+      if (dangTrucTiep()) return;
       try {
         const res = await fetch("/api/bang-gia");
         if (!res.ok) throw new Error();

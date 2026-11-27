@@ -28,3 +28,16 @@ export function NhanPhien({ phien }: { phien: Phien | null }) {
     </span>
   );
 }
+
+// Viên nhỏ báo đang nhận giá trực tiếp từ máy chủ
+export function NhanTrucTiep() {
+  return (
+    <span
+      title="Giá tự cập nhật ngay khi có số liệu phút mới"
+      className="inline-flex h-5 items-center gap-1.5 rounded-full bg-nen-noi px-2 text-[11px] font-medium text-nhan"
+    >
+      <span className="cham-song h-1.5 w-1.5 rounded-full bg-nhan" />
+      Trực tiếp
+    </span>
+  );
+}
